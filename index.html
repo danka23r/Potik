@@ -198,6 +198,8 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid #251e2c;border-
 .dt button.warn{color:#ff6b7f;background:#2b1219}
 .dt svg{width:20px;height:20px}
 .dt .vs{width:1px;height:20px;background:#2a2232;margin:0 3px}
+.dt.fav{z-index:21;padding:3px 4px;transform:none}
+.dt.fav button{width:32px;height:30px}
 .mrow{flex:1;min-height:0;display:flex}
 .mrow>.ws{flex:1;min-width:0}
 /* docked drawing toolbar: a vertical bar on the right (or left) edge, like TradingView */
@@ -3253,8 +3255,8 @@ const DSTY={
   fib:{color:'#c4b2ee',levels:FIB_DEF,width:1,labels:true,fill:true,fillOp:6,extend:false,lock:false},
   fibext:{color:'#7ee0d4',levels:'0,0.618,1,1.272,1.618,2,2.618',width:1,labels:true,extend:false,lock:false},
   measure:{up:'#7ee0d4',dn:'#ff8a9a',op:14,lock:false},
-  long:{tgt:'#26a69a',stp:'#ef5350',op:24,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
-  short:{tgt:'#26a69a',stp:'#ef5350',op:24,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  long:{look:'clean',tgt:'#3b4f76',stp:'#29282b',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  short:{look:'clean',tgt:'#703045',stp:'#29282b',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
   vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:'#c4b2ee',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
   avwap:{color:'#ffd166',width:1.6,dash:'solid',band:false,mult:1,label:true,lock:false},
   elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1.4,lock:false},
@@ -3272,7 +3274,7 @@ const DFIELDS={
   fib:[['levels','Levels (comma separated)','text'],['color','Color','color'],['width','Width','num',.5,4,.5],['labels','Labels','bool'],['fill','Fill between levels','bool'],['fillOp','Fill opacity %','range',0,30,1],['extend','Extend right','bool']],
   fibext:[['levels','Levels (comma separated)','text'],['color','Color','color'],['width','Width','num',.5,4,.5],['labels','Labels','bool'],['extend','Extend right','bool']],
   measure:[['up','Up color','color'],['dn','Down color','color'],['op','Opacity %','range',5,60,1]],
-  long:[['tgt','Target color','color'],['stp','Stop color','color'],['op','Zone opacity %','range',5,80,1],['qty','Contracts','num',1,100000,1],['risk','Size by risk to the stop, $ (0 = use contracts)','num',0,1000000,10],['ppt','Contract','select',Object.entries(INSTR).filter(([k,x])=>x.grp===INS.grp).map(([k,x])=>[x.usd/x.tick,`${k} ($${x.usd/x.tick} / pt)`])],['labels','Labels and info box','bool'],['prices','Price tags on the right edge','bool'],['progress','Live P&L band from the fill','bool'],['mae','Best / worst price reached (MFE / MAE)','bool']],
+  long:[['look','Look','select',[['clean','Clean · only R:R'],['full','Detailed · prices, $, info box']]],['tgt','Target color','color'],['stp','Stop color','color'],['op','Zone opacity %','range',5,100,1],['qty','Contracts','num',1,100000,1],['risk','Size by risk to the stop, $ (0 = use contracts)','num',0,1000000,10],['ppt','Contract','select',Object.entries(INSTR).filter(([k,x])=>x.grp===INS.grp).map(([k,x])=>[x.usd/x.tick,`${k} ($${x.usd/x.tick} / pt)`])],['labels','Labels and info box','bool'],['prices','Price tags on the right edge','bool'],['progress','Live P&L band from the fill','bool'],['mae','Best / worst price reached (MFE / MAE)','bool']],
   vprof:[['mode','Time range','select',[['fixed','Fixed (start → end)'],['live','Developing (start → live price)']]],['vmode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta']]],
     ['vaPct','Value area %','num',40,95,1],['vaLines','VAH / VAL lines','bool'],['ext','Extend POC / VAH / VAL to the right','bool'],['color','Color','color'],['poc','POC color','color'],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['widthPct','Width % of range','range',20,100,1],['bg','Range background','bool']],
   avwap:[...LNF,['band','±σ band','bool'],['mult','Band σ','num',.5,4,.5],['label','Label','bool']],
@@ -3284,7 +3286,8 @@ const TNAME={trend:'Trend Line',ray:'Ray',xline:'Extended Line',hline:'Horizonta
   rect:'Rectangle',ellipse:'Ellipse',brush:'Brush',text:'Text / Callout',plabel:'Price Label',fib:'Fib Retracement',fibext:'Fib Extension',measure:'Measure',
   long:'Long Position',short:'Short Position',vprof:'Volume Profile (range)',avwap:'Anchored VWAP',elliott:'Elliott Wave'};
 // toolbar tools → drawing type (+ style), grouped in the floating toolbar
-const TOOLS={ell5:['elliott',{wave:'impulse'}],ell3:['elliott',{wave:'abc'}]};
+const TOOLS={ell5:['elliott',{wave:'impulse'}],ell3:['elliott',{wave:'abc'}],
+  rectB:['rect',{border:'#2e3c69',fill:'#3a4c84',fillOp:80,width:1}],rectR:['rect',{border:'#56232a',fill:'#6c2b30',fillOp:80,width:1}]};   // the blue / red zones of the favourites bar
 const typeOf=t=>TOOLS[t]?TOOLS[t][0]:t;
 const ONE=new Set(['hline','hray','vline','text','plabel','avwap']);
 const NPTS=d=>d.type==='channel'||d.type==='fibext'?3:d.type==='elliott'?(d.st.wave==='abc'?4:6):2;
@@ -3295,6 +3298,12 @@ let DR=[], selId=null, tool='cursor', pending=null, nextId=1;
 const SEL=new Set();   // extra selected drawings (Shift+click, Shift+drag a box)
 try{const x=JSON.parse(localStorage.getItem(LS)||'[]'); if(Array.isArray(x)){DR=x.filter(d=>d&&DSTY[d.type]); nextId=DR.reduce((m,d)=>Math.max(m,d.id),0)+1}}catch(e){}
 DR.forEach(d=>{d.st={...styleFor(d.type),...(d.st||{})}});
+// 29.10: Long / Short in the user's TradingView colours (blue target for a long, red for a short, a quiet dark stop) and clean: only the R:R.
+// One-time: existing positions get the new look; the old saved default colours for them are dropped.
+try{const k=LS+'.pos2'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;
+  for(const d of DR) if(d.type==='long'||d.type==='short'){const z=DSTY[d.type]; Object.assign(d.st,{look:'clean',tgt:z.tgt,stp:z.stp,op:z.op}); ch=1}
+  let dd=0; for(const t of ['long','short']) if(DDEF[t]){for(const f of ['tgt','stp','op','look']) if(f in DDEF[t]){delete DDEF[t][f]; dd=1}}
+  if(dd) localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF)); if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 let MAGNET=false; try{MAGNET=localStorage.getItem('potik.magnet')==='1'}catch(e){}
 const ser=x=>JSON.stringify(x,(k,v)=>k[0]==='_'?undefined:v);
 function save(){try{localStorage.setItem(LS,ser(DR))}catch(e){}}
@@ -3492,6 +3501,16 @@ function drawDrawings(ctx,g,P){
       const L_=d.type==='long', x0=g.xAt(d.t0), x1=g.xAt(d.t1), L0=Math.min(x0,x1), W=Math.max(2,Math.abs(x1-x0)), R0=L0+W, op=st.op/100;
       const ye=g.yOf(d.entry), yt=g.yOf(d.target), ys=g.yOf(d.stop);
       const tpT=Math.abs(d.target-d.entry), slT=Math.abs(d.stop-d.entry), tpP=tpT*TICK, slP=slT*TICK, rr=slT?tpT/slT:0;
+      if(st.look!=='full'){
+        // clean: two soft zones (lighter at the top), a thin grey entry line and the R:R — nothing else
+        const zc=(ya,yb,col,sh)=>{const top=Math.min(ya,yb), h=Math.abs(yb-ya); if(h<.5) return; const a=Math.min(1,op), n=parseInt(col.slice(1),16), dk=`#${[n>>16&255,n>>8&255,n&255].map(v=>Math.round(v*sh).toString(16).padStart(2,'0')).join('')}`;
+          const gr=ctx.createLinearGradient(0,top,0,top+h); gr.addColorStop(0,hexA(col,a)); gr.addColorStop(1,hexA(dk,a)); ctx.fillStyle=gr; ctx.fillRect(Math.round(L0),Math.round(top),Math.round(W),Math.round(h))};
+        zc(ye,yt,st.tgt,.8); zc(ye,ys,st.stp,.9);
+        ctx.fillStyle=sel?'#c9ccd6':'#787b86'; ctx.fillRect(Math.round(L0),Math.round(ye),Math.round(W),1);
+        if(st.labels!==false){const txt=`RR ${rr.toFixed(2)}`; ctx.font=`500 11px ${MONO}`; const tw=ctx.measureText(txt).width;
+          if(W>=tw+8){const h=Math.abs(yt-ye), y=h>=18?(ye+yt)/2:yt+(yt<ye?-9:9); ctx.fillStyle='rgba(236,232,242,.88)'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(txt,L0+W/2,y)}}
+        break;
+      }
       const qty=posQty(d), usd=st.ppt*qty, ps=posStatus(d), pct=v=>(v/(d.entry*TICK)*100).toFixed(2)+'%', money=v=>(v<0?'−$':'$')+fK(Math.round(Math.abs(v)));
       const zone=(ya,yb,col,far)=>{const top=Math.min(ya,yb), hgt=Math.abs(yb-ya); if(hgt<.5) return;
         const gr=ctx.createLinearGradient(0,ya,0,yb); gr.addColorStop(0,hexA(col,op*.45)); gr.addColorStop(1,hexA(col,Math.min(.9,op*1.5))); ctx.fillStyle=gr; ctx.fillRect(L0,top,W,hgt);
@@ -3670,7 +3689,7 @@ const TICON={
   del:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7M10.2 10.5v5.5M13.8 10.5v5.5" stroke-linecap="round"/>',
   dock:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M15 4.5v15M17.3 8h1M17.3 11h1M17.3 14h1"/>',
 };
-const TOOL_NAME=t=>({cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
+const TOOL_NAME=t=>({rectB:'Blue zone (rectangle)',rectR:'Red zone (rectangle)',cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
 // 29.10: only the tools in use (ray, extended line, horizontal ray, arrow, channel, Fibonacci, ellipse, brush, price label and Elliott are gone from the toolbar;
 // drawings made with them earlier still show). A group with a single tool is a plain button.
 // every tool is its own button in the left column (no dropdowns); TOOL_SETS only groups them in the right-click menu
@@ -3719,7 +3738,7 @@ function buildToolbar(){
 }
 function syncToolbar(){
   document.querySelectorAll('#dt > button[data-t], #dt .tgm').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===tool));
-  document.querySelectorAll('#dt .tfly [data-t]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===tool));
+  document.querySelectorAll('#dt .tfly [data-t], #fav [data-t]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===tool));
 }
 
 /* floating drawing toolbar, movable by its grip */
@@ -3740,6 +3759,30 @@ let gdrag=null;
 grip.addEventListener('pointerdown',e=>{grip.setPointerCapture(e.pointerId); gdrag={x:e.clientX,y:e.clientY,l:parseFloat(dt.style.left)||0,t:parseFloat(dt.style.top)||0}});
 grip.addEventListener('pointermove',e=>{if(!gdrag||TB_MODE!=='float')return; placeBar(gdrag.l+e.clientX-gdrag.x,gdrag.t+e.clientY-gdrag.y)});
 grip.addEventListener('pointerup',()=>{gdrag=null; try{localStorage.setItem('potik.toolbar',JSON.stringify({x:parseFloat(dt.style.left),y:parseFloat(dt.style.top)}))}catch(e){}});
+
+/* favourites bar (29.10, like TradingView's): short, long, rectangle and two ready zones — blue and red — to grab and stretch.
+   It floats over the charts, is always shown (it does not hide by itself), moves by its grip and remembers where it was put. */
+const FAV_TOOLS=['short','long','rect','rectB','rectR'];
+const FICON={
+  short:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">S</text>',
+  long:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">L</text>',
+  rect:'<rect x="5.5" y="5.5" width="13" height="13"/><g fill="#16121b"><circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></g>',
+  rectB:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#3a4c84" stroke="#5a6ca4" stroke-width="1"/>',
+  rectR:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#6c2b30" stroke="#94454c" stroke-width="1"/>',
+};
+const fav=document.createElement('div'); fav.className='dt fav'; fav.id='fav'; fav.setAttribute('role','toolbar'); fav.setAttribute('aria-label','Favourite tools');
+fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span>`+FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${FICON[t]}</svg></button>`).join('');
+ws.appendChild(fav);
+let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav')||'null')}catch(e){}
+function placeFav(x,y){const r=ws.getBoundingClientRect(), w=fav.offsetWidth, h=fav.offsetHeight;
+  fav.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; fav.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
+const favHome=()=>favPos?placeFav(favPos.x,favPos.y):placeFav(ws.getBoundingClientRect().width/2-fav.offsetWidth/2,40);
+favHome(); try{new ResizeObserver(()=>favHome()).observe(ws)}catch(e){}   // stays inside the charts when the window size changes
+fav.addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) return; const t=b.dataset.t; cancelPending(); setTool(tool===t?'cursor':t)});
+{const fg=fav.querySelector('.grip'); let fd=null;
+  fg.addEventListener('pointerdown',e=>{fg.setPointerCapture(e.pointerId); fd={x:e.clientX,y:e.clientY,l:parseFloat(fav.style.left)||0,t:parseFloat(fav.style.top)||0}});
+  fg.addEventListener('pointermove',e=>{if(fd) placeFav(fd.l+e.clientX-fd.x,fd.t+e.clientY-fd.y)});
+  fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav',JSON.stringify(favPos))}catch(e){}});}
 
 /* ---------- settings forms ---------- */
 function el_(tag,cls,txt){const e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e}
