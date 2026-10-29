@@ -390,6 +390,8 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ssres{color:var(--muted);font-size:13px;padding:10px 12px;border-radius:6px}
 .ssres:hover{color:var(--text)}
 @media (max-width:699px){.ssm{min-width:64px;padding:8px 10px;font-size:12px}.sslogo{font-size:20px}.ss{align-items:flex-start}}
+/* 29.10: a quieter window header */
+.vw button[data-v="tape"],.vw button[data-v="acct"],.wh .indb,.wh .tgl.dom,.wc .lnk,.wc .propb,.wc .wsep:first-of-type{display:none!important}
 </style>
 
 <div class="app">
@@ -401,10 +403,10 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
     <div class="wtabs" id="wtabs" role="group" aria-label="Windows"></div>
     <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
     <div class="right">
-      <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)">⌘ K</button>
+      <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)" hidden>⌘ K</button>
       <button type="button" class="hbtn" id="setb" title="Settings: every tool in one place">Settings</button>
-      <button type="button" class="hbtn" id="appb" title="Appearance & language">Aa</button>
-      <button type="button" class="hbtn" id="datab" title="Instrument, session, data source, tick import">Data</button>
+      <button type="button" class="hbtn" id="appb" title="Appearance & language" hidden>Aa</button>
+      <button type="button" class="hbtn" id="datab" title="Instrument, session, data source, tick import" hidden>Data</button>
       <button type="button" class="hbtn" id="rpb" title="Replay a session: rewind, step, blind training">Replay</button>
       <span class="sim" id="srcb">SIM</span>
       <span class="clk" id="clk">--:--:-- ET</span>
@@ -5480,6 +5482,7 @@ function openMenu(P,p,cx,cy,indId){
     {...st('util','Footprint level lines'),on:!!(P.S.ind.fp.naked||P.S.ind.fp.stackZone||P.S.ind.fp.unfin),act:()=>{const f=P.S.ind.fp, on=!(f.naked||f.stackZone||f.unfin); f.naked=on; f.stackZone=on; f.unfin=on; f.always=on; P.dirty=true; saveLayout()}},
     {sep:1},
     {...st('ind','Indicators'),kbd:'Ctrl I',act:()=>openIndicators(P)},
+    {...st('util','DOM beside the chart'),on:!!P.S.dom,act:()=>{P.S.dom=!P.S.dom; const b=P.el.querySelector('.dom'); if(b) b.setAttribute('aria-pressed',P.S.dom); P.dirty=true; saveLayout()}},
     {...st('gear','Settings'),kbd:'Ctrl ,',act:()=>openProps(P)},
     {icon:'util',label:'Chart templates…',act:()=>openTemplates(P)},
     {sep:1},
