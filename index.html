@@ -3255,8 +3255,8 @@ const DSTY={
   fib:{color:'#c4b2ee',levels:FIB_DEF,width:1,labels:true,fill:true,fillOp:6,extend:false,lock:false},
   fibext:{color:'#7ee0d4',levels:'0,0.618,1,1.272,1.618,2,2.618',width:1,labels:true,extend:false,lock:false},
   measure:{up:'#7ee0d4',dn:'#ff8a9a',op:14,lock:false},
-  long:{look:'clean',tgt:'#3b4f76',stp:'#29282b',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
-  short:{look:'clean',tgt:'#703045',stp:'#29282b',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  long:{look:'clean',tgt:'#5670a8',stp:'#3c3a40',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  short:{look:'clean',tgt:'#9a4462',stp:'#3c3a40',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
   vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:'#c4b2ee',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
   avwap:{color:'#ffd166',width:1.6,dash:'solid',band:false,mult:1,label:true,lock:false},
   elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1.4,lock:false},
@@ -3287,7 +3287,7 @@ const TNAME={trend:'Trend Line',ray:'Ray',xline:'Extended Line',hline:'Horizonta
   long:'Long Position',short:'Short Position',vprof:'Volume Profile (range)',avwap:'Anchored VWAP',elliott:'Elliott Wave'};
 // toolbar tools → drawing type (+ style), grouped in the floating toolbar
 const TOOLS={ell5:['elliott',{wave:'impulse'}],ell3:['elliott',{wave:'abc'}],
-  rectB:['rect',{border:'#2e3c69',fill:'#3a4c84',fillOp:80,width:1}],rectR:['rect',{border:'#56232a',fill:'#6c2b30',fillOp:80,width:1}]};   // the blue / red zones of the favourites bar
+  rectB:['rect',{border:'#4a5f9e',fill:'#566fb8',fillOp:80,width:1}],rectR:['rect',{border:'#80373f',fill:'#9a434b',fillOp:80,width:1}]};   // the blue / red zones of the favourites bar
 const typeOf=t=>TOOLS[t]?TOOLS[t][0]:t;
 const ONE=new Set(['hline','hray','vline','text','plabel','avwap']);
 const NPTS=d=>d.type==='channel'||d.type==='fibext'?3:d.type==='elliott'?(d.st.wave==='abc'?4:6):2;
@@ -3304,6 +3304,11 @@ try{const k=LS+'.pos2'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1')
   for(const d of DR) if(d.type==='long'||d.type==='short'){const z=DSTY[d.type]; Object.assign(d.st,{look:'clean',tgt:z.tgt,stp:z.stp,op:z.op}); ch=1}
   let dd=0; for(const t of ['long','short']) if(DDEF[t]){for(const f of ['tgt','stp','op','look']) if(f in DDEF[t]){delete DDEF[t][f]; dd=1}}
   if(dd) localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF)); if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
+// later the same evening the user asked for lighter colours everywhere: repaint what still has the first, darker ones
+try{const k=LS+'.pos3'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0; const OLD={'#3b4f76':1,'#703045':1,'#29282b':1};
+  for(const d of DR){if((d.type==='long'||d.type==='short')){const z=DSTY[d.type]; if(OLD[d.st.tgt]){d.st.tgt=z.tgt; ch=1} if(OLD[d.st.stp]){d.st.stp=z.stp; ch=1}}
+    else if(d.type==='rect'){if(d.st.fill==='#3a4c84'){Object.assign(d.st,{fill:'#566fb8',border:'#4a5f9e'}); ch=1} else if(d.st.fill==='#6c2b30'){Object.assign(d.st,{fill:'#9a434b',border:'#80373f'}); ch=1}}}
+  if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 let MAGNET=false; try{MAGNET=localStorage.getItem('potik.magnet')==='1'}catch(e){}
 const ser=x=>JSON.stringify(x,(k,v)=>k[0]==='_'?undefined:v);
 function save(){try{localStorage.setItem(LS,ser(DR))}catch(e){}}
@@ -3508,7 +3513,7 @@ function drawDrawings(ctx,g,P){
         zc(ye,yt,st.tgt,.8); zc(ye,ys,st.stp,.9);
         ctx.fillStyle=sel?'#c9ccd6':'#787b86'; ctx.fillRect(Math.round(L0),Math.round(ye),Math.round(W),1);
         if(st.labels!==false){const txt=`RR ${rr.toFixed(2)}`; ctx.font=`500 11px ${MONO}`; const tw=ctx.measureText(txt).width;
-          if(W>=tw+8){const h=Math.abs(yt-ye), y=h>=18?(ye+yt)/2:yt+(yt<ye?-9:9); ctx.fillStyle='rgba(236,232,242,.88)'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(txt,L0+W/2,y)}}
+          if(W>=tw+8){const up=yt<ye; ctx.fillStyle='rgba(240,237,245,.92)'; ctx.textAlign='left'; ctx.textBaseline=up?'bottom':'top'; ctx.fillText(txt,L0+6,ye+(up?-3:4))}}   // at the entry, on the target side
         break;
       }
       const qty=posQty(d), usd=st.ppt*qty, ps=posStatus(d), pct=v=>(v/(d.entry*TICK)*100).toFixed(2)+'%', money=v=>(v<0?'−$':'$')+fK(Math.round(Math.abs(v)));
@@ -3767,8 +3772,8 @@ const FICON={
   short:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">S</text>',
   long:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">L</text>',
   rect:'<rect x="5.5" y="5.5" width="13" height="13"/><g fill="#16121b"><circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></g>',
-  rectB:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#3a4c84" stroke="#5a6ca4" stroke-width="1"/>',
-  rectR:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#6c2b30" stroke="#94454c" stroke-width="1"/>',
+  rectB:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#566fb8" stroke="#7a8dcc" stroke-width="1"/>',
+  rectR:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#9a434b" stroke="#bd5f67" stroke-width="1"/>',
 };
 const fav=document.createElement('div'); fav.className='dt fav'; fav.id='fav'; fav.setAttribute('role','toolbar'); fav.setAttribute('aria-label','Favourite tools');
 fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span>`+FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${FICON[t]}</svg></button>`).join('');
