@@ -587,7 +587,17 @@ const dayOf=t=>Math.floor(t/DAY), sod=t=>((t%DAY)+DAY)%DAY;
 const etS=t=>(sod(t)-TOFF+DAY)%DAY;   // seconds since midnight New York time
 // session end of the session holding t (for crypto the end is the next day's midnight, so sod() cannot be used)
 const sesEnd=()=>(D.day?D.day.i:dayOf(sim.t))*DAY+CLOSE;
-const clock=(t,sec)=>{const s=Math.floor(etS(t));return pad(Math.floor(s/3600))+':'+pad(Math.floor(s/60)%60)+(sec?':'+pad(s%60):'')};
+// 29.10: times are SHOWN in a chosen zone (default Central Europe, the user's own); inside, everything stays in exchange time (ET, or UTC for crypto)
+const DISP_TZS=[['Europe/Berlin','Central Europe (Berlin)'],['Europe/Kyiv','Kyiv'],['Europe/London','London'],['UTC','UTC'],['America/New_York','New York (ET)'],['America/Chicago','Chicago (CT)']];
+let DISP_TZ='Europe/Berlin'; try{DISP_TZ=localStorage.getItem('potik.tz')||'Europe/Berlin'}catch(e){}
+function absMs(t){   // exchange time t → real UTC milliseconds
+  const n=CAL.length, i=dayOf(t), ic=clamp_(i,0,Math.max(0,n-1)), w=(CAL[ic]?CAL[ic].getTime():0)+(i-ic)*864e5+(sod(t)-TOFF)*1000;
+  if(CRYPTO) return w; const u=w-tzOff(w,'America/New_York')*1000; return w-tzOff(u,'America/New_York')*1000}
+const dispS=t=>{if(DISP_TZ==='America/New_York'&&!CRYPTO) return etS(t); const u=absMs(t); return (((Math.floor(u/1000)+tzOff(u,DISP_TZ))%DAY)+DAY)%DAY};
+const TZN={}; function tzName(){const k=DISP_TZ+'|'+Math.floor(Date.now()/36e5); if(!TZN[k]){let v=DISP_TZ; try{v=new Intl.DateTimeFormat(DISP_TZ.startsWith('America/')?'en-US':'en-GB',{timeZone:DISP_TZ,timeZoneName:'short'}).formatToParts(new Date()).find(x=>x.type==='timeZoneName').value}catch(e){} TZN[k]=v.replace(/^GMT$/,'UTC')} return TZN[k]}
+const hms=(s,sec)=>pad(Math.floor(s/3600))+':'+pad(Math.floor(s/60)%60)+(sec?':'+pad(s%60):'');
+const clock=(t,sec)=>hms(Math.floor(dispS(t)),sec);
+const exClock=(t,sec)=>hms(Math.floor(etS(t)),sec);   // exchange time (inputs that are typed in New York time)
 const RDC=[], realDate=t=>{const i=clamp(dayOf(t),0,CAL.length-1); if(RDC[i]!=null) return RDC[i]; const d=CAL[i]; return RDC[i]=d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}):''};
 // blind training hides real dates: sessions are counted back from the replayed one
 const dateLbl=t=>RP.blind?(dayOf(t)===RP.day?'Session':'S'+(dayOf(t)-RP.day)):realDate(t);
@@ -4842,7 +4852,7 @@ function syncReplayBar(force){
   if(force||+sl.max!==CLOSE-OPEN){sl.min=0; sl.max=CLOSE-OPEN; sl.step=1}
   if(!rsDrag) sl.value=Math.round(sim.t-d0);
   $('#rday').textContent=RP.blind?'Blind session':`${realDate(d0)}${FEED.kind==='csv'?' · '+FEED.name:''}`;
-  if(!rsDrag) $('#rtime').textContent=clock(sim.t,true)+' ET';
+  if(!rsDrag) $('#rtime').textContent=clock(sim.t,true)+' '+tzName();
   $('#rbig').checked=!!RP.big; $('#rexit').hidden=FEED.kind!=='sim';
 }
 function wireReplayBar(){
@@ -4850,7 +4860,7 @@ function wireReplayBar(){
   bar.addEventListener('click',e=>{const b=e.target.closest('[data-r]'); if(!b) return; const a=b.dataset.r;
     if(a==='start') seekTo(RP.start); else if(a==='b5') seekTo(sim.t-300); else if(a==='f5') seekTo(sim.t+300);
     else if(a==='bbar') stepBar(-1); else if(a==='fbar') stepBar(1); else if(a==='report') openReport(); else if(a==='setup') openReplayDialog(); else if(a==='exit') exitReplay()});
-  sl.addEventListener('input',()=>{rsDrag=true; $('#rtime').textContent=clock(RP.day*DAY+OPEN+ +sl.value,true)+' ET'});
+  sl.addEventListener('input',()=>{rsDrag=true; $('#rtime').textContent=clock(RP.day*DAY+OPEN+ +sl.value,true)+' '+tzName()});
   sl.addEventListener('change',()=>{rsDrag=false; seekTo(RP.day*DAY+OPEN+ +sl.value)});
   const big=$('#rbig'), bn=$('#rbign');
   const upd=()=>{RP.big=big.checked?Math.max(10,+bn.value||100):0};
@@ -4865,7 +4875,7 @@ function openReplayDialog(){
     const sel=row('Session',el_('select')), last=CAL.length-1;
     for(let i=last;i>=0;i--){const o=el_('option',null,`${CAL[i].toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}${FEED.kind==='sim'&&i===last?' · today':''}`); o.value=i; sel.appendChild(o)}
     sel.value=RP.on?RP.day:FEED.kind==='sim'?Math.max(0,last-1):last;
-    const tm=row('Start at (New York time)',el_('input')); tm.type='time'; tm.step=60; tm.value=RP.on?clock(RP.start):'09:30';
+    const tm=row('Start at (New York time)',el_('input')); tm.type='time'; tm.step=60; tm.value=RP.on?exClock(RP.start):'09:30';
     const hint=el_('p','acnote',ETH?'ETH session: 18:00 the evening before to 17:00.':'RTH session: 9:30 to 16:00.'); f.appendChild(hint);
     const bl=row('Blind training',el_('input')); bl.type='checkbox'; bl.checked=RP.blind;
     f.appendChild(el_('p','acnote','Blind picks a random session and hides its date until the report'+(FEED.kind==='csv'?'; prices are shifted so you cannot recognise the levels.':'.')));
@@ -4891,7 +4901,7 @@ function openReport(){
   const lA=avg(longs,x=>at(x.entry)), sA=avg(shorts,x=>at(x.entry));
   openDialog(`Replay report · ${real}${RP.blind?' (blind)':''}`,body=>{
     const card=(k,v,c)=>`<div class="accard"><span>${k}</span><b class="${c||''}">${v}</b></div>`, cls=v=>v>0?'up':v<0?'dn':'';
-    body.innerHTML=`<p class="idesc">${RP.ended?'The session is over.':`Replayed up to ${clock(sim.t)} ET.`} ${SYM} · ${ETH?'ETH':'RTH'} · ${FEED.kind==='csv'?'imported ticks':'simulated'}${RP.blind?' · the date was hidden while you traded':''}.</p>
+    body.innerHTML=`<p class="idesc">${RP.ended?'The session is over.':`Replayed up to ${clock(sim.t)} ${tzName()}.`} ${SYM} · ${ETH?'ETH':'RTH'} · ${FEED.kind==='csv'?'imported ticks':'simulated'}${RP.blind?' · the date was hidden while you traded':''}.</p>
       <h4 class="acsub">Your trading</h4>
       <div class="acgrid">${card('Net P&L',money(st.net),cls(st.net))}${card('Trades',st.n)}${card('Win rate',st.n?Math.round(st.wins/st.n*100)+'%':'–')}${card('Profit factor',st.n?(isFinite(st.pf)?st.pf.toFixed(2):'∞'):'–')}
       ${card('Avg win / loss',st.n?`${money(st.avgW)} / ${money(st.avgL)}`:'–')}${card('Expectancy',st.n?money(st.exp):'–',cls(st.exp))}${card('Max drawdown',money(-st.dd),st.dd?'dn':'')}${card('Avg MAE / MFE',st.n?`${st.mae.toFixed(1)} / ${st.mfe.toFixed(1)} t`:'–')}
@@ -6192,6 +6202,8 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(allDirty);
 
 /* ---------- loop: one market, every window redraws from it ---------- */
 const clk=$('#clk');
+clk.title='Time zone of the clock and the time axis (click to change)'; clk.style.cursor='pointer';
+clk.addEventListener('click',()=>{const r=clk.getBoundingClientRect(); showMenu(DISP_TZS.map(([z,t])=>({label:t,on:DISP_TZ===z,act:()=>{DISP_TZ=z; try{localStorage.setItem('potik.tz',z)}catch(e){} lastClk=0; allDirty()}})),r.left-120,r.bottom+4)});
 let lastTs=performance.now(), acc=0, lastClk=0, dataDirty=false, lastData=0, lastSt=0, lastDw=0;
 function frame(ts){
   UIDK=null;
@@ -6229,7 +6241,7 @@ function frame(ts){
   if(ts-lastSt>1000){lastSt=ts; studyAlerts()}
   linkTick();
   if(DWIN&&ts-lastDw>100){lastDw=ts; updateDataWin()}
-  if(ts-lastClk>200){clk.textContent=(RP.on&&!RP.blind?realDate(sim.t)+' ':'')+clock(sim.t,true)+' '+TZL; lastClk=ts; if(RP.on) syncReplayBar()}
+  if(ts-lastClk>200){clk.textContent=(RP.on&&!RP.blind?realDate(sim.t)+' ':'')+clock(sim.t,true)+' '+tzName(); lastClk=ts; if(RP.on) syncReplayBar()}
 }
 /* ---------- start screen: shown on every open. Pick a view (each view keeps its own workspace), the instrument and the feed;
    the screen then disappears. The ПОТІК logo in the bar brings it back. A change of instrument or feed reloads the page,
