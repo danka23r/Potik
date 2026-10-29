@@ -3652,7 +3652,9 @@ const TICON={
 const TOOL_NAME=t=>({cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
 // 29.10: only the tools in use (ray, extended line, horizontal ray, arrow, channel, Fibonacci, ellipse, brush, price label and Elliott are gone from the toolbar;
 // drawings made with them earlier still show). A group with a single tool is a plain button.
-const TOOL_GROUPS=[['cursor'],['trend','hline','vline'],['rect','text'],['measure'],['long','short'],['vprof','avwap']];
+// every tool is its own button in the left column (no dropdowns); TOOL_SETS only groups them in the right-click menu
+const TOOL_SETS=[['cursor'],['trend','hline','vline'],['rect','text'],['measure'],['long','short'],['vprof','avwap']];
+const TOOL_GROUPS=TOOL_SETS.flat().map(t=>[t]);
 let TG_LAST={}; try{TG_LAST=JSON.parse(localStorage.getItem('potik.tg')||'{}')||{}}catch(e){}
 const svgI=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${TICON[k]||''}</svg>`;
 function buildToolbar(){
@@ -5432,7 +5434,7 @@ function openMenu(P,p,cx,cy,indId){
     {...st('hand','Hand'),kbd:'Alt H',on:P.mode==='hand',act:()=>setMode(P,'hand')},
     {...st('zoom','Zoom Out'),kbd:'Alt R',act:()=>resetView(P)},
     {sep:1},
-    {...st('pen','Drawing Objects'),sub:TOOL_GROUPS.slice(1).flatMap((g,k)=>[...(k?[{sep:1}]:[]),...g.map(t=>({label:TOOL_NAME(t),act:ONE.has(typeOf(t))||t==='long'||t==='short'?()=>{create(P,p,t); allDirty()}:draw(t)}))])},
+    {...st('pen','Drawing Objects'),sub:TOOL_SETS.slice(1).flatMap((g,k)=>[...(k?[{sep:1}]:[]),...g.map(t=>({label:TOOL_NAME(t),act:ONE.has(typeOf(t))||t==='long'||t==='short'?()=>{create(P,p,t); allDirty()}:draw(t)}))])},
     {...st('util','Drawing Utilities'),sub:[
       {label:'Object tree…',act:openObjectTree},
       {label:MAGNET?'Magnet off':'Magnet on',act:()=>{MAGNET=!MAGNET; try{localStorage.setItem('potik.magnet',MAGNET?'1':'0')}catch(e){} const m=$('#magb'); if(m) m.setAttribute('aria-pressed',MAGNET)}},
