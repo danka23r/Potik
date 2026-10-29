@@ -43,7 +43,8 @@ button{background:none;border:0;cursor:pointer}
 .wtabs button{padding:3px 9px;border-radius:4px;color:var(--muted)}
 .wtabs button[aria-pressed="true"]{background:#1c1424;color:#fff}
 .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
-.sim{font-size:10px;letter-spacing:.08em;color:var(--mag);border:1px solid #4a1f52;border-radius:3px;padding:1px 5px}
+.sim{font-size:10px;letter-spacing:.08em;color:var(--mag);border:1px solid #4a1f52;border-radius:3px;padding:1px 5px;cursor:pointer}
+.sim:hover{border-color:var(--mag)}
 .clk{font-family:var(--f-num);color:var(--muted);font-variant-numeric:tabular-nums}
 .right select{background:var(--bar);border:1px solid var(--line);border-radius:4px;padding:2px 4px;font-family:var(--f-num);font-size:11px}
 .pp{padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--muted);min-width:52px}
@@ -470,7 +471,7 @@ const INSTR={
   CL:{name:'Crude Oil',tick:.01,usd:10,base:61.4,vol:.55,dec:2,months:[1,2,3,4,5,6,7,8,9,10,11,12],grp:'CL'},
   GC:{name:'Gold',tick:.1,usd:10,base:4120,vol:.6,dec:1,months:[2,4,6,8,10,12],grp:'GC'},
   // crypto trades 24/7: sessions are UTC days; one contract = lot coins (sizes are whole lots), Binance symbol bsym
-  BTC:{name:'Bitcoin / USDT',tick:1,usd:.01,base:112000,vol:2,dec:0,months:[],grp:'BTC',crypto:true,lot:.01,unit:'BTC',bsym:'BTCUSDT'},
+  BTC:{name:'Bitcoin / USDT',tick:1,usd:.01,base:80000,vol:2,dec:0,months:[],grp:'BTC',crypto:true,lot:.01,unit:'BTC',bsym:'BTCUSDT'},
   ETH:{name:'Ether / USDT',tick:.1,usd:.01,base:4100,vol:1.3,dec:1,months:[],grp:'ETHU',crypto:true,lot:.1,unit:'ETH',bsym:'ETHUSDT'},
   SOL:{name:'Solana / USDT',tick:.01,usd:.01,base:195,vol:1,dec:2,months:[],grp:'SOL',crypto:true,lot:1,unit:'SOL',bsym:'SOLUSDT'},
 };
@@ -490,8 +491,17 @@ if(DCFG.src==='csv'){try{DS=await dsLoad(DCFG.ds)}catch(e){console.error(e)} if(
 if(DCFG.src==='bnc'&&CRYPTO){try{BNL=await bncLoad(INSTR[DCFG.sym],HIST_DAYS,DCFG.bnc,f=>{const m=document.getElementById('busyMsg'); if(m) m.textContent=`Loading ${INSTR[DCFG.sym].bsym} from Binance · ${Math.round(f*100)}%`})}catch(e){BOOT_MSG=`Binance could not be reached (${e.message||e}), so the simulator is running.`}}
 if(DCFG.src==='ws'){WSF=makeWsFeed(DCFG.wsUrl,DCFG.wsSub); const ok=await WSF.ready; if(!ok){BOOT_MSG=`No trade arrived from ${DCFG.wsUrl||'the WebSocket'} (${WSF.status}), so the simulator is running.`; WSF.close(); WSF=null}}
 if(!INSTR[DCFG.sym]) DCFG.sym='NQ';
+/* a simulated crypto market starts at the real price: Binance's current price if it answers within 3 s,
+   otherwise the last real price this browser saw, otherwise the built-in default (which goes stale) */
+const LPX_KEY='potik.lastpx.'+DCFG.sym;
+let SIMBASE=null;
+if(INSTR[DCFG.sym].crypto&&!BNL&&!DS&&!WSF){
+  const live=await Promise.race([bncPrice(INSTR[DCFG.sym].bsym),new Promise(r=>setTimeout(()=>r(null),3000))]);
+  if(live){SIMBASE=live; try{localStorage.setItem(LPX_KEY,String(live))}catch(e){}}
+  else{try{const v=+localStorage.getItem(LPX_KEY); if(v>0) SIMBASE=v}catch(e){}}
+}
 const INS=INSTR[DCFG.sym], TICK=INS.tick, DEC=INS.dec, VOL=DS||WSF||BNL?1:INS.vol, PPT=INS.usd/INS.tick;
-const BASEP=BNL?Math.round(BNL.first/TICK)*TICK:DS?DS.P[0]*TICK:WSF?Math.round(WSF.first.price/TICK)*TICK:Math.round(INS.base/TICK)*TICK;
+const BASEP=BNL?Math.round(BNL.first/TICK)*TICK:DS?DS.P[0]*TICK:WSF?Math.round(WSF.first.price/TICK)*TICK:Math.round((SIMBASE||INS.base)/TICK)*TICK;
 const PKEY=INS.grp==='NQ'?'':'.'+INS.grp;   // drawings and DOM notes are kept per price scale
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, pad=n=>String(n).padStart(2,'0');
 // simulator randomness is seeded per session, so a session can be rebuilt exactly (replay, rewind)
@@ -4248,6 +4258,14 @@ function bncEp(mk){return mk==='spot'?{rest:['https://api.binance.com/api/v3','h
   :{rest:['https://fapi.binance.com/fapi/v1'],ws:'wss://fstream.binance.com/stream?streams=',
     // since April 2026 Binance futures serves trades on /market and the order book on /public; the old address only sends the book
     wsT:'wss://fstream.binance.com/market/stream?streams=',wsB:'wss://fstream.binance.com/public/stream?streams=',lim:1500,name:'Binance futures'}}   // a function: it is needed before this part of the page has run
+// the current price only (one small request per address, 2.5 s each at most); null when Binance cannot be reached
+async function bncPrice(sym){
+  for(const mk of ['fut','spot']) for(const base of bncEp(mk).rest){
+    try{const c=new AbortController(), t=setTimeout(()=>c.abort(),2500); const r=await fetch(`${base}/ticker/price?symbol=${sym}`,{cache:'no-store',signal:c.signal}); clearTimeout(t);
+      if(r.ok){const j=await r.json(); if(+j.price>0) return +j.price}}catch(e){}
+  }
+  return null;
+}
 async function bncGet(ep,path){
   let err; for(const base of ep.rest){try{const r=await fetch(base+path,{cache:'no-store'}); if(r.ok) return await r.json(); err=new Error('HTTP '+r.status)}catch(e){err=e}}
   throw err;
@@ -4737,6 +4755,7 @@ const UK={
 "Ticks (trades)":"Тіки (угоди)","Size":"Розмір","Apply":"Застосувати",
 };
 Object.assign(UK,{"Settings: every tool in one place": "Налаштування: усі інструменти в одному місці"});
+Object.assign(UK,{"SIM · not real prices":"SIM · не реальні ціни","Simulated market, not real prices. Click to switch to live Binance data":"Симуляція ринку, ціни не реальні. Клік — перейти на живі дані Binance"});
 Object.assign(UK,{"Minimize (to the bar at the top)":"Згорнути (на панель угорі)","Minimize":"Згорнути","Float this window":"Зробити вікно плаваючим","Dock this window back into the grid":"Повернути вікно в сітку",
   "Restore window":"Відновити вікно","Restore size":"Відновити розмір","Float":"Плаваюче","Dock into the grid":"Повернути в сітку","Floating size":"Розмір плаваючого вікна","Small":"Мале","Medium":"Середнє","Large":"Велике",
   "Fill the workspace":"На весь робочий простір","Duplicate window":"Дублювати вікно","Restore all minimized":"Відновити всі згорнуті","Close other windows":"Закрити інші вікна","Window":"Вікно","Minimized windows":"Згорнуті вікна",
@@ -4746,6 +4765,7 @@ Object.assign(UK,{"Minimize (to the bar at the top)":"Згорнути (на п�
 Object.assign(UK,{"Session VWAP with ±1σ, ±2σ and ±3σ standard deviation bands.": "VWAP сесії зі смугами стандартного відхилення ±1σ, ±2σ і ±3σ.", "Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.": "Об’єм на кожній ціні. Бічний профіль праворуч (сьогодні, попередній день, тиждень, місяць, композит за N днів або видимі бари), профіль для кожної сесії на графіку, лінії POC / зони вартості, що формуються, «голі» POC / VAH / VAL минулих сесій, доки ціна їх не торкнеться, і вузли високого / низького об’єму.", "A compact TPO (market profile) for every session drawn on the price chart, starting at the session open: blocks or letters per period, value area and POC.": "Компактний TPO (ринковий профіль) для кожної сесії прямо на ціновому графіку, від відкриття сесії: блоки або літери за періодами, зона вартості й POC.", "Volume at every price inside each bar: bid x ask, delta, volume, profile, ladder or trades, in one or two columns. Imbalances are found tick by tick, with stacked zones, unfinished auctions, absorption, exhaustion and naked POCs. Shown at any zoom (Show footprint: Always): numbers when they fit, coloured cells when zoomed far out. Or only when zoomed in, like before.": "Об’єм на кожній ціні всередині бару: bid x ask, дельта, об’єм, профіль, драбина або кількість угод, в одній чи двох колонках. Дисбаланси шукаються потиково, зі стековими зонами, незавершеними аукціонами, поглинанням, виснаженням і «голими» POC. Показується за будь-якого масштабу (Показувати футпринт: Завжди): числа, коли поміщаються, кольорові клітинки при сильному віддаленні. Або лише при наближенні, як раніше.", "Bubbles for large trades, with a separate minimum for buys and sells. A big order usually fills as many small prints in a row, so with “Combine consecutive prints” on, prints on one side that follow each other quickly are added up into one trade (5 prints of 10 = one bubble of 50).": "Бульбашки великих угод з окремим мінімумом для купівель і продажів. Великий ордер зазвичай виконується багатьма дрібними принтами поспіль, тому з увімкненим «Об’єднувати послідовні принти» принти однієї сторони, що швидко йдуть один за одним, додаються в одну угоду (5 принтів по 10 = одна бульбашка 50).", "Running sum of buy minus sell volume, in its own panel.": "Накопичена сума об’єму купівель мінус продажів, в окремій панелі.", "Rows of per-bar totals under the chart. Pick any rows: volume, average volume at price (AVAP), delta, cumulative delta, delta change, min/max intrabar delta, delta %, number of trades, bar duration.": "Рядки підсумків для кожного бару під графіком: об’єм, середній об’єм на ціну (AVAP), дельта, кумулятивна дельта, зміна дельти, мін./макс. дельта всередині бару, дельта %, кількість угод, тривалість бару.", "Resting limit orders from the simulated order book, drawn behind the bars: the brighter, the more size waits at that price. You can watch walls hold, get eaten or get pulled. The book is recorded once a second from today’s open.": "Лімітні ордери зі стакану, намальовані за барами: що яскравіше, то більший обсяг чекає на цій ціні. Видно, як стіни тримаються, з’їдаються або знімаються. Стакан записується щосекунди від відкриття сьогоднішньої сесії.", "Average resting size on the ask (up) and the bid (down) across the first N levels during each bar, with bid minus ask as a line. Recorded from today’s open.": "Середній обсяг лімітних ордерів на ask (вгору) і bid (вниз) у перших N рівнях за кожен бар, плюс лінія bid мінус ask. Записується від відкриття сьогоднішньої сесії.", "How fast the tape runs in each bar: trades, volume, ask volume, bid volume or delta per N seconds. Bars above the moving-average filter are highlighted and can paint the price bars.": "Як швидко йде стрічка в кожному барі: угоди, об’єм, об’єм ask, об’єм bid або дельта за N секунд. Бари вище фільтра ковзної середньої підсвічуються і можуть фарбувати цінові бари.", "Colours every bar by its RSI value.": "Фарбує кожен бар за значенням RSI.", "Boxes around fixed time blocks with high, low, size and volume.": "Рамки навколо фіксованих блоків часу з максимумом, мінімумом, розміром і об’ємом.", "Two exponential moving averages.": "Дві експоненційні ковзні середні."});
 Object.assign(UK,{"Settings": "Налаштування", "Search settings": "Пошук налаштувань", "On the chart": "На графіку", "Visible": "Видимий", "Copy to all chart windows": "Скопіювати в усі графіки", "Add a study": "Додати індикатор", "＋ Add a study": "＋ Додати індикатор", "Classic studies: each can be added more than once, on the price chart or in its own panel.": "Класичні індикатори: кожен можна додати кілька разів, на ціновий графік або в окрему панель.", "Studies on this chart": "Індикатори на цьому графіку", "Price & trend": "Ціна й тренд", "Trading": "Торгівля", "Drawings (object tree)": "Малюнки (дерево об’єктів)", "Application": "Застосунок", "Data & instrument": "Дані та інструмент", "Backups": "Резервні копії", "TPO window": "Вікно TPO", "Bar type…": "Тип барів…", "Copy indicators to all windows": "Скопіювати індикатори в усі вікна", "Commission, slippage, order size and how you trade from the DOM and the chart.": "Комісія, прослизання, розмір ордера і як ви торгуєте зі стакану та графіка.", "Open a chart window to change its indicators.": "Відкрийте вікно графіка, щоб змінити його індикатори.", "Show footprint": "Показувати футпринт", "Always, at any zoom (footprint only)": "Завжди, за будь-якого масштабу (лише футпринт)", "Only when zoomed in": "Лише при наближенні", "Filter": "Фільтр", "Combine prints": "Об’єднання принтів", "Buys: show from size (contracts)": "Купівлі: показувати від розміру (контракти)", "Sells: show from size (contracts)": "Продажі: показувати від розміру (контракти)", "Up to size (0 = no limit)": "До розміру (0 = без обмеження)", "Combine consecutive prints on one side into one trade": "Об’єднувати послідовні принти однієї сторони в одну угоду", "… while the next print comes within ms": "… поки наступний принт приходить протягом мс", "… and stays within N ticks of the first price": "… і в межах N тіків від першої ціни", "An opposite print ends the trade": "Принт протилежної сторони завершує угоду", "Show how many prints were combined": "Показувати, скільки принтів об’єднано", "Line over the prices a combined trade swept": "Лінія через ціни, які пройшла об’єднана угода", "Toolbar position: right, left or floating": "Панель: справа, зліва або плаваюча", "Right side": "Справа", "Left side": "Зліва", "Floating": "Плаваюча", "Reopen closed window": "Відкрити закрите вікно", "Save a snapshot now": "Зберегти копію зараз", "Export to a file…": "Експорт у файл…", "Import a file…": "Імпорт із файлу…", "Restore": "Відновити", "Download": "Завантажити", "Click again to restore": "Натисніть ще раз, щоб відновити", "No snapshots yet.": "Копій ще немає.", "Saved": "Збережено", "Why": "Причина", "page opened": "сторінку відкрито", "every 5 minutes": "кожні 5 хвилин", "saved by you": "збережено вами", "before restoring a backup": "перед відновленням копії", "Recently deleted": "Нещодавно видалені", "Restore all": "Відновити всі", "Empty the bin": "Очистити кошик", "Deleted": "Видалено", "Days of history (TPO, profiles)": "Днів історії (TPO, профілі)", "Binance market": "Ринок Binance", "USDⓈ-M futures (perpetual)": "USDⓈ-M ф’ючерси (безстрокові)", "Spot": "Спот", "Binance · crypto, real data (live)": "Binance · крипта, реальні дані (наживо)", "Merge from here to the latest": "Об’єднати звідси до останнього", "Undo the joins in this profile": "Скасувати об’єднання в цьому профілі", "Merge the last…": "Об’єднати останні…", "All profiles (one composite)": "Усі профілі (один композит)", "Labels and info box": "Підписи та інфо-блок", "Price tags on the right edge": "Цінові мітки справа", "Live P&L band from the fill": "Смуга P&L від входу", "Best / worst price reached (MFE / MAE)": "Найкраща / найгірша ціна (MFE / MAE)", "Size by risk to the stop, $ (0 = use contracts)": "Розмір за ризиком до стопу, $ (0 = контракти)", "Three in a row": "Три в ряд", "Four in a row": "Чотири в ряд", "No closed windows to reopen": "Немає закритих вікон", "Window reopened": "Вікно відкрито знову", "Data…": "Дані…"});
 const UK_RX=[
+  [/^Switch to live Binance data \(real (\w+) prices\)$/,'Перейти на живі дані Binance (реальні ціни $1)'],
   [/^Window (\d+)$/,'Вікно $1'],[/^Indicators · Window (\d+) \((.+)\)$/,'Індикатори · Вікно $1 ($2)'],[/^Chart Properties · Window (\d+)$/,'Властивості графіка · Вікно $1'],
   [/^Buy (\d+) (limit|stop) @ (.+)$/,(m,q,k,p)=>`Купити ${q} ${k==='limit'?'лімітом':'стопом'} @ ${p}`],[/^Sell (\d+) (limit|stop) @ (.+)$/,(m,q,k,p)=>`Продати ${q} ${k==='limit'?'лімітом':'стопом'} @ ${p}`],
   [/^Buy (\d+) market$/,'Купити $1 по ринку'],[/^Sell (\d+) market$/,'Продати $1 по ринку'],[/^Alert at (.+)$/,'Алерт на $1'],[/^(.+) settings…$/,'$1: налаштування…'],
@@ -5714,12 +5734,18 @@ $('#rpb').addEventListener('click',openReplayDialog);
 wireReplayBar();
 function updateSource(){
   const b=$('#srcb'), k=FEED.kind;
-  b.textContent=RP.on?(RP.blind?'BLIND':'REPLAY'):k==='csv'?'CSV':FEED.live?'LIVE':'SIM'; b.className='sim'+(RP.on?' rp':k==='csv'?' csv':FEED.live?' ws':'');
-  b.title=`${FEED.name} · ${INS.name} · ${CRYPTO?'24/7, UTC days':ETH?'ETH':'RTH'}`;
+  const fake=CRYPTO&&k==='sim'&&!RP.on;
+  b.textContent=RP.on?(RP.blind?'BLIND':'REPLAY'):k==='csv'?'CSV':FEED.live?'LIVE':fake?'SIM · not real prices':'SIM'; b.className='sim'+(RP.on?' rp':k==='csv'?' csv':FEED.live?' ws':'');
+  b.title=fake?'Simulated market, not real prices. Click to switch to live Binance data':`${FEED.name} · ${INS.name} · ${CRYPTO?'24/7, UTC days':ETH?'ETH':'RTH'}`;
   $('#rpb').setAttribute('aria-pressed',RP.on); $('#rpb').disabled=!!FEED.live;
   $('#pp').hidden=$('#spd').hidden=!!FEED.live; $('#rbar').hidden=!RP.on; syncReplayBar(true);
 }
 setPlaying(G.playing); updateSource();
+$('#srcb').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();
+  if(CRYPTO&&FEED.kind==='sim'&&!RP.on) showMenu([{icon:'live',label:`Switch to live Binance data (real ${INS.bsym} prices)`,act:()=>{DCFG={...DCFG,src:'bnc'}; saveDcfg(); location.reload()}},{sep:1},{icon:'gear',label:'Data…',act:openDataDialog}],r.left,r.bottom+4);
+  else openDataDialog()});
+// remember the last real price, so a simulator started later on this device begins there
+if(FEED.kind==='bnc'){const keep=()=>{try{if(D.last) localStorage.setItem(LPX_KEY,String(D.last*TICK))}catch(e){}}; keep(); setInterval(keep,30000)}
 themeCss(THEME);
 if(!WSP.list[WSP.cur]) WSP.list[WSP.cur]=null; fillWsSel();
 $('#wsSel').addEventListener('change',e=>{const v=e.target.value; fillWsSel(); if(v.startsWith('w:')) switchWorkspace(v.slice(2)); else if(v==='new') openWorkspaceDialog('new'); else if(v==='ren') openWorkspaceDialog('ren');
