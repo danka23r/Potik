@@ -1405,12 +1405,12 @@ const IND=[
    fields:[['color','Line color','color'],['width','Line width','num',.5,5,.1],['glow','Soft glow','bool'],['b1','Band ±1σ','bool'],['b2','Band ±2σ','bool'],['b3','Band ±3σ','bool'],
      ['band','Band color','color'],['bandW','Band width','num',.5,4,.1],['dash','Band style','select',['solid','dashed','dotted']],['bandOp','Band opacity %','range',0,100,1],['fill','Soft fill inside the first band','bool'],['fillOp','Fill opacity %','range',0,40,1]]},
   {id:'prof',name:'Volume Profile',group:'Volume',desc:'Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.',
-   def:{on:true,side:'day',v3:true,vaEdges:true,rowPx:4,smooth:1,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
+   def:{on:true,side:'day',v3:true,vaEdges:true,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
      sessions:false,sessW:70,sessOp:35,sessPoc:true,dev:false,devCol:'#ffffff',
      naked:false,nakedVA:false,nakedDays:5,nakedCol:'#ffd166',nodes:false,nodeLines:false,hvnCol:'#8fd3ff',lvnCol:'#ffd166'},
    tabs:[
     ['Side profile',[['side','Where','select',[['day','Each day, from its start (00:00) to the next day'],['right','Right side of the chart'],['left','Left side of the chart']]],['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
-      ['mode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta'],['ladder','Ladder (bid left, ask right)']]],['widthPct','Width % of chart','range',5,45,1],['rowPx','Row height px (bigger = calmer shape, fewer spikes)','range',2,12,1],['smooth','Smoothing of the shape','select',[[0,'Off (raw rows)'],[1,'Light'],[2,'Strong']]],['color','Color','color'],['poc','POC color','color'],
+      ['mode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta'],['ladder','Ladder (bid left, ask right)']]],['widthPct','Width % of chart','range',5,45,1],['color','Color','color'],['poc','POC color','color'],
       ['vaPct','Value area %','num',40,95,1],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['vaEdges','Daily profile: thin lines on the value area edges (VAH / VAL)','bool'],['vaLines','POC / VAH / VAL lines across the chart','bool'],['vaCol','Line color','color'],
       ['labels','Volume numbers on rows','bool'],['shadow','Black silhouette','bool']]],
     ['Sessions',[['sessions','Profile for every session on the chart','bool'],['sessW','Width % of the session','range',20,100,1],['sessOp','Opacity %','range',10,90,1],['sessPoc','Session POC line','bool'],
@@ -1964,9 +1964,6 @@ function drawChart(P,ctx,w,h){
     if(I.rng.hilo){ctx.fillStyle=hexA(I.rng.extColor,.45); ctx.fillRect(x0,Math.round(yOf(r.hi))-.5,x1-x0,1); ctx.fillRect(x0,Math.round(yOf(r.lo))-.5,x1-x0,1)}
   }
 
-  // light smoothing of a profile's row widths: 0 off, 1 = [1 2 1], 2 = [1 2 3 2 1]
-function profSmooth(v,k){if(!k) return v; const w=k>=2?[1,2,3,2,1]:[1,2,1], h=w.length>>1;
-  return v.map((_,i)=>{let s=0,n=0; for(let j=-h;j<=h;j++){const x=v[i+j]; if(x!=null){s+=x*w[j+h]; n+=w[j+h]}} return Math.max(v[i]*.35,s/n)})}
   // session start / end bar index for any bar (bars of one session are contiguous)
   const sessOf=i=>{const d=dayOf(B[i].t0); let a=i,b=i; while(a>0&&dayOf(B[a-1].t0)===d)a--; while(b<last&&dayOf(B[b+1].t0)===d)b++; return [a,b]};
 
@@ -2003,28 +2000,25 @@ function profSmooth(v,k){if(!k) return v; const w=k>=2?[1,2,3,2,1]:[1,2,1], h=w.
   /* a volume profile for each day (29.10): anchored at the day's first bar (00:00 UTC for crypto, the session open otherwise)
      and spanning to the next day, on every bar type; when the day's start is scrolled off, it sticks to the left edge */
   if(Qp.on&&Qp.side==='day'){
-    const Wmax=plotW*clamp(+Qp.widthPct||20,5,45)/100*1.5, rp=[1,2,3,4,5,6,8,10,12,16,20,24,32,40,50,80,100,160,200,320,400,640].find(r=>r*tp>=clamp(+Qp.rowPx||4,2,12))||1000;
+    const Wmax=plotW*clamp(+Qp.widthPct||20,5,45)/100*1.5, rp=[1,2,3,4,6,8,12,16,24,40,80,160,320].find(r=>r*tp>=2.2)||640;
     for(const [a] of segs){
       const [s0,s1]=sessOf(a), day=D.days[dayOf(B[a].t0)]; if(!day||!day.v) continue;
       const xS=xOf(s0)-bw/2, xE=day===D.day?Math.max(xOf(s1)+bw/2,R):xOf(s1)+bw/2, x0=Math.max(xS,0);
       if(xE<=0||x0>=plotW) continue;
       const W=Math.min((xE-x0)*.92,Wmax); if(W<6) continue;
-      const rows=[];
-      for(let k=Math.floor(day.lo/rp)*rp;k<=day.hi;k+=rp){let b=0,av=0; for(let p=k;p<k+rp;p++){const x=day.prof.get(p); if(x){b+=x[0]; av+=x[1]}} rows.push([k,b,av])}
+      const rows=[]; let mx=1;
+      for(let k=Math.floor(day.lo/rp)*rp;k<=day.hi;k+=rp){let b=0,av=0; for(let p=k;p<k+rp;p++){const x=day.prof.get(p); if(x){b+=x[0]; av+=x[1]}} rows.push([k,b,av]); if(b+av>mx)mx=b+av}
       if(!rows.length) continue;
-      // 29.10 (like Deepcharts): thicker rows that touch, and a light smoothing of the drawn shape so single-row spikes ("sticks") don't stick out.
-      // POC and value area still come from the raw rows; only the widths are smoothed.
-      const sw=profSmooth(rows.map(r=>r[1]+r[2]),+Qp.smooth||0); let mx=1; for(const v of sw) if(v>mx) mx=v;
       /* look (29.10): rows fade from the day's start toward their tips, a hairline gap between rows and rounded tips;
          the value area brighter, outside it quieter, the POC soft white; thin lines on the value area's edges (VAH / VAL) */
-      const va=valueArea(rows.map(r=>r[1]+r[2]),Qp.vaPct), rpx=rp*tp, gp=rpx>=7?1:0, rad=gp?Math.min(2,(rpx-1)/2):0;
+      const va=valueArea(rows.map(r=>r[1]+r[2]),Qp.vaPct), rpx=rp*tp, gp=rpx>=3?1:0, lh=Math.max(1,rpx-gp), rad=Math.min(2,lh/2);
       const grad=(col,a1,a2)=>{const g=ctx.createLinearGradient(x0,0,x0+W,0); g.addColorStop(0,hexA(col,a1)); g.addColorStop(1,hexA(col,a2)); return g};
-      const kv=(+Qp.vaOp||90)/100, ko=(+Qp.outOp||45)/100, gVA=grad(Qp.color,.68*kv,.4*kv), gOut=grad(Qp.color,.4*ko,.17*ko), gPoc=grad(Qp.poc,.85,.45);
+      const kv=(+Qp.vaOp||90)/100, ko=(+Qp.outOp||45)/100, gVA=grad(Qp.color,.62*kv,.26*kv), gOut=grad(Qp.color,.34*ko,.1*ko), gPoc=grad(Qp.poc,.85,.4);
       const bar=(x,y,w,h)=>{if(w<=0) return; if(rad>=1&&w>3){ctx.beginPath(); ctx.roundRect(x,y,w,h,[0,rad,rad,0]); ctx.fill()} else ctx.fillRect(x,y,w,h)};
-      rows.forEach(([k,b,av],i)=>{const y=Math.round(yOf(k+rp-1)-tp/2), lh=Math.max(1,Math.round(yOf(k)+tp/2)-y-gp); if(y>pH||y+lh<0) return;   // whole pixels, no overlap: no seams
-        const inVA=i>=va.dn&&i<=va.up, t=b+av, wT=sw[i]/mx*W;
-        if(Qp.mode==='split'){const op=(inVA?.62*kv:.3*ko), wb=t?b/t*wT:0, wa=wT-wb; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,lh); ctx.fillStyle=hexA(Qp.color,op); bar(x0+wb,y,wa,lh)}
-        else{ctx.fillStyle=i===va.poc?gPoc:inVA?gVA:gOut; bar(x0,y,wT,lh)}});
+      rows.forEach(([k,b,av],i)=>{const y=yOf(k+rp-1)-tp/2+gp/2; if(y>pH||y+lh<0) return;
+        const inVA=i>=va.dn&&i<=va.up;
+        if(Qp.mode==='split'){const op=(inVA?.62*kv:.3*ko), wb=b/mx*W, wa=av/mx*W; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,lh); ctx.fillStyle=hexA(Qp.color,op); bar(x0+wb,y,wa,lh)}
+        else{ctx.fillStyle=i===va.poc?gPoc:inVA?gVA:gOut; bar(x0,y,(b+av)/mx*W,lh)}});
       const yP=k=>Math.round(yOf(k))+.5, pocP=rows[va.poc][0]+(rp-1)/2, xEnd=Math.min(xE,plotW);
       ctx.lineWidth=1; ctx.strokeStyle=hexA(Qp.poc,.42); ctx.beginPath(); ctx.moveTo(x0,yP(pocP)); ctx.lineTo(xEnd,yP(pocP)); ctx.stroke();
       if(Qp.vaLines||Qp.vaEdges){
@@ -2039,7 +2033,7 @@ function profSmooth(v,k){if(!k) return v; const w=k>=2?[1,2,3,2,1]:[1,2,1], h=w.
   // side volume profile (modes, value area, labels, high / low volume nodes)
   let sideVA=null;
   if(Qp.on&&Qp.side!=='day'){
-    const Q=Qp, xR=plotW, LFT=Q.side==='left', X=x=>LFT?plotW-x:x, RX=(x,y,w,h)=>ctx.fillRect(LFT?plotW-x-w:x,y,w,h), SX=(x,y,w,h)=>ctx.strokeRect(LFT?plotW-x-w:x,y,w,h), rp=[1,2,3,4,5,6,8,10,12,16,20,24,32,40,50,80,100,160,200,320,400,640].find(r=>r*tp>=clamp(+Q.rowPx||4,2,12))||1000, rows=[]; let mx=1,md=1,ms=1;
+    const Q=Qp, xR=plotW, LFT=Q.side==='left', X=x=>LFT?plotW-x:x, RX=(x,y,w,h)=>ctx.fillRect(LFT?plotW-x-w:x,y,w,h), SX=(x,y,w,h)=>ctx.strokeRect(LFT?plotW-x-w:x,y,w,h), rp=[1,2,3,4,6,8,12,16,24,40,80].find(r=>r*tp>=2.2)||160, rows=[]; let mx=1,md=1,ms=1;
     const src=profSource(Q,B,i0,i1);
     if(isFinite(src.lo)) for(let k=Math.floor(src.lo/rp)*rp;k<=src.hi;k+=rp){
       let b=0,a=0; for(let p=k;p<k+rp;p++){const x=src.get(p); b+=x[0]; a+=x[1]}
@@ -2053,7 +2047,7 @@ function profSmooth(v,k){if(!k) return v; const w=k>=2?[1,2,3,2,1]:[1,2,1], h=w.
         for(let i=0;i<rows.length;i++){let v=0,c=0; for(let d=-3;d<=3;d++){const r=tv[i+d]; if(r!=null){v+=r;c++}} ctx.lineTo(X(xR-Math.min(PW*1.5,v/c/mx*PW*1.55)),yOf(rows[i][0]+rp/2))}
         ctx.lineTo(X(xR),yOf(rows[rows.length-1][0]+rp)); ctx.closePath(); ctx.fill();
       }
-      const lh=Math.max(1,Math.round(rp*tp)-(rp*tp>=7?1:0)), BID=C.mag, lab=Q.labels&&rp*tp>=9, ssm=profSmooth(tv,+Q.smooth||0), smx=Math.max(1,...ssm);   // rows touch (29.10)
+      const lh=Math.max(1,rp*tp*.5), BID=C.mag, lab=Q.labels&&rp*tp>=9;
       if(lab){ctx.font=`500 ${Math.min(10,rp*tp*.75)}px ${MONO}`; ctx.textBaseline='middle'}
       rows.forEach(([k,b,a],i)=>{
         const y=yOf(k+(rp-1)/2); if(y<-4||y>pH+4) return;
@@ -2061,7 +2055,7 @@ function profSmooth(v,k){if(!k) return v; const w=k>=2?[1,2,3,2,1]:[1,2,1], h=w.
         if(Q.mode==='split'){const wb=b/mx*PW, wa=a/mx*PW; ctx.fillStyle=hexA(BID,op); RX(xR-wb-wa,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); RX(xR-wa,y-lh/2,wa,lh)}
         else if(Q.mode==='delta'){const wv=Math.abs(a-b)/md*PW; ctx.fillStyle=hexA(a>=b?Q.color:BID,op); RX(xR-wv,y-lh/2,wv,lh)}
         else if(Q.mode==='ladder'){const m=xR-PW/2, wb=b/ms*PW/2, wa=a/ms*PW/2; ctx.fillStyle=hexA(BID,op); RX(m-wb,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); RX(m,y-lh/2,wa,lh)}
-        else{const wv=ssm[i]/smx*PW; ctx.fillStyle=isP?Q.poc:hexA(Q.color,op); RX(xR-wv,y-lh/2,wv,lh)}
+        else{const wv=(a+b)/mx*PW; ctx.fillStyle=isP?Q.poc:hexA(Q.color,op); RX(xR-wv,y-lh/2,wv,lh)}
         if(isP&&Q.mode!=='volume'){ctx.strokeStyle=Q.poc; ctx.lineWidth=1; SX(xR-PW+.5,Math.round(y-lh/2)-.5,PW-1,Math.round(lh)+1)}
         if(lab){const v=Q.mode==='delta'?a-b:a+b; ctx.fillStyle=C.text; ctx.textAlign=LFT?'left':'right'; ctx.fillText((Q.mode==='delta'&&v>0?'+':'')+fK(v),X(xR-3),y+.5)}
       });
