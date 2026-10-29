@@ -624,6 +624,9 @@ let READY=false;
 const D={m1:[],tk:[],recent:[],rh:0,days:[],day:null,last:0,lastSide:1,tkOn:false};
 /* tape of single prints >= BIG_MIN contracts, same threshold for history and live (typed arrays: ~1M prints) */
 const BIG_MIN=10;
+// the exact last trade price as the exchange sent it (BTC 81628.4), shown with cents; bars still use the tick grid
+let RAWPX=null;
+const lastStr=()=>CRYPTO?(RAWPX!=null&&Math.round(RAWPX/TICK)===D.last?RAWPX:D.last*TICK).toFixed(2):fP(D.last);
 const BIG={n:0,cap:1<<16,t:new Float64Array(1<<16),px:new Int32Array(1<<16),sz:new Int32Array(1<<16),sd:new Int8Array(1<<16),
   push(t,px,sz,sd){if(this.n===this.cap)this.grow(); const i=this.n++; this.t[i]=t; this.px[i]=px; this.sz[i]=sz; this.sd[i]=sd},
   grow(){const c=this.cap*2; for(const [k,T] of [['t',Float64Array],['px',Int32Array],['sz',Int32Array],['sd',Int8Array]]){const a=new T(c); a.set(this[k]); this[k]=a} this.cap=c},
@@ -1405,11 +1408,11 @@ const IND=[
    fields:[['color','Line color','color'],['width','Line width','num',.5,5,.1],['b1','Band ±1σ','bool'],['b2','Band ±2σ','bool'],['b3','Band ±3σ','bool'],
      ['band','Band color','color'],['bandW','Band width','num',.5,4,.1],['dash','Band style','select',['solid','dashed','dotted']],['bandOp','Band opacity %','range',0,100,1],['fill','Fill between bands','bool'],['fillOp','Fill opacity %','range',0,40,1]]},
   {id:'prof',name:'Volume Profile',group:'Volume',desc:'Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.',
-   def:{on:true,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
+   def:{on:true,side:'right',period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
      sessions:false,sessW:70,sessOp:35,sessPoc:true,dev:false,devCol:'#ffffff',
      naked:false,nakedVA:false,nakedDays:5,nakedCol:'#ffd166',nodes:false,nodeLines:false,hvnCol:'#8fd3ff',lvnCol:'#ffd166'},
    tabs:[
-    ['Side profile',[['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
+    ['Side profile',[['side','Side of the chart','select',[['right','Right'],['left','Left']]],['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
       ['mode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta'],['ladder','Ladder (bid left, ask right)']]],['widthPct','Width % of chart','range',5,45,1],['color','Color','color'],['poc','POC color','color'],
       ['vaPct','Value area %','num',40,95,1],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['vaLines','POC / VAH / VAL lines across the chart','bool'],['vaCol','Line color','color'],
       ['labels','Volume numbers on rows','bool'],['shadow','Black silhouette','bool']]],
@@ -1454,7 +1457,7 @@ const IND=[
     ['Filters',[['minTrade','Only prints ≥ size (0 = all; works from 10)','num',0,1000,1]]],
     ['Templates',fpTemplates]]},
   {id:'big',name:'Big Trades',group:'Order Flow',desc:'Bubbles for large trades, with a separate minimum for buys and sells. A big order usually fills as many small prints in a row, so with “Combine consecutive prints” on, prints on one side that follow each other quickly are added up into one trade (5 prints of 10 = one bubble of 50).',
-   def:{on:true,minBuy:30,minSell:30,max:0,scale:60,opacity:50,buy:'#f7dcf3',sell:'#e23cf0',glow:true,labels:true,count:true,sweep:true,agg:true,aggMs:300,aggTicks:4,aggOpp:true},
+   def:{on:true,minBuy:30,minSell:30,max:0,scale:60,opacity:55,buy:'#f7dcf3',sell:'#e23cf0',glow:false,labels:true,count:false,sweep:false,v2:true,agg:true,aggMs:300,aggTicks:4,aggOpp:true},
    tabs:[
     ['Filter',[['minBuy','Buys: show from size (contracts)','num',1,100000,1],['minSell','Sells: show from size (contracts)','num',1,100000,1],['max','Up to size (0 = no limit)','num',0,100000,1]]],
     ['Combine prints',[['agg','Combine consecutive prints on one side into one trade','bool'],['aggMs','… while the next print comes within ms','num',10,5000,10],['aggTicks','… and stays within N ticks of the first price','num',0,100,1],['aggOpp','An opposite print ends the trade','bool'],
@@ -1491,7 +1494,9 @@ const IND_BY=Object.fromEntries(IND.map(x=>[x.id,x]));
 const GROUPS=['Volume','Order Flow','Price','Trend','My Indicators'];
 const DEF_PROPS={bg:'#000000',up:'#f7dcf3',down:'#e23cf0',legend:true,style:'candle'};
 const PROP_FIELDS=[['style','Bar style','select',[['candle','Candles'],['hollow','Hollow candles'],['ohlc','OHLC bars'],['ha','Heikin Ashi'],['line','Line'],['area','Area'],['none','No bars (footprint only)']]],['bg','Background','color'],['up','Up bar color (RSI off)','color'],['down','Down bar color (RSI off)','color'],['legend','Show legend','bool']];
-function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})}; return o}
+function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})};
+  if(src&&src.big&&!src.big.v2) Object.assign(o.big,{count:false,sweep:false,glow:false,v2:true});   // 29.10: compact big trades
+  return o}
 /* ---------- classic studies: any number of instances per window, on the price or in their own panel ----------
    A study: {id, name, group, place:'price'|'panel', def, fields, label(Q), calc(B,Q,ctx)} where calc returns
    {lines:[{v,color,width,dash}], hist:[{v,col(i)}], fills:[{a,b,color,op}], levels:[{v,color}], candles:{o,h,l,c}, hlines:[{p,a,b,color,label,dash}], range:[lo,hi]}.
@@ -1823,7 +1828,7 @@ function legendHead(ctx,S,c){
   ctx.textAlign='left'; ctx.textBaseline='top'; let lx=8;
   ctx.font=`600 11px ${UI}`; ctx.fillStyle='#fff'; const head=`${SYM} - ${btLabel(S.bt)}`; ctx.fillText(head,lx,8); lx+=ctx.measureText(head).width+12;
   ctx.font=`10.5px ${MONO}`;
-  for(const [k,v] of [['O',fP(c.o)],['H',fP(c.h)],['L',fP(c.l)],['C',fP(c.c)],['V',fK(c.vol)],['D',(c.delta>0?'+':'')+fK(c.delta)]]){
+  for(const [k,v] of [['O',fP(c.o)],['H',fP(c.h)],['L',fP(c.l)],['C',c.c===D.last&&c.t0>=sim.t-86400?lastStr():fP(c.c)],['V',fK(c.vol)],['D',(c.delta>0?'+':'')+fK(c.delta)]]){
     ctx.fillStyle=C.muted; ctx.fillText(k,lx,9); lx+=ctx.measureText(k).width+4;
     ctx.fillStyle=k==='D'?(c.delta>=0?C.pink:C.mag):C.text; ctx.fillText(v,lx,9); lx+=ctx.measureText(v).width+10;
   }
@@ -1884,7 +1889,7 @@ function drawChart(P,ctx,w,h){
   const sotH=I.sot.on?Math.round(clamp(h*I.sot.height/100,40,220)):0, powH=I.dpow.on?Math.round(clamp(h*I.dpow.height/100,40,220)):0;
   const stPan=(S.studies||[]).filter(Q=>Q.on&&STUDY_BY[Q.id]&&STUDY_BY[Q.id].place==='panel').map(Q=>({Q,H:Math.round(clamp(h*(+Q.height||14)/100,40,320))}));
   const timeTop=h-TA, statTop=timeTop-stH, cvdTop=statTop-cvdH, sotTop=cvdTop-sotH, powTop=sotTop-powH, stTop0=powTop-stPan.reduce((a,x)=>a+x.H,0), pH=Math.max(60,stTop0);
-  const PW=I.prof.on?Math.round(clamp(plotW*I.prof.widthPct/100,30,420)):0, R=plotW-PW-10, bw=V.barW;
+  const PW=I.prof.on?Math.round(clamp(plotW*I.prof.widthPct/100,30,420)):0, R=plotW-(I.prof.side==='left'?0:PW)-10, bw=V.barW;
   if(!isFinite(V.scroll))V.scroll=0; if(!isFinite(V.barW))V.barW=5;
   V.scroll=clamp(V.scroll,-Math.max(0,last-1),(R*.5)/bw);
   const s=V.scroll, xOf=i=>R-(last-i+s)*bw-bw/2;
@@ -1897,6 +1902,7 @@ function drawChart(P,ctx,w,h){
   let lo=Infinity,hi=-Infinity;
   for(let i=i0;i<=i1;i++){const c=B[i]; if(c.l<lo)lo=c.l; if(c.h>hi)hi=c.h}
   if(V.center==null) V.center=D.last;
+  if(V.autoY) V.userY=false;   // userY: the user moved or zoomed the price scale by hand, so nothing pulls the view back
   if(V.autoY&&isFinite(lo)){
     const span=Math.max(hi-lo,12), padT=span*.07+1, vT=V.center+pH/2/V.tickPx, vB=V.center-pH/2/V.tickPx;
     if(hi+padT>vT||lo-padT<vB||(vT-vB)>(span+2*padT)*1.9) V.fit=true;
@@ -1905,9 +1911,9 @@ function drawChart(P,ctx,w,h){
       V.tickPx+=(tt-V.tickPx)*.3; V.center+=(tc-V.center)*.3; P.dirty=true;
       if(Math.abs(tt-V.tickPx)<.004&&Math.abs(tc-V.center)<.05) V.fit=false;
     }
-  }else if(isFinite(lo)&&(lo>V.center+pH/2/V.tickPx||hi<V.center-pH/2/V.tickPx)){
+  }else if(!V.userY&&!P.drag&&isFinite(lo)&&(lo>V.center+pH/2/V.tickPx||hi<V.center-pH/2/V.tickPx)){
     V.center+=((lo+hi)/2-V.center)*.3; P.dirty=true;
-  }else if(!P.drag&&V.scroll>=-.5){
+  }else if(!V.userY&&!P.drag&&V.scroll>=-.5){
     const yl=pH/2-(D.last-V.center)*V.tickPx;
     if(yl<pH*.1||yl>pH*.86){V.center+=(D.last-V.center)*.12;P.dirty=true}
   }
@@ -1979,7 +1985,7 @@ function drawChart(P,ctx,w,h){
   // side volume profile (modes, value area, labels, high / low volume nodes)
   let sideVA=null;
   if(Qp.on){
-    const Q=Qp, xR=plotW, rp=[1,2,3,4,6,8,12,16,24,40,80].find(r=>r*tp>=2.2)||160, rows=[]; let mx=1,md=1,ms=1;
+    const Q=Qp, xR=plotW, LFT=Q.side==='left', X=x=>LFT?plotW-x:x, RX=(x,y,w,h)=>ctx.fillRect(LFT?plotW-x-w:x,y,w,h), SX=(x,y,w,h)=>ctx.strokeRect(LFT?plotW-x-w:x,y,w,h), rp=[1,2,3,4,6,8,12,16,24,40,80].find(r=>r*tp>=2.2)||160, rows=[]; let mx=1,md=1,ms=1;
     const src=profSource(Q,B,i0,i1);
     if(isFinite(src.lo)) for(let k=Math.floor(src.lo/rp)*rp;k<=src.hi;k+=rp){
       let b=0,a=0; for(let p=k;p<k+rp;p++){const x=src.get(p); b+=x[0]; a+=x[1]}
@@ -1989,21 +1995,21 @@ function drawChart(P,ctx,w,h){
       const tv=rows.map(r=>r[1]+r[2]), va=valueArea(tv,Q.vaPct);
       sideVA={poc:rows[va.poc][0]+(rp-1)/2,vah:rows[va.up][0]+rp-1,val:rows[va.dn][0]};
       if(Q.shadow){
-        ctx.fillStyle=pr.bg; ctx.beginPath(); ctx.moveTo(xR,yOf(rows[0][0])+tp/2);
-        for(let i=0;i<rows.length;i++){let v=0,c=0; for(let d=-3;d<=3;d++){const r=tv[i+d]; if(r!=null){v+=r;c++}} ctx.lineTo(xR-Math.min(PW*1.5,v/c/mx*PW*1.55),yOf(rows[i][0]+rp/2))}
-        ctx.lineTo(xR,yOf(rows[rows.length-1][0]+rp)); ctx.closePath(); ctx.fill();
+        ctx.fillStyle=pr.bg; ctx.beginPath(); ctx.moveTo(X(xR),yOf(rows[0][0])+tp/2);
+        for(let i=0;i<rows.length;i++){let v=0,c=0; for(let d=-3;d<=3;d++){const r=tv[i+d]; if(r!=null){v+=r;c++}} ctx.lineTo(X(xR-Math.min(PW*1.5,v/c/mx*PW*1.55)),yOf(rows[i][0]+rp/2))}
+        ctx.lineTo(X(xR),yOf(rows[rows.length-1][0]+rp)); ctx.closePath(); ctx.fill();
       }
       const lh=Math.max(1,rp*tp*.5), BID=C.mag, lab=Q.labels&&rp*tp>=9;
       if(lab){ctx.font=`500 ${Math.min(10,rp*tp*.75)}px ${MONO}`; ctx.textBaseline='middle'}
       rows.forEach(([k,b,a],i)=>{
         const y=yOf(k+(rp-1)/2); if(y<-4||y>pH+4) return;
         const inVA=i>=va.dn&&i<=va.up, op=(inVA?Q.vaOp:Q.outOp)/100, isP=i===va.poc;
-        if(Q.mode==='split'){const wb=b/mx*PW, wa=a/mx*PW; ctx.fillStyle=hexA(BID,op); ctx.fillRect(xR-wb-wa,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); ctx.fillRect(xR-wa,y-lh/2,wa,lh)}
-        else if(Q.mode==='delta'){const wv=Math.abs(a-b)/md*PW; ctx.fillStyle=hexA(a>=b?Q.color:BID,op); ctx.fillRect(xR-wv,y-lh/2,wv,lh)}
-        else if(Q.mode==='ladder'){const m=xR-PW/2, wb=b/ms*PW/2, wa=a/ms*PW/2; ctx.fillStyle=hexA(BID,op); ctx.fillRect(m-wb,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); ctx.fillRect(m,y-lh/2,wa,lh)}
-        else{const wv=(a+b)/mx*PW; ctx.fillStyle=isP?Q.poc:hexA(Q.color,op); ctx.fillRect(xR-wv,y-lh/2,wv,lh)}
-        if(isP&&Q.mode!=='volume'){ctx.strokeStyle=Q.poc; ctx.lineWidth=1; ctx.strokeRect(xR-PW+.5,Math.round(y-lh/2)-.5,PW-1,Math.round(lh)+1)}
-        if(lab){const v=Q.mode==='delta'?a-b:a+b; ctx.fillStyle=C.text; ctx.textAlign='right'; ctx.fillText((Q.mode==='delta'&&v>0?'+':'')+fK(v),xR-3,y+.5)}
+        if(Q.mode==='split'){const wb=b/mx*PW, wa=a/mx*PW; ctx.fillStyle=hexA(BID,op); RX(xR-wb-wa,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); RX(xR-wa,y-lh/2,wa,lh)}
+        else if(Q.mode==='delta'){const wv=Math.abs(a-b)/md*PW; ctx.fillStyle=hexA(a>=b?Q.color:BID,op); RX(xR-wv,y-lh/2,wv,lh)}
+        else if(Q.mode==='ladder'){const m=xR-PW/2, wb=b/ms*PW/2, wa=a/ms*PW/2; ctx.fillStyle=hexA(BID,op); RX(m-wb,y-lh/2,wb,lh); ctx.fillStyle=hexA(Q.color,op); RX(m,y-lh/2,wa,lh)}
+        else{const wv=(a+b)/mx*PW; ctx.fillStyle=isP?Q.poc:hexA(Q.color,op); RX(xR-wv,y-lh/2,wv,lh)}
+        if(isP&&Q.mode!=='volume'){ctx.strokeStyle=Q.poc; ctx.lineWidth=1; SX(xR-PW+.5,Math.round(y-lh/2)-.5,PW-1,Math.round(lh)+1)}
+        if(lab){const v=Q.mode==='delta'?a-b:a+b; ctx.fillStyle=C.text; ctx.textAlign=LFT?'left':'right'; ctx.fillText((Q.mode==='delta'&&v>0?'+':'')+fK(v),X(xR-3),y+.5)}
       });
       if(Q.nodes&&rows.length>8){
         const n=tv.length, sm=tv.map((_,i)=>{let v=0,c=0; for(let d=-2;d<=2;d++){if(tv[i+d]!=null){v+=tv[i+d];c++}} return v/c}), smx=Math.max(...sm);
@@ -2016,13 +2022,13 @@ function drawChart(P,ctx,w,h){
         }
         for(const [i,kind] of nodes.filter((nd,j,arr)=>!j||arr[j-1][0]!==nd[0]-1||arr[j-1][1]!==nd[1])){
           const y=Math.round(yOf(rows[i][0]+(rp-1)/2))+.5, cl=kind>0?Q.hvnCol:Q.lvnCol, xm=xR-PW-3;
-          ctx.fillStyle=cl; ctx.beginPath(); ctx.moveTo(xm,y-4); ctx.lineTo(xm+5,y); ctx.lineTo(xm,y+4); ctx.fill();
-          if(Q.nodeLines){ctx.strokeStyle=hexA(cl,.45); ctx.lineWidth=1; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(xm-2,y); ctx.stroke(); ctx.setLineDash([])}
+          ctx.fillStyle=cl; ctx.beginPath(); ctx.moveTo(X(xm),y-4); ctx.lineTo(X(xm+5),y); ctx.lineTo(X(xm),y+4); ctx.fill();
+          if(Q.nodeLines){ctx.strokeStyle=hexA(cl,.45); ctx.lineWidth=1; ctx.setLineDash([2,4]); ctx.beginPath(); ctx.moveTo(X(0),y); ctx.lineTo(X(xm-2),y); ctx.stroke(); ctx.setLineDash([])}
         }
       }
       if(Q.vaLines){
         ctx.lineWidth=1;
-        for(const [p,dash,al] of [[sideVA.poc,[],.8],[sideVA.vah,[5,4],.55],[sideVA.val,[5,4],.55]]){const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(Q.vaCol,al); ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(xR-PW,y); ctx.stroke()}
+        for(const [p,dash,al] of [[sideVA.poc,[],.8],[sideVA.vah,[5,4],.55],[sideVA.val,[5,4],.55]]){const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(Q.vaCol,al); ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(X(0),y); ctx.lineTo(X(xR-PW),y); ctx.stroke()}
         ctx.setLineDash([]);
       }
     }
@@ -2125,38 +2131,53 @@ function drawChart(P,ctx,w,h){
 
   drawPriceStudies(P,ctx,B,i0,i1,last,xOf,yOf,bw,plotW,pH,tp,segs);
 
-  // big trades: single prints (BIG) or consecutive prints combined (BAG + the runs still open)
+  // big trades: single prints (BIG) or consecutive prints combined (BAG + the runs still open). Compact (29.10): one column at the
+  // bar centre; trades of one bar and side that would overlap merge into one bubble; size labels only where they fit.
   if(I.big.on&&bw>=2){
-    const Q=I.big, op=Q.opacity/100, sc=Q.scale/100, cmb=Q.agg&&BIGAGG.agg, S_=cmb?BAG:BIG;
+    const Q=I.big, op=Q.opacity/100, sc=Q.scale/60, cmb=Q.agg&&BIGAGG.agg, S_=cmb?BAG:BIG, ev=V.g.ev;
     const tS=B[i0].t0, tE=i1<last?B[i1+1].t0:Infinity, mn=sd=>sd>0?+Q.minBuy||1:+Q.minSell||1, ok=(z,sd)=>z>=mn(sd)&&!(Q.max>0&&z>Q.max);
-    // collect visible trades, keep the 500 largest (like MotiveWave), draw larger ones on top; flat fill when crowded
-    let bi=i0; const vis=[];
+    // event bars (ticks, volume): in Binance history the bars inside a minute come from the candle, not from real trades, so a
+    // trade goes to the bar of its minute that traded its price (the bar of its time when that one does)
+    const barFor=(b0,tt,px)=>{const c=B[b0]; if(!ev||px>=c.l&&px<=c.h) return b0; const m0=Math.floor(tt/60)*60, m1=m0+60; let best=b0, bd=Infinity;
+      for(let j=b0;j>=i0&&j>=b0-60;j--){const x=B[j]; if(x.t0<m0-1&&j<b0) break; if(px>=x.l&&px<=x.h){const d=b0-j; if(d<bd){bd=d; best=j} break}}
+      for(let j=b0+1;j<=i1&&j<=b0+60;j++){const x=B[j]; if(x.t0>=m1) break; if(px>=x.l&&px<=x.h){if(j-b0<bd) best=j; break}}
+      return best};
+    let bi=i0; const raw=[];
     for(let j=S_.lower(tS);j<S_.n;j++){
       const tt=S_.t[j]; if(tt>=tE) break; if(!ok(S_.sz[j],S_.sd[j])) continue;
       while(bi<last&&B[bi+1].t0<=tt) bi++;
-      vis.push({t:tt,px:S_.px[j],sz:S_.sz[j],sd:S_.sd[j],k:cmb?S_.k[j]:1,lo:cmb?S_.lo[j]:0,hi:cmb?S_.hi[j]:0,bi});
+      raw.push({px:S_.px[j],sz:S_.sz[j],sd:S_.sd[j],k:cmb?S_.k[j]:1,lo:cmb?S_.lo[j]:S_.px[j],hi:cmb?S_.hi[j]:S_.px[j],bi:barFor(bi,tt,S_.px[j])});
     }
-    if(cmb) for(const a of AG) if(a&&ok(a.sz,a.sd)&&a.t0>=tS&&a.t0<tE){let b=bi; while(b<last&&B[b+1].t0<=a.t0) b++; vis.push({t:a.t0,px:Math.round(a.pv/a.sz),sz:a.sz,sd:a.sd,k:a.k,lo:a.lo,hi:a.hi,bi:b,open:true})}
-    if(vis.length>500){vis.sort((p,q)=>q.sz-p.sz); vis.length=500}
+    if(cmb) for(const a of AG) if(a&&ok(a.sz,a.sd)&&a.t0>=tS&&a.t0<tE){let b=bi; while(b<last&&B[b+1].t0<=a.t0) b++; const px=Math.round(a.pv/a.sz); raw.push({px,sz:a.sz,sd:a.sd,k:a.k,lo:a.lo,hi:a.hi,bi:barFor(b,a.t0,px)})}
+    // merge: same bar, same side, closer than ~1.4 bubble radii on screen
+    const rMax=clamp(bw*.48,3.5,15)*sc, rMin=Math.min(2.5,rMax*.5), gap=Math.max(1,Math.round(rMax*1.4/Math.max(tp,.01)));
+    const grp=new Map();
+    for(const v of raw){const key=v.bi*4+(v.sd>0?1:0)+Math.floor(v.px/gap)*1e7*4; const g=grp.get(key);
+      if(g){g.pv+=v.px*v.sz; g.sz+=v.sz; g.k+=v.k; g.n++; if(v.lo<g.lo)g.lo=v.lo; if(v.hi>g.hi)g.hi=v.hi}
+      else grp.set(key,{pv:v.px*v.sz,sz:v.sz,sd:v.sd,k:v.k,n:1,lo:v.lo,hi:v.hi,bi:v.bi})}
+    let vis=[...grp.values()]; for(const g of vis) g.px=g.pv/g.sz;
+    if(vis.length>300){vis.sort((p,q)=>q.sz-p.sz); vis.length=300}
     vis.sort((p,q)=>p.sz-q.sz);
-    const fancy=vis.length<=200;
+    const mx=vis.length?vis[vis.length-1].sz:1, fancy=vis.length<=150, labs=[];
     for(const v of vis){
-      const bj=v.bi, t1=bj<last?B[bj+1].t0:Math.max(sim.t,B[bj].t0+1), fr=(v.t-B[bj].t0)/(t1-B[bj].t0);
-      const x=xOf(bj)+(clamp(fr,0,1)-.5)*bw*.9, y=yOf(v.px), r=clamp(2+Math.sqrt(v.sz)*.95,3,17)*sc*clamp(bw/5,.4,1);
+      const x=xOf(v.bi), y=yOf(v.px), r=rMin+(rMax-rMin)*Math.sqrt(v.sz/mx);
+      if(y<-r||y>pH+r) continue;
       const col=v.sd>0?Q.buy:Q.sell;
-      if(Q.sweep&&v.k>1&&v.hi>v.lo){ctx.fillStyle=hexA(col,Math.min(1,op+.2)); ctx.fillRect(Math.round(x)-.5,yOf(v.hi),1.5,Math.max(1,(v.hi-v.lo)*tp)); ctx.fillRect(Math.round(x)-3,Math.round(yOf(v.hi)),6,1); ctx.fillRect(Math.round(x)-3,Math.round(yOf(v.lo)),6,1)}
-      if(fancy){
-        const g=ctx.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r);
-        g.addColorStop(0,hexA(mixHex(col,'#ffffff',.5),Math.min(1,op+.2))); g.addColorStop(1,hexA(col,op*.75));
-        if(Q.glow&&bw>=4){ctx.shadowColor=hexA(col,op*.8); ctx.shadowBlur=r*.6}
-        ctx.fillStyle=g;
-      }else ctx.fillStyle=hexA(col,op*.8);
+      if(Q.sweep&&v.hi>v.lo){ctx.fillStyle=hexA(col,Math.min(1,op+.2)); ctx.fillRect(Math.round(x)-.5,yOf(v.hi),1,Math.max(1,(v.hi-v.lo)*tp))}
+      if(fancy){const g=ctx.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r); g.addColorStop(0,hexA(mixHex(col,'#ffffff',.45),Math.min(1,op+.2))); g.addColorStop(1,hexA(col,op*.8)); ctx.fillStyle=g}
+      else ctx.fillStyle=hexA(col,op*.85);
+      if(Q.glow&&fancy&&bw>=4){ctx.shadowColor=hexA(col,op*.7); ctx.shadowBlur=r*.5}
       ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill(); ctx.shadowBlur=0; V.g.bigs.push([x,y,r]);
-      if(v.k>1&&fancy){ctx.strokeStyle=hexA(col,.9); ctx.lineWidth=1; ctx.setLineDash(v.open?[2,2]:[]); ctx.beginPath(); ctx.arc(x,y,r+1.5,0,6.2832); ctx.stroke(); ctx.setLineDash([])}
-      if(Q.labels&&fp&&r>=8){ctx.font=`600 ${clamp(r*.62,8,12)}px ${MONO}`; ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(fK(v.sz),x,y+.5);
-        if(Q.count&&v.k>1&&r>=10&&bw>=60){ctx.font=`500 9px ${MONO}`; ctx.fillStyle=col; ctx.textBaseline='top'; ctx.fillText(v.k+' prints',x,y+r+3)}}
+      if(Q.labels&&r>=8) labs.push({x,y,r,v});
     }
+    // size labels on the biggest bubbles first, never on top of each other
+    ctx.textAlign='center'; ctx.textBaseline='middle'; const used=[];
+    for(const L_ of labs.reverse()){const {x,y,r,v}=L_, t=fK(v.sz), fs=clamp(r*.62,8,11); ctx.font=`600 ${fs}px ${MONO}`; const w=ctx.measureText(t).width;
+      if(w>r*2-2) continue; const bx=[x-w/2-1,y-fs/2-1,x+w/2+1,y+fs/2+1]; if(used.some(u=>bx[0]<u[2]&&bx[2]>u[0]&&bx[1]<u[3]&&bx[3]>u[1])) continue; used.push(bx);
+      ctx.fillStyle='#000'; ctx.fillText(t,x,y+.5);
+      if(Q.count&&v.k>1&&r>=11&&bw>=60){ctx.font=`500 9px ${MONO}`; ctx.fillStyle=v.sd>0?Q.buy:Q.sell; ctx.textBaseline='top'; ctx.fillText(v.k+' prints',x,y+r+2); ctx.textBaseline='middle'}}
   }
+
 
   // range labels
   if(I.rng.on&&I.rng.labels){
@@ -2281,7 +2302,7 @@ function drawChart(P,ctx,w,h){
   if(DOMCFG.noteGuides) for(const k in NOTES) tag(ctx,plotW,AX,yOf(+k),0,pH,hexA(DOMCFG.noteCol,.35),'#fff',fP(+k));
   for(const o of BRK.orders){const px=o._drag??o.px; tag(ctx,plotW,AX,yOf(px),0,pH,ordCol(o),'#0b0710',fP(px))}
   if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,posPnl()>=0?'#2ee6a6':'#ff5c7a','#0b0710',fP(BRK.avg));
-  tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',fP(D.last));
+  tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',lastStr());
   if(!G.hideDraw) for(const d of DR){
     const st=d.st||{}; if(!visibleIn(d,P)) continue;
     if((d.type==='hline'||d.type==='hray')&&st.label!==false){const pp=d.type==='hline'?d.p:d.a.p; tag(ctx,plotW,AX,yOf(pp),0,pH,isSel(d)?'#e9e3ef':hexA(st.color||'#b9a6e6',.35),isSel(d)?'#000':'#fff',fP(pp))}
@@ -2319,7 +2340,7 @@ function drawChart(P,ctx,w,h){
     V.g.lg={w:legendHead(ctx,S,c)};
     ctx.font=`10.5px ${UI}`; let ly=26;
     const names={vwap:()=>`VWAP (${CRYPTO?'UTC day':ETH?"ETH":"RTH"})${[1,2,3].filter(k=>I.vwap['b'+k]).map(k=>' ±'+k+'σ').join('')}`,rsi:()=>`RSI Bars (${I.rsi.period})`,
-      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+clock(FEED.bf.loT):' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
+      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+clock(FEED.bf.loT):FEED.bf.st==='waiting'?' · Binance busy, retrying':' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
       fp:()=>`Footprint · ${FP_MODE_NAME[F.mode1]||'Bid x Ask'}${F.mode2&&F.mode2!=='none'?' + '+FP_MODE_NAME[F.mode2]:''}${fp?'':fpLod?' (cells, zoom in for numbers)':' (zoom in)'}${F.naked||F.stackZone||F.unfin?' + level lines':''}`,
       cvd:()=>'CVD',stats:()=>`Bar Statistics (${stRows.map(r=>r[1]).join(' ')||'no rows'})`,
       heat:()=>'Liquidity Heatmap (book from today’s open)',dpow:()=>`DOM Power (${I.dpow.levels} levels)`,sot:()=>`Speed of Tape (${SOT_NAME[I.sot.stat]} / ${I.sot.interval}s)`};
@@ -2836,7 +2857,7 @@ function sotCalc(B,i0,i1,last,Q,secPB){
    split a profile at any period and merge neighbours (stored as times, so they survive a change of letter period). */
 const TPO_DEF=()=>({period:30,tf:'day',style:'letters',gradient:true,letterCol:'#c4b2ee',curCol:'#f7dcf3',rowTotals:false,ocMarks:true,mid:false,hilo:false,stats:true,
   vaOn:true,vaBy:'time',vaPct:70,vaFill:true,vaLines:false,vaCol:'#7b23b4',pocOn:true,pocCol:'#e23cf0',pocLine:'profile',nakedVA:false,
-  ibOn:true,ibMin:60,ibCol:'#e23cf0',ext50:false,ext100:true,ext150:false,ext200:true,orOn:true,orMin:5,orCol:'#ffd166',
+  ibOn:true,ibMin:60,ibCol:'#e23cf0',ext50:false,ext100:false,ext150:false,ext200:false,v2:true,orOn:true,orMin:5,orCol:'#ffd166',
   singles:true,singleCol:'#ffd166',tails:true,poor:true,
   vp:true,vpSide:'right',vpW:56,vpSplit:false,vpCol:'#c4b2ee',
   s1on:false,s1a:'09:30',s1b:'10:30',s1c:'#8fd3ff',s2on:false,s2a:'10:30',s2b:'14:00',s2c:'#c4b2ee',s3on:false,s3a:'14:00',s3b:'16:00',s3c:'#ffd166'});
@@ -2906,132 +2927,152 @@ function tpoStats(pf,rt,cfg){
 }
 const hm=s=>{const [h,m]=String(s||'0:0').split(':'); return (+h)*60+(+m)};
 function drawTPO(P,ctx,w,h){
+  /* TPO window (reworked 29.10): a real price scale like the chart. Drag pans both ways, the wheel widens / narrows the columns,
+     Ctrl + wheel or dragging the price axis zooms the prices, double-click fits everything again. Rows group ticks
+     automatically so letters stay readable at any zoom. */
   const V=P.V, S=P.S, cfg=S.tpo, pr=S.props, AX=66, TA=22, stH=cfg.stats?44:0, plotW=w-AX, pH=h-TA-stH;
-  ctx.fillStyle=pr.bg; ctx.fillRect(0,0,w,h); V.g=null; V.tl=[];
+  ctx.fillStyle=pr.bg; ctx.fillRect(0,0,w,h); V.g=null; V.tl=[]; V.tg={plotW,pH,AX};
   const profs=tpoProfiles(cfg,S.tpoCuts); if(!profs.length) return;
-  const colW=clamp(V.tcol||9,4,16), cw=colW*.72, gap=Math.max(16,colW*2), ML=cfg.rowTotals?34:18, vpw=cfg.vp?+cfg.vpW+6:0;
+  const colW=clamp(V.tcol||10,4,18), cw=colW*.8, gap=Math.max(22,colW*2.2), ML=cfg.rowTotals?36:20, vpw=cfg.vp?+cfg.vpW+8:0;
   const Lw=pf=>Math.max(6,pf.periods.length)*cw, blockW=pf=>ML+Lw(pf)+vpw+gap;
   let total=0; for(const pf of profs) total+=blockW(pf);
   V.tscroll=clamp(V.tscroll||0,0,Math.max(0,total-plotW*.6));
-  const vis=[]; let xr=plotW-8+V.tscroll;
+  const vis=[]; let xr=plotW-12+V.tscroll;
   for(let i=profs.length-1;i>=0&&xr>0;i--){const bw_=blockW(profs[i]); if(xr-bw_<plotW) vis.push([profs[i],xr-bw_+gap*.5,i]); xr-=bw_}
   let lo=Infinity,hi=-Infinity; for(const [pf] of vis){if(pf.lo<lo)lo=pf.lo; if(pf.hi>hi)hi=pf.hi}
   if(!isFinite(lo)) return;
-  const span=hi-lo+1, sel=S.tpoRow, rt=sel==='auto'?([2,4,8,10,20,40,80,160].find(r=>span/r*12<=pH-20)||320):+sel;
-  const top=Math.floor(hi/rt)+1, bot=Math.floor(lo/rt)-1, rowH=Math.min(22,(pH-16)/(top-bot+1)), y0=(pH-(top-bot+1)*rowH)/2;
-  const yRow=r=>y0+(top-r)*rowH, yP=p=>yRow(Math.floor(p/rt))+rowH/2, fs=Math.min(12.5,rowH*.82), txt=rowH>=7&&colW>=6&&cfg.style!=='blocks';
+  // vertical scale: price (ticks) → y. Auto fits the visible profiles until the user moves or zooms it.
+  if(V.tauto!==false||V.tpt==null){V.tauto=true; V.tpt=clamp((pH-36)/(hi-lo+3),.002,60); V.tpc=(lo+hi)/2}
+  const tpt=V.tpt, yOfP=p=>pH/2-(p-V.tpc)*tpt;
+  const sel=S.tpoRow, rt=sel==='auto'?([1,2,4,5,8,10,20,25,40,50,100,200,250,400,500,1000,2000,2500,5000,10000].find(r=>r*tpt>=12)||20000):Math.max(1,+sel);
+  const rowH=rt*tpt, yRow=r=>yOfP(r*rt+rt-.5), yP=p=>yRow(Math.floor(p/rt))+rowH/2;
+  const fs=clamp(rowH*.78,7,13), txt=rowH>=9&&colW>=7&&cfg.style!=='blocks';
+  const pTop=Math.floor((V.tpc+pH/2/tpt)/rt)+1, pBot=Math.floor((V.tpc-pH/2/tpt)/rt)-1;
   const sess=[1,2,3].filter(k=>cfg[`s${k}on`]).map(k=>[hm(cfg[`s${k}a`])*60,hm(cfg[`s${k}b`])*60,cfg[`s${k}c`]]);
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,plotW,pH+TA+stH); ctx.clip();
+  // price grid
+  const gk=Math.max(1,Math.ceil(28/rowH));
+  ctx.fillStyle='rgba(255,255,255,.035)'; for(let r=Math.ceil(pBot/gk)*gk;r<=pTop;r+=gk) ctx.fillRect(0,Math.round(yRow(r)+rowH/2),plotW,1);
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,plotW,pH); ctx.clip();
   let latest=null;
+  const hov=V.hover&&V.hover.x<plotW&&V.hover.y<pH?V.hover:null;
   for(const [pf,bx,pi_] of vis){
     const T=tpoStats(pf,rt,cfg), ps=pf.periods, np=ps.length, lw=Lw(pf);
     const x0=bx+ML+(cfg.vp&&cfg.vpSide==='left'?vpw:0), xEnd=x0+lw, isLast=pi_===profs.length-1;
     if(isLast) latest=T;
     V.tl.push({x0,lw,cw,pf,T,rt,yRow,rowH,aligned:cfg.style==='aligned',idx:pi_,bx,bxe:bx+blockW(pf)-gap});
-    if(V.tsel&&V.tsel.has(pf.t0)){const yt=yRow(T.bot+T.n-1)-6, yb=yRow(T.bot)+rowH+6; ctx.fillStyle='rgba(255,209,102,.06)'; ctx.fillRect(bx-4,yt,blockW(pf)-gap+8,yb-yt); ctx.strokeStyle='#ffd166'; ctx.lineWidth=1.2; ctx.setLineDash([5,3]); ctx.strokeRect(bx-3.5,yt+.5,blockW(pf)-gap+7,yb-yt-1); ctx.setLineDash([])}
     const rY=i=>yRow(T.bot+i), inVA=i=>cfg.vaOn&&i>=T.vdn&&i<=T.vup;
-    // value area, POC and single-print bands
-    if(cfg.vaOn&&cfg.vaFill){ctx.fillStyle=hexA(cfg.vaCol,.22); ctx.fillRect(x0-3,rY(T.vup),lw+6,(T.vup-T.vdn+1)*rowH)}
-    if(cfg.pocOn){ctx.fillStyle=hexA(cfg.pocCol,.25); ctx.fillRect(x0-3,rY(T.poc),lw+6,rowH)}
-    if(cfg.singles) for(const [a,b] of T.singles){ctx.fillStyle=hexA(cfg.singleCol,.13); ctx.fillRect(x0-3,rY(b),lw+6,(b-a+1)*rowH); ctx.fillStyle=cfg.singleCol; ctx.fillRect(x0-4,rY(b),2,(b-a+1)*rowH)}
-    // letters / blocks
+    if(V.tsel&&V.tsel.has(pf.t0)){const yt=rY(T.n-1)-6, yb=rY(0)+rowH+6; ctx.fillStyle='rgba(255,209,102,.06)'; ctx.fillRect(bx-4,yt,blockW(pf)-gap+8,yb-yt); ctx.strokeStyle='#ffd166'; ctx.lineWidth=1.2; ctx.setLineDash([5,3]); ctx.strokeRect(bx-3.5,yt+.5,blockW(pf)-gap+7,yb-yt-1); ctx.setLineDash([])}
+    // value area band, POC row, single prints
+    const rr=(x,y,ww,hh,rad)=>{ctx.beginPath(); ctx.roundRect(x,y,ww,hh,Math.min(rad,hh/2,ww/2)); ctx.fill()};
+    if(cfg.vaOn&&cfg.vaFill){ctx.fillStyle=hexA(cfg.vaCol,.2); rr(x0-4,rY(T.vup),lw+8,(T.vup-T.vdn+1)*rowH,4)}
+    if(cfg.singles) for(const [a,b] of T.singles){ctx.fillStyle=hexA(cfg.singleCol,.1); ctx.fillRect(x0-4,rY(b),lw+8,(b-a+1)*rowH); ctx.fillStyle=cfg.singleCol; ctx.fillRect(x0-6,rY(b),2,(b-a+1)*rowH)}
+    if(cfg.pocOn){ctx.fillStyle=hexA(cfg.pocCol,.28); rr(x0-4,rY(T.poc),lw+8,rowH,3)}
+    // hovered row
+    if(hov&&hov.x>=bx-4&&hov.x<=bx+blockW(pf)-gap+4){const r=Math.floor((yRow(0)-hov.y)/rowH)+1, i=r-T.bot; if(i>=0&&i<T.n){ctx.fillStyle='rgba(255,255,255,.07)'; ctx.fillRect(x0-4,rY(i),lw+8,rowH)}}
+    // letters / blocks: colour runs through the session (earlier → later), dimmer outside the value area
     ctx.font=`600 ${fs}px ${MONO}`; ctx.textAlign='center'; ctx.textBaseline='middle';
     const col=new Array(T.n).fill(0);
     ps.forEach((p,pi)=>{
       const cur=T.live&&pi===np-1, sod_=p.t-p.day.i*DAY, sc=sess.find(s=>sod_>=s[0]&&sod_<s[1]);
-      const fade=cfg.gradient&&np>1?.5+.5*pi/(np-1):1;
+      const f=np>1?pi/(np-1):1, base=sc?sc[2]:cfg.gradient?mixHex(mixHex(cfg.letterCol,'#6f63c9',.45),cfg.letterCol,Math.min(1,f*1.6)):cfg.letterCol;
+      const pc=cfg.gradient&&!sc&&f>.62?mixHex(cfg.letterCol,cfg.curCol,(f-.62)/.38*.8):base;
       for(let r=Math.floor(p.lo/rt);r<=Math.floor(p.hi/rt);r++){
         const i=r-T.bot, x=x0+(cfg.style==='aligned'?pi:col[i])*cw, y=yRow(r); col[i]++;
-        if(y>pH||y+rowH<0) continue;
-        ctx.fillStyle=cfg.pocOn&&i===T.poc?'#fff':cur?cfg.curCol:hexA(sc?sc[2]:cfg.letterCol,(inVA(i)||!cfg.vaOn?1:.45)*fade);
-        if(txt) ctx.fillText(TPO_LETTER(p.k),x+cw/2,y+rowH/2+.5); else ctx.fillRect(x+.5,y+.5,Math.max(1,cw-1),Math.max(1,rowH-1));
+        if(y>pH||y+rowH<0||x>plotW||x+cw<0) continue;
+        const isPoc=cfg.pocOn&&i===T.poc;
+        ctx.fillStyle=cur?cfg.curCol:isPoc?'#ffffff':hexA(pc,inVA(i)||!cfg.vaOn?.95:.42);
+        if(txt) ctx.fillText(TPO_LETTER(p.k),x+cw/2,y+rowH/2+.5);
+        else{const gp=rowH>4?1:0, gw=cw>4?1:0; rr(x+gw/2,y+gp/2,Math.max(1,cw-gw),Math.max(1,rowH-gp),Math.min(2,rowH/3))}
       }
     });
-    // row totals
-    if(cfg.rowTotals){ctx.font=`500 ${Math.min(10,fs)}px ${MONO}`; ctx.textAlign='right'; ctx.fillStyle=C.muted; T.cnt.forEach((c,i)=>{if(rowH>=8) ctx.fillText(c,x0-8,rY(i)+rowH/2+.5)})}
+    if(cfg.rowTotals&&rowH>=8){ctx.font=`500 ${Math.min(10,fs)}px ${MONO}`; ctx.textAlign='right'; ctx.fillStyle=C.muted; T.cnt.forEach((c,i)=>ctx.fillText(c,x0-9,rY(i)+rowH/2+.5))}
     // initial balance, extensions, opening range
     if(cfg.ibOn&&T.ib){
-      const [a,b]=T.ib, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.ibCol; ctx.fillRect(x0-8,ya,2,yb-ya);
+      const [a,b]=T.ib, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.ibCol; ctx.fillRect(x0-10,ya,2,yb-ya);
       const ibr=b-a; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.font=`500 9px ${MONO}`; ctx.textAlign='left'; ctx.textBaseline='bottom';
       for(const [k,m] of [['ext50',.5],['ext100',1],['ext150',1.5],['ext200',2]]) if(cfg[k]) for(const p of [b+ibr*m,a-ibr*m]){
-        const y=Math.round(yRow(p/rt)+rowH/2)+.5; if(y<0||y>pH) continue;
-        ctx.strokeStyle=hexA(cfg.ibCol,.5); ctx.beginPath(); ctx.moveTo(x0-8,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillStyle=hexA(cfg.ibCol,.8); ctx.fillText('×'+m,x0-8,y-1);
+        const y=Math.round(yOfP(p))+.5; if(y<0||y>pH) continue;
+        ctx.strokeStyle=hexA(cfg.ibCol,.45); ctx.beginPath(); ctx.moveTo(x0-10,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillStyle=hexA(cfg.ibCol,.8); ctx.fillText('×'+m,x0-10,y-1);
       }
       ctx.setLineDash([]);
     }
-    if(cfg.orOn&&T.or){const [a,b]=T.or, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.orCol; ctx.fillRect(x0-12,ya,2,yb-ya)}
-    // tails and poor extremes
-    if(cfg.tails){ctx.fillStyle=C.lav; if(T.tt>=2) ctx.fillRect(x0-15,rY(T.n-1),1,T.tt*rowH); if(T.tb>=2) ctx.fillRect(x0-15,rY(T.tb-1),1,T.tb*rowH)}
+    if(cfg.orOn&&T.or){const [a,b]=T.or, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.orCol; ctx.fillRect(x0-14,ya,2,yb-ya)}
+    if(cfg.tails){ctx.fillStyle=C.lav; if(T.tt>=2) ctx.fillRect(x0-17,rY(T.n-1),1,T.tt*rowH); if(T.tb>=2) ctx.fillRect(x0-17,rY(T.tb-1),1,T.tb*rowH)}
     if(cfg.poor&&!T.live){
       ctx.strokeStyle=hexA('#ff8a9a',.8); ctx.setLineDash([2,2]); ctx.lineWidth=1; ctx.font=`700 9px ${UI}`; ctx.fillStyle='#ff8a9a'; ctx.textAlign='left'; ctx.textBaseline='middle';
-      if(T.cnt[T.n-1]>=2){const y=Math.round(rY(T.n-1))+.5; ctx.beginPath(); ctx.moveTo(x0-3,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
-      if(T.cnt[0]>=2){const y=Math.round(rY(0)+rowH)-.5; ctx.beginPath(); ctx.moveTo(x0-3,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
+      if(T.cnt[T.n-1]>=2){const y=Math.round(rY(T.n-1))+.5; ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
+      if(T.cnt[0]>=2){const y=Math.round(rY(0)+rowH)-.5; ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
       ctx.setLineDash([]);
     }
-    // midpoint, high / low
     ctx.lineWidth=1;
-    if(cfg.mid){const y=Math.round(yRow((pf.lo+pf.hi)/2/rt)+rowH/2)+.5; ctx.strokeStyle=hexA('#ffffff',.4); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(x0-3,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.setLineDash([])}
-    if(cfg.hilo){ctx.fillStyle=hexA('#ffffff',.35); ctx.fillRect(x0-3,Math.round(rY(T.n-1)),lw+6,1); ctx.fillRect(x0-3,Math.round(rY(0)+rowH)-1,lw+6,1)}
-    // volume profile next to the letters
+    if(cfg.mid){const y=Math.round(yOfP((pf.lo+pf.hi)/2))+.5; ctx.strokeStyle=hexA('#ffffff',.4); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.setLineDash([])}
+    if(cfg.hilo){ctx.fillStyle=hexA('#ffffff',.35); ctx.fillRect(x0-4,Math.round(rY(T.n-1)),lw+8,1); ctx.fillRect(x0-4,Math.round(rY(0)+rowH)-1,lw+8,1)}
+    // volume profile beside the letters
     if(cfg.vp){
-      const vx=cfg.vpSide==='left'?x0-ML-vpw+2:xEnd+4, W=+cfg.vpW; let mx=1; for(const v of T.vol) if(v>mx)mx=v;
+      const vx=cfg.vpSide==='left'?x0-ML-vpw+4:xEnd+6, W=+cfg.vpW; let mx=1; for(const v of T.vol) if(v>mx)mx=v;
       for(let i=0;i<T.n;i++){
-        const y=rY(i), hh=Math.max(1,rowH-1), isP=i===T.vpoc;
+        const y=rY(i), hh=Math.max(1,rowH-(rowH>4?1:0)), isP=i===T.vpoc; if(y>pH||y+rowH<0) continue;
         if(cfg.vpSplit){const wb=T.vb[i]/mx*W, wa=T.vs[i]/mx*W; ctx.fillStyle=hexA(C.mag,.6); ctx.fillRect(vx,y,wb,hh); ctx.fillStyle=hexA(cfg.vpCol,.6); ctx.fillRect(vx+wb,y,wa,hh)}
-        else{ctx.fillStyle=isP?hexA(cfg.pocCol,.9):hexA(cfg.vpCol,i>=T.vdn&&i<=T.vup?.55:.3); ctx.fillRect(vx,y,T.vol[i]/mx*W,hh)}
+        else{ctx.fillStyle=isP?hexA(cfg.pocCol,.9):hexA(cfg.vpCol,i>=T.vdn&&i<=T.vup?.5:.25); ctx.fillRect(vx,y,T.vol[i]/mx*W,hh)}
         if(isP&&cfg.vpSplit){ctx.strokeStyle=cfg.pocCol; ctx.strokeRect(vx+.5,y+.5,W-1,hh-1)}
       }
     }
-    // open / close markers
     if(cfg.ocMarks){
-      if(T.open!=null){const yo=yP(T.open); ctx.fillStyle=C.text; ctx.beginPath(); ctx.moveTo(x0-ML+1,yo-3.5); ctx.lineTo(x0-ML+4.5,yo); ctx.lineTo(x0-ML+1,yo+3.5); ctx.fill()}
+      if(T.open!=null){const yo=yP(T.open); ctx.fillStyle=C.text; ctx.beginPath(); ctx.moveTo(x0-ML+2,yo-3.5); ctx.lineTo(x0-ML+5.5,yo); ctx.lineTo(x0-ML+2,yo+3.5); ctx.fill()}
       const cp=T.live?D.last:T.close; if(cp!=null){const yc=yP(cp), xc=xEnd+2; ctx.fillStyle=T.live?C[D.lastSide>0?'pink':'mag']:C.text; ctx.beginPath(); ctx.moveTo(xc+6,yc-4); ctx.lineTo(xc,yc); ctx.lineTo(xc+6,yc+4); ctx.fill()}
     }
     // POC / VAH / VAL lines: across the profile, or naked until a later profile trades the price
     const until=p=>{for(let k=pi_+1;k<profs.length;k++){const q=profs[k]; if(q.lo<=p&&q.hi>=p) return k} return -1};
     const xOfProf=k=>{const v=vis.find(e=>e[2]===k); return v?v[1]:k>pi_?plotW:null};
     const lineTo=(p,cl,dash,naked)=>{
-      const y=Math.round(yP(p))+.5; let x1=xEnd+vpw;
+      const y=Math.round(yOfP(p))+.5; let x1=xEnd+vpw;
       if(naked){const k=until(Math.round(p)); x1=k<0?plotW:(xOfProf(k)??plotW)}
-      ctx.strokeStyle=cl; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x0-3,y); ctx.lineTo(x1,y); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle=cl; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(x1,y); ctx.stroke(); ctx.setLineDash([]);
     };
     if(cfg.pocOn&&cfg.pocLine!=='off') lineTo(T.pocP,hexA(cfg.pocCol,.85),[],cfg.pocLine==='naked');
     if(cfg.vaOn&&(cfg.vaLines||cfg.nakedVA)){lineTo(T.vahP,hexA(cfg.vaCol,.9),[5,3],cfg.nakedVA); lineTo(T.valP,hexA(cfg.vaCol,.9),[5,3],cfg.nakedVA)}
-    // label and statistics
-    const d0=ps[0].day;
-    ctx.font=`${isLast?700:500} 11px ${UI}`; ctx.fillStyle=isLast?'#fff':C.text; ctx.textAlign='left'; ctx.textBaseline='middle';
-    const dL=ps[np-1].day, nd=dL.i-d0.i+1;
+    ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fillRect(Math.round(bx-gap*.5),0,1,pH);
+  }
+  ctx.restore();
+  // date labels and statistics under each profile (fixed strip at the bottom)
+  ctx.fillStyle=pr.bg; ctx.fillRect(0,pH,plotW,h-pH);
+  ctx.save(); ctx.beginPath(); ctx.rect(0,pH,plotW,h-pH); ctx.clip();
+  for(const e of V.tl){
+    const pf=e.pf, ps=pf.periods, np=ps.length, d0=ps[0].day, dL=ps[np-1].day, nd=dL.i-d0.i+1, isLast=e.idx===profs.length-1, T=e.T, sx=e.x0-ML;
     const lbl=nd>1&&cfg.tf==='day'?`${dateLbl(d0.t0)} – ${dateLbl(dL.t0)} · ${nd} days`:cfg.tf==='week'?'Wk '+dateLbl(d0.t0):cfg.tf==='month'?(RP.blind?'Month':CAL[d0.i].toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'})):dateLbl(d0.t0)+(pf.t0!==d0.t0?' '+clock(pf.t0):'');
-    if(nd>1&&cfg.tf==='day'){ctx.fillStyle=hexA('#ffd166',.7); ctx.fillRect(x0-ML,pH+2,Math.max(30,lw+ML-4),2)}
-    ctx.fillText(lbl,x0-ML,pH+11);
+    ctx.font=`${isLast?600:500} 11px ${UI}`; ctx.fillStyle=isLast?'#fff':C.text; ctx.textAlign='left'; ctx.textBaseline='middle';
+    if(nd>1&&cfg.tf==='day'){ctx.fillStyle=hexA('#ffd166',.7); ctx.fillRect(sx,pH+2,Math.max(30,e.lw+ML-4),2); ctx.fillStyle=isLast?'#fff':C.text}
+    ctx.fillText(lbl,sx,pH+12);
     if(stH){
-      ctx.font=`9.5px ${MONO}`; ctx.fillStyle=C.muted; const sx=x0-ML, sy=pH+TA+8;
+      ctx.font=`9.5px ${MONO}`; ctx.fillStyle=C.muted; const sy=pH+TA+8;
       ctx.fillText(`R ${((pf.hi-pf.lo)*TICK).toFixed(DEC)}${T.ib?' · IB '+((T.ib[1]-T.ib[0])*TICK).toFixed(DEC):''}`,sx,sy);
       ctx.fillText(`RF ${T.rf>0?'+':''}${T.rf} · ${T.above}↑ ${T.below}↓`,sx,sy+13);
       ctx.fillStyle=T.type?C.lav:C.muted; ctx.fillText(T.type||`${np} × ${pf.P}m`,sx,sy+26);
     }
-    ctx.fillStyle=C.line; ctx.fillRect(Math.round(bx-gap*.5),0,1,pH);
   }
   ctx.restore();
   // price axis
   ctx.fillStyle=pr.bg; ctx.fillRect(plotW+1,0,AX,h);
-  ctx.fillStyle=C.line; ctx.fillRect(plotW,0,1,pH); ctx.fillRect(0,pH,w,1); if(stH) ctx.fillRect(0,pH+TA,w,1);
-  ctx.font=`600 11px ${UI}`; ctx.fillStyle=C.text; ctx.textAlign='left'; ctx.textBaseline='middle';
-  const k=Math.max(1,Math.ceil(20/rowH));
-  for(let r=bot;r<=top;r++) if(r%k===0) ctx.fillText(fP(r*rt),plotW+7,yRow(r)+rowH/2);
+  ctx.fillStyle=C.line; ctx.fillRect(plotW,0,1,h); ctx.fillRect(0,pH,plotW,1); if(stH) ctx.fillRect(0,pH+TA,plotW,1);
+  ctx.font=`500 10.5px ${MONO}`; ctx.fillStyle=C.muted; ctx.textAlign='left'; ctx.textBaseline='middle';
+  for(let r=Math.ceil(pBot/gk)*gk;r<=pTop;r+=gk){const y=yRow(r)+rowH/2; if(y>6&&y<pH-6) ctx.fillText(fP(r*rt),plotW+7,y)}
   if(latest){
     ctx.font=`600 10.5px ${MONO}`;
     if(cfg.vaOn){tag(ctx,plotW,AX,yP(latest.vahP),0,pH,'#22192c',C.text,fP(Math.round(latest.vahP))); tag(ctx,plotW,AX,yP(latest.valP),0,pH,'#22192c',C.text,fP(Math.round(latest.valP)))}
     if(cfg.pocOn) tag(ctx,plotW,AX,yP(latest.pocP),0,pH,hexA(cfg.pocCol,.45),'#fff',fP(Math.round(latest.pocP)));
   }
-  ctx.font=`600 10.5px ${MONO}`; tag(ctx,plotW,AX,yP(D.last),0,pH,'#fff','#000',fP(D.last));
-  ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=hexA(pr.bg,.7); ctx.fillRect(5,5,360,34);
+  ctx.font=`600 10.5px ${MONO}`; tag(ctx,plotW,AX,yOfP(D.last),0,pH,'#fff','#000',lastStr());
+  // crosshair: price under the mouse
+  if(hov){const pp=V.tpc+(pH/2-hov.y)/tpt; ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,Math.round(hov.y)+.5); ctx.lineTo(plotW,Math.round(hov.y)+.5); ctx.stroke(); ctx.setLineDash([]);
+    tag(ctx,plotW,AX,hov.y,0,pH,'#3a3042','#fff',fP(Math.round(pp)))}
+  if(V.tauto){ctx.font=`600 9px ${UI}`; ctx.fillStyle=C.mag; ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('AUTO',w-6,pH-4)}
+  // header
+  ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=hexA(pr.bg,.75); ctx.fillRect(5,5,380,34);
   ctx.fillStyle='#fff'; ctx.font=`600 11px ${UI}`; ctx.fillText(`${SYM} - TPO ${cfg.period}m · per ${{day:'session',week:'week',month:'month'}[cfg.tf]} · ${profs.length} profiles`,8,8);
-  ctx.font=`10.5px ${MONO}`; ctx.fillStyle=C.muted; ctx.fillText(`Row ${(rt*TICK).toFixed(DEC)} pt · click / Shift+click profiles to join them · right-click: split, merge`,8,24);
-  // the selection chip: click it (or press M) to join the selected profiles
+  ctx.font=`10.5px ${MONO}`; ctx.fillStyle=C.muted; ctx.fillText(`Row ${(rt*TICK).toFixed(DEC)} · drag to move · Ctrl+wheel: price zoom · dbl-click: fit`,8,24);
   V.tchip=null; const sr=V.tsel&&V.tsel.size>1?tpoSelIdx(P):null;
-  if(sr){const t=`Merge ${sr[1]-sr[0]+1} profiles  ·  M`, x=380; ctx.font=`600 11.5px ${UI}`; const tw=ctx.measureText(t).width+20; ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.roundRect(x,9,tw,24,6); ctx.fill(); ctx.fillStyle='#1a1206'; ctx.textBaseline='middle'; ctx.fillText(t,x+10,21.5); V.tchip=[x,9,x+tw,33]}
-  P.live.hidden=(V.tscroll||0)<20;
+  if(sr){const t=`Merge ${sr[1]-sr[0]+1} profiles  ·  M`, x=392; ctx.font=`600 11.5px ${UI}`; const tw=ctx.measureText(t).width+20; ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.roundRect(x,9,tw,24,6); ctx.fill(); ctx.fillStyle='#1a1206'; ctx.textBaseline='middle'; ctx.fillText(t,x+10,21.5); V.tchip=[x,9,x+tw,33]}
+  P.live.hidden=(V.tscroll||0)<20&&V.tauto;
 }
 // which profile / period a point is on (for split and merge)
 function tpoHit(P,p){
@@ -3562,7 +3603,7 @@ function buildToolbar(){
   const hid=mk('hidb','eye','Hide / show all drawings'); hid.setAttribute('aria-pressed',G.hideDraw); hid.addEventListener('click',()=>setHideDraw(!G.hideDraw));
   const del=mk('del','del','Delete selected drawing'); let arm=0;
   add(el_('span','sp'));
-  const dk=mk('dockb','dock','Toolbar position: right, left or floating'); dk.addEventListener('click',e=>{const r=dk.getBoundingClientRect(); showMenu([['right','Right side'],['left','Left side'],['float','Floating']].map(([v,t])=>({label:t,on:TB_MODE===v,act:()=>setTbMode(v)})),r.left-200,r.top)});
+  const dk=mk('dockb','dock','Toolbar position: right, left or floating'); dk.addEventListener('click',e=>{const r=dk.getBoundingClientRect(); showMenu([['right','Right side'],['left','Left side'],['float','Floating']].map(([v,t])=>({label:t,on:TB_MODE===v,act:()=>setTbMode(v)})),TB_MODE==='left'?r.right+6:r.left-200,r.top)});
   del.addEventListener('click',()=>{
     if(selected().length){deleteSelected(); return}
     if(!DR.length) return;
@@ -3590,9 +3631,9 @@ function placeBar(x,y){const r=ws.getBoundingClientRect(), w=dt.offsetWidth, h=d
   dt.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; dt.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
 let barPos=null; try{barPos=JSON.parse(localStorage.getItem('potik.toolbar')||'null')}catch(e){}
 // where the toolbar lives: 'right' / 'left' (docked, vertical) or 'float' (movable by its grip)
-let TB_MODE='right'; try{TB_MODE=localStorage.getItem('potik.tbdock')||'right'}catch(e){}
+let TB_MODE='left'; try{TB_MODE=localStorage.getItem('potik.tbdock')||'left'; if(!localStorage.getItem('potik.tbdock.v2')){localStorage.setItem('potik.tbdock.v2','1'); if(TB_MODE==='right') TB_MODE='left'}}catch(e){}   // left by default (29.10); the user can still move it
 function setTbMode(m){
-  TB_MODE=['right','left','float'].includes(m)?m:'right'; try{localStorage.setItem('potik.tbdock',TB_MODE)}catch(e){}
+  TB_MODE=['right','left','float'].includes(m)?m:'left'; try{localStorage.setItem('potik.tbdock',TB_MODE)}catch(e){}
   const row=$('#mrow'); document.querySelectorAll('.tfly').forEach(f=>{f.hidden=true; f.classList.remove('fx'); f.style.left=f.style.top=''});
   dt.classList.toggle('dock',TB_MODE!=='float'); dt.classList.toggle('left',TB_MODE==='left'); dt.setAttribute('aria-orientation',TB_MODE==='float'?'horizontal':'vertical');
   if(TB_MODE==='right') row.appendChild(dt); else if(TB_MODE==='left') row.insertBefore(dt,ws); else{ws.appendChild(dt); const r=ws.getBoundingClientRect(); barPos?placeBar(barPos.x,barPos.y):placeBar((r.width-dt.offsetWidth)/2,40)}
@@ -3669,7 +3710,7 @@ function indAt(P,p){
     if((R.lines||[]).some(L=>near(L.v[i]))||(R.hlines||[]).some(h=>i>=h.a&&i<=h.b&&near(h.p))) return 'st:'+Q.uid}
   if(I.vwap.on){const Q=I.vwap; if([0,...[1,2,3].filter(k=>Q['b'+k])].some(k=>near((c.vwap+k*c.sd)/TICK)||near((c.vwap-k*c.sd)/TICK))) return 'vwap'}
   if(I.ema.on&&[I.ema.p1,I.ema.p2].some(q=>near(emaArr(B,Math.max(2,+q))[i]))) return 'ema';
-  if(I.prof.on&&p.x>=g.plotW-g.PW) return 'prof';
+  if(I.prof.on&&(I.prof.side==='left'?p.x<=g.PW:p.x>=g.plotW-g.PW)) return 'prof';
   if(I.fp.on&&g.fpOn){const x=g.xOf(i), pp=g.pAt(p.y); if(Math.abs(p.x-x)<=g.bw/2&&pp>=c.l-1.5&&pp<=c.h+1.5) return 'fp'}
   if(I.rng.on){const r=ranges(B,+I.rng.minutes).find(r=>i>=r.a&&i<=r.b); if(r&&(near(r.hi)||near(r.lo))) return 'rng'}
   return null;
@@ -4431,7 +4472,10 @@ function makeBncFeed(L,ins){
           if(end||r.length<1000) break; path=`/aggTrades?symbol=${S}&fromId=${r[r.length-1].a+1}&limit=1000`}
         add(tr.filter(x=>x.sz>=BIG_MIN),BIGAGG.agg?runsOf(tr):[]);
       };
-      const back=async(lo,hi,onStep)=>{for(let b=hi;b>lo;){const a=Math.max(lo,b-3e5); await chunk(a,b); b=a; onStep(a); B.loT=tOf(B.lo)}};
+      // a chunk that fails (Binance busy, network) is tried again after a minute, up to 5 times, instead of stopping the history
+      const back=async(lo,hi,onStep)=>{for(let b=hi;b>lo;){const a=Math.max(lo,b-3e5);
+        for(let k=0;;k++){try{await chunk(a,b); break}catch(e){if(k>=5||/blocked|closed/.test(e.message||'')) throw e; B.st='waiting'; allDirty(); await new Promise(r=>setTimeout(r,60000)); B.st='loading'}}
+        b=a; onStep(a); B.loT=tOf(B.lo)}};
       // save the big prints this page holds, one record per UTC day, for days fully or partly covered
       const save=async()=>{try{
         const now=Date.now(), from=B.lo, recs=[];
@@ -4488,7 +4532,7 @@ function makeBncFeed(L,ins){
           if(r.a<=this.lastA) continue; this.lastA=r.a;
           const t=toT(+r.T); if(t<sim.t-120) continue; sim.t=Math.max(sim.t,t);
           const sd=r.m?-1:1, z=lots(+r.q,sd>0?1:0); if(z<1) continue;
-          const px=Math.round(+r.p/TICK); this.lastPx=px; addTrade(sim.t,sd,z,px); this.n++; k++;
+          const px=Math.round(+r.p/TICK); this.lastPx=px; RAWPX=+r.p; addTrade(sim.t,sd,z,px); this.n++; k++;
         }else if(r.b||r.bids){
           const bids=r.b||r.bids, asks=r.a||r.asks; if(!bids.length) continue; this.book=true;
           const b=Math.round(+bids[0][0]/TICK);
@@ -5324,8 +5368,9 @@ function openMenu(P,p,cx,cy,indId){
     {...st('undo','Undo'),kbd:'Ctrl Z',disabled:!UNDO.length,act:undo},
     {icon:'copy',label:'Paste',kbd:'Ctrl V',disabled:!CLIP,act:()=>paste(P)},
     {sep:1},
-    {...st('live','Go to Live'),act:()=>{P.V.scroll=0; if(!P.V.autoY)P.V.center=D.last; P.dirty=true}},
+    {...st('live','Go to Live'),act:()=>{P.V.scroll=0; P.V.userY=false; if(!P.V.autoY)P.V.center=D.last; P.dirty=true}},
     {...st('auto','Auto Scale'),on:P.V.autoY,act:()=>{P.V.autoY=true; P.V.fit=true; P.dirty=true}},
+    {...st('util','Volume profile'),on:!!P.S.ind.prof.on,sub:[['right','On the right'],['left','On the left']].map(([v,t])=>({label:t,on:P.S.ind.prof.on&&(P.S.ind.prof.side||'right')===v,act:()=>{P.S.ind.prof.on=true; P.S.ind.prof.side=v; P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'Off',on:!P.S.ind.prof.on,act:()=>{P.S.ind.prof.on=false; P.dirty=true; saveLayout()}}])},
     {...st('util','Footprint level lines'),on:!!(P.S.ind.fp.naked||P.S.ind.fp.stackZone||P.S.ind.fp.unfin),act:()=>{const f=P.S.ind.fp, on=!(f.naked||f.stackZone||f.unfin); f.naked=on; f.stackZone=on; f.unfin=on; f.always=on; P.dirty=true; saveLayout()}},
     {sep:1},
     {...st('ind','Indicators'),kbd:'Ctrl I',act:()=>openIndicators(P)},
@@ -5598,7 +5643,7 @@ function defaultBarW(S){const k=(btSpec(S.bt)||{}).k, F=S.ind&&S.ind.fp; if(F&&F
 function makePane(cfg){
   const el=$('#winTpl').content.firstElementChild.cloneNode(true);
   const c=JSON.parse(JSON.stringify(cfg));
-  const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{})},
+  const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{}),...(c.tpo&&!c.tpo.v2?{ext100:false,ext200:false,v2:true}:{})},
     tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min};
   {const b=S.ind.big, ob=c.ind&&c.ind.big; if(ob&&ob.min!=null&&ob.minBuy==null){b.minBuy=b.minSell=ob.min} delete b.min; b.aggMs=BIGAGG.ms; b.aggTicks=BIGAGG.ticks; b.aggOpp=BIGAGG.opp}   // settings from older versions
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
@@ -5620,7 +5665,7 @@ function makePane(cfg){
   q('.mx').addEventListener('click',()=>toggleMax(P));
   q('.mn').addEventListener('click',()=>minimizePane(P));
   q('.cl').addEventListener('click',()=>closePane(P));
-  P.live.addEventListener('click',()=>{P.V.scroll=0; P.V.tscroll=0; if(!P.V.autoY)P.V.center=D.last; P.dirty=true});
+  P.live.addEventListener('click',()=>{P.V.scroll=0; P.V.tscroll=0; P.V.tauto=true; P.V.userY=false; if(!P.V.autoY)P.V.center=D.last; P.dirty=true});
   el.addEventListener('pointerdown',()=>setActive(P),true);
   q('.lnk').addEventListener('click',()=>cycleLink(P)); syncLinkChip(P);
   q('.flt').addEventListener('click',()=>toggleFloat(P)); wireFloat(P); syncWinBtns(P);
@@ -5707,6 +5752,7 @@ function wireCanvas(P){
   const legendAt=p=>V.g&&V.g.legend.find(l=>p.x>=l.x&&p.x<=l.x+l.w&&p.y>=l.y&&p.y<=l.y+l.h);
   const setCursor=p=>{
     if(P.S.view==='tape'){cv.style.cursor='default'; return}
+    if(P.S.view==='tpo'){cv.style.cursor=V.tg&&p.x>V.tg.plotW?'ns-resize':'grab'; return}
     if(P.S.view==='dom'||zone(p)==='dom'){const h=domHit(P,p); cv.style.cursor=h&&(h.hdr?['price','abid','aask'].includes(h.col):h.col==='notes')?'pointer':'default'; return}
     const z=zone(p);
     if((z==='plot'||z==='lower')&&legendAt(p)){cv.style.cursor='pointer';return}
@@ -5720,7 +5766,7 @@ function wireCanvas(P){
   const zoomX=(f,x)=>{const g=V.g; if(!g)return; const nb=clamp(V.barW*f,0.5,220);
     if(V.scroll>=-.5){V.barW=nb; return}
     const a=(g.R-x)/V.barW, b=(g.R-x)/nb; V.barW=nb; V.scroll+=b-a};
-  const zoomY=(f,y)=>{const g=V.g; if(!g)return; const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt; V.autoY=false};
+  const zoomY=(f,y)=>{const g=V.g; if(!g)return; const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt; V.autoY=false; V.userY=true};
 
   cv.addEventListener('contextmenu',e=>{
     e.preventDefault(); const p=pos(e); setActive(P);
@@ -5742,7 +5788,7 @@ function wireCanvas(P){
     const p=pos(e); ptrs.set(e.pointerId,p);
     if(P.S.view==='tape'){P.drag={z:'none',moved:true}; return}
     if(P.S.view==='dom'||zone(p)==='dom'){domClick(P,p); P.drag={z:'none',moved:true}; return}
-    if(P.S.view==='tpo'){P.drag={z:'tpo',x:p.x,s0:V.tscroll||0,moved:false,type:e.pointerType}; cv.style.cursor='grabbing'; return}
+    if(P.S.view==='tpo'){const ax=V.tg&&p.x>V.tg.plotW; P.drag={z:ax?'tpoax':'tpo',x:p.x,y:p.y,s0:V.tscroll||0,c0:V.tpc,t0:V.tpt,moved:false,type:e.pointerType}; cv.style.cursor=ax?'ns-resize':'grabbing'; return}
     if(ptrs.size===1){
       const z=zone(p);
       if(z==='split'){const sp=splitAt(p); P.drag={z:'split',obj:sp.obj,h0:+sp.obj.height||14,y:p.y,x:p.x,H:cv.getBoundingClientRect().height,moved:false}; return}
@@ -5781,7 +5827,8 @@ function wireCanvas(P){
     if(!drag) return;
     const dx=p.x-drag.x, dy=p.y-drag.y;
     if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true;
-    if(drag.z==='tpo'){V.tscroll=Math.max(0,drag.s0+dx); P.dirty=true; return}
+    if(drag.z==='tpo'){V.tscroll=Math.max(0,drag.s0+dx); if(drag.c0!=null&&(Math.abs(dy)>3||V.tauto===false)){V.tauto=false; V.tpc=drag.c0+dy/V.tpt} P.dirty=true; return}
+    if(drag.z==='tpoax'){if(drag.t0!=null){V.tauto=false; V.tpt=clamp(drag.t0*Math.exp(-dy*.008),.002,60)} P.dirty=true; return}
     if(drag.z==='brush'){const d=drag.d, l=d.pts[d.pts.length-1]; if(Math.hypot(V.g.xAt(l.t)-p.x,V.g.yOf(l.p)-p.y)>3) d.pts.push(ptAt(P,p)); allDirty(); return}
     if(drag.z==='box'){V.box=[drag.x,drag.y,p.x,p.y]; P.dirty=true; return}
     if(drag.z==='split'){drag.obj.height=Math.round(clamp(drag.h0+(drag.y-p.y)/drag.H*100,6,60)); P.dirty=true; return}
@@ -5792,9 +5839,9 @@ function wireCanvas(P){
       allDirty(); return;
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
-    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(Math.abs(dy)>2||V.center!==drag.center){V.autoY=false; V.center=drag.center+dy/V.tickPx}}
+    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(Math.abs(dy)>2||V.center!==drag.center){V.autoY=false; V.userY=true; V.center=drag.center+dy/V.tickPx}}
     else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
-    else if(drag.z==='price'){V.autoY=false; V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
+    else if(drag.z==='price'){V.autoY=false; V.userY=true; V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
       const [a,b]=[...ptrs.values()], nb=clamp(drag.barW*Math.max(30,Math.abs(a.x-b.x))/drag.dx,0.5,220); zoomX(nb/V.barW,drag.cx);
@@ -5829,9 +5876,10 @@ function wireCanvas(P){
   cv.addEventListener('dblclick',e=>{
     const p=pos(e), z=zone(p);
     if(P.S.view==='tape'){V.tsN=null; V.tsOff=0; P.dirty=true; return}
+    if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
-    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; if(!V.autoY) V.center=D.last}
+    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.userY=false; if(!V.autoY) V.center=D.last}
     P.dirty=true;
   });
   cv.addEventListener('wheel',e=>{
@@ -5839,10 +5887,17 @@ function wireCanvas(P){
     const p0=pos(e);
     if(P.S.view==='tape'){if(V.tsN!=null){V.tsOff=Math.max(0,(V.tsOff||0)+Math.sign(e.deltaY)*3); P.dirty=true} return}
     if(P.S.view==='dom'||zone(p0)==='dom'){V.domC=(V.domC==null?D.last:V.domC)-Math.sign(e.deltaY)*3; V.domHold=true; P.dirty=true; return}
-    if(P.S.view==='tpo'){const m=e.deltaMode===1?16:1; if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) V.tscroll=Math.max(0,(V.tscroll||0)-e.deltaX*m); else V.tcol=clamp((V.tcol||9)*Math.exp(-e.deltaY*m*.0015),4,16); P.dirty=true; return}
+    if(P.S.view==='tpo'){const m=e.deltaMode===1?16:1, dY=e.deltaY*m, g=V.tg, ax=g&&p0.x>g.plotW;
+      if((e.ctrlKey||e.metaKey||ax)&&g&&V.tpt){const y=ax?g.pH/2:p0.y, at=V.tpc+(g.pH/2-y)/V.tpt, nt=clamp(V.tpt*Math.exp(-dY*.0016),.002,60); V.tauto=false; V.tpt=nt; V.tpc=at-(g.pH/2-y)/nt}
+      else if(e.altKey&&V.tpt){V.tauto=false; V.tpc+=dY/V.tpt*.5}
+      else if(e.shiftKey) V.tscroll=Math.max(0,(V.tscroll||0)+dY);
+      else if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) V.tscroll=Math.max(0,(V.tscroll||0)-e.deltaX*m);
+      else V.tcol=clamp((V.tcol||10)*Math.exp(-dY*.0015),4,18);
+      P.dirty=true; return}
     const p=pos(e), z=zone(p), m=e.deltaMode===1?16:e.deltaMode===2?400:1, dY=e.deltaY*m, dX=e.deltaX*m;
     if(z==='price'||e.ctrlKey||e.metaKey) zoomY(Math.exp(-dY*.0016),z==='price'&&V.g?V.g.pH/2:p.y);
     else if(e.shiftKey) V.scroll+=dY/V.barW;
+    else if(e.altKey){V.autoY=false; V.userY=true; V.center+=dY/Math.max(.05,V.tickPx)*.5}   // Alt + wheel moves the chart up and down
     else if(Math.abs(dX)>Math.abs(dY)) V.scroll+=dX/V.barW;
     else zoomX(Math.exp(-dY*.0016),p.x);
     P.dirty=true;
@@ -5914,7 +5969,8 @@ function frame(ts){
   const dt_=Math.min(.25,(ts-lastTs)/1000); lastTs=ts;
   if(KEYS.size&&active&&(active.S.view==='chart'||active.S.view==='tpo')){
     const V=active.V, f=KEYS.fast?3:1;
-    if(active.S.view==='tpo'){if(KEYS.has('ArrowLeft'))V.tscroll=(V.tscroll||0)+500*dt_*f; if(KEYS.has('ArrowRight'))V.tscroll=Math.max(0,(V.tscroll||0)-500*dt_*f)}
+    if(active.S.view==='tpo'){if(KEYS.has('ArrowLeft'))V.tscroll=(V.tscroll||0)+500*dt_*f; if(KEYS.has('ArrowRight'))V.tscroll=Math.max(0,(V.tscroll||0)-500*dt_*f);
+      if((KEYS.has('ArrowUp')||KEYS.has('ArrowDown'))&&V.tpt){V.tauto=false; V.tpc+=(KEYS.has('ArrowUp')?1:-1)*300*dt_*f/V.tpt}}
     else{
       if(KEYS.has('ArrowLeft')) V.scroll-=700*dt_*f/V.barW;
       if(KEYS.has('ArrowRight')) V.scroll+=700*dt_*f/V.barW;
