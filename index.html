@@ -2959,7 +2959,9 @@ function drawTPO(P,ctx,w,h){
   const V=P.V, S=P.S, cfg=S.tpo, pr=S.props, AX=66, TA=22, stH=cfg.stats?44:0, plotW=w-AX, pH=h-TA-stH;
   ctx.fillStyle=pr.bg; ctx.fillRect(0,0,w,h); V.g=null; V.tl=[]; V.tg={plotW,pH,AX};
   const profs=tpoProfiles(cfg,S.tpoCuts); if(!profs.length) return;
-  const LO=!!cfg.onlyLetters, colW=clamp(V.tcol||10,LO?8:4,18), cw=colW*.8, gap=Math.max(22,colW*2.2), ML=cfg.rowTotals?36:20, vpw=cfg.vp&&!LO?+cfg.vpW+8:0;
+  // horizontal zoom (29.10): V.tcol scales everything sideways, like the bar width on the chart; zoomed out, a profile is a thin silhouette
+  const LO=!!cfg.onlyLetters, colW=clamp(V.tcol||10,.25,14), cw=colW*.8, zf=Math.min(1,colW/8), gap=Math.round(clamp(colW*2.2,5,40)), ML=Math.round((cfg.rowTotals&&colW>=6?36:20)*Math.max(.2,zf)), vpw=cfg.vp&&!LO?Math.round(+cfg.vpW*Math.max(.25,zf)+8*zf):0;
+  const wantTxt=LO?colW>=6:colW>=7&&cfg.style!=='blocks', thin=cw<2.5, tiny=colW<4;   // tiny: side markers (IB, OR, tails, open/close) are left out
   const Lw=pf=>Math.max(6,pf.periods.length)*cw, blockW=pf=>ML+Lw(pf)+vpw+gap;
   let total=0; for(const pf of profs) total+=blockW(pf);
   V.tscroll=clamp(V.tscroll||0,0,Math.max(0,total-plotW*.6));
@@ -2970,9 +2972,9 @@ function drawTPO(P,ctx,w,h){
   // vertical scale: price (ticks) → y. Auto fits the visible profiles until the user moves or zooms it.
   if(V.tauto!==false||V.tpt==null){V.tauto=true; V.tpt=clamp((pH-36)/(hi-lo+3),.002,60); V.tpc=(lo+hi)/2}
   const tpt=V.tpt, yOfP=p=>pH/2-(p-V.tpc)*tpt;
-  const sel=LO&&S.tpoRow!=='auto'&&+S.tpoRow*tpt<11?'auto':S.tpoRow, rt=sel==='auto'?([1,2,4,5,8,10,20,25,40,50,100,200,250,400,500,1000,2000,2500,5000,10000].find(r=>r*tpt>=12)||20000):Math.max(1,+sel);
+  const sel=LO&&S.tpoRow!=='auto'&&+S.tpoRow*tpt<11?'auto':S.tpoRow, rt=sel==='auto'?([1,2,4,5,8,10,20,25,40,50,100,200,250,400,500,1000,2000,2500,5000,10000].find(r=>r*tpt>=(wantTxt?12:3))||20000):Math.max(1,+sel);
   const rowH=rt*tpt, yRow=r=>yOfP(r*rt+rt-.5), yP=p=>yRow(Math.floor(p/rt))+rowH/2;
-  const fs=clamp(rowH*.78,7,13), txt=LO||rowH>=9&&colW>=7&&cfg.style!=='blocks';
+  const fs=clamp(rowH*.78,7,13), txt=wantTxt&&rowH>=9;
   const pTop=Math.floor((V.tpc+pH/2/tpt)/rt)+1, pBot=Math.floor((V.tpc-pH/2/tpt)/rt)-1;
   const sess=[1,2,3].filter(k=>cfg[`s${k}on`]).map(k=>[hm(cfg[`s${k}a`])*60,hm(cfg[`s${k}b`])*60,cfg[`s${k}c`]]);
   // price grid
@@ -2998,7 +3000,10 @@ function drawTPO(P,ctx,w,h){
     // letters / blocks: colour runs through the session (earlier → later), dimmer outside the value area
     ctx.font=`600 ${fs}px ${MONO}`; ctx.textAlign='center'; ctx.textBaseline='middle';
     const col=new Array(T.n).fill(0);
-    ps.forEach((p,pi)=>{
+    if(thin&&cfg.style!=='aligned'){
+      for(let i=0;i<T.n;i++){const y=rY(i); if(y>pH||y+rowH<0) continue; const isPoc=cfg.pocOn&&i===T.poc;
+        ctx.fillStyle=isPoc?'#ffffff':hexA(cfg.letterCol,inVA(i)||!cfg.vaOn?.85:.4); ctx.fillRect(x0,y+(rowH>3?.5:0),Math.max(1,T.cnt[i]*cw),Math.max(1,rowH-(rowH>3?1:0)))}
+    }else ps.forEach((p,pi)=>{
       const cur=T.live&&pi===np-1, sod_=p.t-p.day.i*DAY, sc=sess.find(s=>sod_>=s[0]&&sod_<s[1]);
       const f=np>1?pi/(np-1):1, base=sc?sc[2]:cfg.gradient?mixHex(mixHex(cfg.letterCol,'#6f63c9',.45),cfg.letterCol,Math.min(1,f*1.6)):cfg.letterCol;
       const pc=cfg.gradient&&!sc&&f>.62?mixHex(cfg.letterCol,cfg.curCol,(f-.62)/.38*.8):base;
@@ -3013,7 +3018,7 @@ function drawTPO(P,ctx,w,h){
     });
     if(cfg.rowTotals&&rowH>=8){ctx.font=`500 ${Math.min(10,fs)}px ${MONO}`; ctx.textAlign='right'; ctx.fillStyle=C.muted; T.cnt.forEach((c,i)=>ctx.fillText(c,x0-9,rY(i)+rowH/2+.5))}
     // initial balance, extensions, opening range
-    if(cfg.ibOn&&T.ib){
+    if(cfg.ibOn&&T.ib&&!tiny){
       const [a,b]=T.ib, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.ibCol; ctx.fillRect(x0-10,ya,2,yb-ya);
       const ibr=b-a; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.font=`500 9px ${MONO}`; ctx.textAlign='left'; ctx.textBaseline='bottom';
       for(const [k,m] of [['ext50',.5],['ext100',1],['ext150',1.5],['ext200',2]]) if(cfg[k]) for(const p of [b+ibr*m,a-ibr*m]){
@@ -3022,9 +3027,9 @@ function drawTPO(P,ctx,w,h){
       }
       ctx.setLineDash([]);
     }
-    if(cfg.orOn&&T.or){const [a,b]=T.or, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.orCol; ctx.fillRect(x0-14,ya,2,yb-ya)}
-    if(cfg.tails){ctx.fillStyle=C.lav; if(T.tt>=2) ctx.fillRect(x0-17,rY(T.n-1),1,T.tt*rowH); if(T.tb>=2) ctx.fillRect(x0-17,rY(T.tb-1),1,T.tb*rowH)}
-    if(cfg.poor&&!T.live){
+    if(cfg.orOn&&T.or&&!tiny){const [a,b]=T.or, ya=yP(b)-rowH/2, yb=yP(a)+rowH/2; ctx.fillStyle=cfg.orCol; ctx.fillRect(x0-14,ya,2,yb-ya)}
+    if(cfg.tails&&!tiny){ctx.fillStyle=C.lav; if(T.tt>=2) ctx.fillRect(x0-17,rY(T.n-1),1,T.tt*rowH); if(T.tb>=2) ctx.fillRect(x0-17,rY(T.tb-1),1,T.tb*rowH)}
+    if(cfg.poor&&!T.live&&!tiny){
       ctx.strokeStyle=hexA('#ff8a9a',.8); ctx.setLineDash([2,2]); ctx.lineWidth=1; ctx.font=`700 9px ${UI}`; ctx.fillStyle='#ff8a9a'; ctx.textAlign='left'; ctx.textBaseline='middle';
       if(T.cnt[T.n-1]>=2){const y=Math.round(rY(T.n-1))+.5; ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
       if(T.cnt[0]>=2){const y=Math.round(rY(0)+rowH)-.5; ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.fillText('poor',xEnd+2,y)}
@@ -3043,7 +3048,7 @@ function drawTPO(P,ctx,w,h){
         if(isP&&cfg.vpSplit){ctx.strokeStyle=cfg.pocCol; ctx.strokeRect(vx+.5,y+.5,W-1,hh-1)}
       }
     }
-    if(cfg.ocMarks){
+    if(cfg.ocMarks&&!tiny){
       if(T.open!=null){const yo=yP(T.open); ctx.fillStyle=C.text; ctx.beginPath(); ctx.moveTo(x0-ML+2,yo-3.5); ctx.lineTo(x0-ML+5.5,yo); ctx.lineTo(x0-ML+2,yo+3.5); ctx.fill()}
       const cp=T.live?D.last:T.close; if(cp!=null){const yc=yP(cp), xc=xEnd+2; ctx.fillStyle=T.live?C[D.lastSide>0?'pink':'mag']:C.text; ctx.beginPath(); ctx.moveTo(xc+6,yc-4); ctx.lineTo(xc,yc); ctx.lineTo(xc+6,yc+4); ctx.fill()}
     }
@@ -3063,13 +3068,15 @@ function drawTPO(P,ctx,w,h){
   // date labels and statistics under each profile (fixed strip at the bottom)
   ctx.fillStyle=pr.bg; ctx.fillRect(0,pH,plotW,h-pH);
   ctx.save(); ctx.beginPath(); ctx.rect(0,pH,plotW,h-pH); ctx.clip();
-  for(const e of V.tl){
+  let labR=Infinity; const tlS=[...V.tl].sort((a,b)=>b.x0-a.x0);
+  for(const e of tlS){
     const pf=e.pf, ps=pf.periods, np=ps.length, d0=ps[0].day, dL=ps[np-1].day, nd=dL.i-d0.i+1, isLast=e.idx===profs.length-1, T=e.T, sx=e.x0-ML;
     const lbl=nd>1&&cfg.tf==='day'?`${dateLbl(d0.t0)} – ${dateLbl(dL.t0)} · ${nd} days`:cfg.tf==='week'?'Wk '+dateLbl(d0.t0):cfg.tf==='month'?(RP.blind?'Month':CAL[d0.i].toLocaleDateString('en-US',{month:'short',year:'numeric',timeZone:'UTC'})):dateLbl(d0.t0)+(pf.t0!==d0.t0?' '+clock(pf.t0):'');
     ctx.font=`${isLast?600:500} 11px ${UI}`; ctx.fillStyle=isLast?'#fff':C.text; ctx.textAlign='left'; ctx.textBaseline='middle';
     if(nd>1&&cfg.tf==='day'){ctx.fillStyle=hexA('#ffd166',.7); ctx.fillRect(sx,pH+2,Math.max(30,e.lw+ML-4),2); ctx.fillStyle=isLast?'#fff':C.text}
+    const lw_=ctx.measureText(lbl).width; if(sx+lw_+8>labR) continue; labR=sx;
     ctx.fillText(lbl,sx,pH+12);
-    if(stH){
+    if(stH&&e.bxe-e.bx>=110){
       ctx.font=`9.5px ${MONO}`; ctx.fillStyle=C.muted; const sy=pH+TA+8;
       ctx.fillText(`R ${((pf.hi-pf.lo)*TICK).toFixed(DEC)}${T.ib?' · IB '+((T.ib[1]-T.ib[0])*TICK).toFixed(DEC):''}`,sx,sy);
       ctx.fillText(`RF ${T.rf>0?'+':''}${T.rf} · ${T.above}↑ ${T.below}↓`,sx,sy+13);
@@ -3095,7 +3102,7 @@ function drawTPO(P,ctx,w,h){
   // header
   ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillStyle=hexA(pr.bg,.75); ctx.fillRect(5,5,380,34);
   ctx.fillStyle='#fff'; ctx.font=`600 11px ${UI}`; ctx.fillText(`${SYM} - TPO ${cfg.period}m · per ${{day:'session',week:'week',month:'month'}[cfg.tf]} · ${profs.length} profiles`,8,8);
-  ctx.font=`10.5px ${MONO}`; ctx.fillStyle=C.muted; ctx.fillText(`Row ${(rt*TICK).toFixed(DEC)} · drag to move · Ctrl+wheel: price zoom · dbl-click: fit`,8,24);
+  ctx.font=`10.5px ${MONO}`; ctx.fillStyle=C.muted; ctx.fillText(`Row ${(rt*TICK).toFixed(DEC)} · wheel: zoom · drag: move · Ctrl+wheel: price zoom · dbl-click: fit`,8,24);
   V.tchip=null; const sr=V.tsel&&V.tsel.size>1?tpoSelIdx(P):null;
   if(sr){const t=`Merge ${sr[1]-sr[0]+1} profiles  ·  M`, x=392; ctx.font=`600 11.5px ${UI}`; const tw=ctx.measureText(t).width+20; ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.roundRect(x,9,tw,24,6); ctx.fill(); ctx.fillStyle='#1a1206'; ctx.textBaseline='middle'; ctx.fillText(t,x+10,21.5); V.tchip=[x,9,x+tw,33]}
   P.live.hidden=(V.tscroll||0)<20&&V.tauto;
@@ -5832,7 +5839,7 @@ function wireCanvas(P){
   const legendAt=p=>V.g&&V.g.legend.find(l=>p.x>=l.x&&p.x<=l.x+l.w&&p.y>=l.y&&p.y<=l.y+l.h);
   const setCursor=p=>{
     if(P.S.view==='tape'){cv.style.cursor='default'; return}
-    if(P.S.view==='tpo'){cv.style.cursor=V.tg&&p.x>V.tg.plotW?'ns-resize':'grab'; return}
+    if(P.S.view==='tpo'){cv.style.cursor=V.tg&&p.x>V.tg.plotW?'ns-resize':V.tg&&p.y>V.tg.pH?'ew-resize':'grab'; return}
     if(P.S.view==='dom'||zone(p)==='dom'){const h=domHit(P,p); cv.style.cursor=h&&(h.hdr?['price','abid','aask'].includes(h.col):h.col==='notes')?'pointer':'default'; return}
     const z=zone(p);
     if((z==='plot'||z==='lower')&&legendAt(p)){cv.style.cursor='pointer';return}
@@ -5876,7 +5883,7 @@ function wireCanvas(P){
     const p=pos(e); ptrs.set(e.pointerId,p);
     if(P.S.view==='tape'){P.drag={z:'none',moved:true}; return}
     if(P.S.view==='dom'||zone(p)==='dom'){domClick(P,p); P.drag={z:'none',moved:true}; return}
-    if(P.S.view==='tpo'){const ax=V.tg&&p.x>V.tg.plotW; P.drag={z:ax?'tpoax':'tpo',x:p.x,y:p.y,s0:V.tscroll||0,c0:V.tpc,t0:V.tpt,moved:false,type:e.pointerType}; cv.style.cursor=ax?'ns-resize':'grabbing'; return}
+    if(P.S.view==='tpo'){const ax=V.tg&&p.x>V.tg.plotW, tm=V.tg&&!ax&&p.y>V.tg.pH; if(tm){P.drag={z:'tpotime',x:p.x,c0:V.tcol||10,s0:V.tscroll||0,moved:false}; cv.style.cursor='ew-resize'; return} P.drag={z:ax?'tpoax':'tpo',x:p.x,y:p.y,s0:V.tscroll||0,c0:V.tpc,t0:V.tpt,moved:false,type:e.pointerType}; cv.style.cursor=ax?'ns-resize':'grabbing'; return}
     if(ptrs.size===1){
       const z=zone(p);
       if(z==='split'){const sp=splitAt(p); P.drag={z:'split',obj:sp.obj,h0:+sp.obj.height||14,y:p.y,x:p.x,H:cv.getBoundingClientRect().height,moved:false}; return}
@@ -5916,6 +5923,7 @@ function wireCanvas(P){
     const dx=p.x-drag.x, dy=p.y-drag.y;
     if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true;
     if(drag.z==='tpo'){V.tscroll=Math.max(0,drag.s0+dx); if(drag.c0!=null&&(Math.abs(dy)>3||V.tauto===false)){V.tauto=false; V.tpc=drag.c0+dy/V.tpt} P.dirty=true; return}
+    if(drag.z==='tpotime'){V.tcol=clamp(drag.c0*Math.exp(dx*.008),.25,14); P.dirty=true; return}
     if(drag.z==='tpoax'){if(drag.t0!=null){V.tauto=false; V.tpt=clamp(drag.t0*Math.exp(-dy*.008),.002,60)} P.dirty=true; return}
     if(drag.z==='brush'){const d=drag.d, l=d.pts[d.pts.length-1]; if(Math.hypot(V.g.xAt(l.t)-p.x,V.g.yOf(l.p)-p.y)>3) d.pts.push(ptAt(P,p)); allDirty(); return}
     if(drag.z==='box'){V.box=[drag.x,drag.y,p.x,p.y]; P.dirty=true; return}
@@ -5980,7 +5988,7 @@ function wireCanvas(P){
       else if(e.altKey&&V.tpt){V.tauto=false; V.tpc+=dY/V.tpt*.5}
       else if(e.shiftKey) V.tscroll=Math.max(0,(V.tscroll||0)+dY);
       else if(Math.abs(e.deltaX)>Math.abs(e.deltaY)) V.tscroll=Math.max(0,(V.tscroll||0)-e.deltaX*m);
-      else V.tcol=clamp((V.tcol||10)*Math.exp(-dY*.0015),4,18);
+      else{const old=V.tcol||10, nw=clamp(old*Math.exp(-dY*.0018),.25,14), k=nw/old; if(g){const R0=g.plotW-12, u=R0+(V.tscroll||0)-p0.x; V.tscroll=Math.max(0,u*k-(R0-p0.x))} V.tcol=nw}
       P.dirty=true; return}
     const p=pos(e), z=zone(p), m=e.deltaMode===1?16:e.deltaMode===2?400:1, dY=e.deltaY*m, dX=e.deltaX*m;
     if(z==='price'||e.ctrlKey||e.metaKey) zoomY(Math.exp(-dY*.0016),z==='price'&&V.g?V.g.pH/2:p.y);
