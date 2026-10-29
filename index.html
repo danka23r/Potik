@@ -3650,7 +3650,9 @@ const TICON={
   dock:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M15 4.5v15M17.3 8h1M17.3 11h1M17.3 14h1"/>',
 };
 const TOOL_NAME=t=>({cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
-const TOOL_GROUPS=[['cursor'],['trend','ray','xline','hline','hray','vline','arrow','channel'],['fib','fibext'],['rect','ellipse','brush','text','plabel'],['measure'],['long','short'],['vprof','avwap'],['ell5','ell3']];
+// 29.10: only the tools in use (ray, extended line, horizontal ray, arrow, channel, Fibonacci, ellipse, brush, price label and Elliott are gone from the toolbar;
+// drawings made with them earlier still show). A group with a single tool is a plain button.
+const TOOL_GROUPS=[['cursor'],['trend','hline','vline'],['rect','text'],['measure'],['long','short'],['vprof','avwap']];
 let TG_LAST={}; try{TG_LAST=JSON.parse(localStorage.getItem('potik.tg')||'{}')||{}}catch(e){}
 const svgI=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${TICON[k]||''}</svg>`;
 function buildToolbar(){
@@ -5121,7 +5123,7 @@ const HK_ACT=[
   ['buy','Buy market',()=>mktOrder(1)],['sell','Sell market',()=>mktOrder(-1)],['flat','Flatten',()=>flatten()],['rev','Reverse',()=>reverse()],['cxl','Cancel all orders',()=>cancelAll()],
   ['datawin','Data window',()=>toggleDataWin()],['shot','Save chart image',()=>active&&chartImage(active,'save')],['objtree','Object tree',()=>openObjectTree()],
   ['magnet','Magnet on / off',()=>{MAGNET=!MAGNET; try{localStorage.setItem('potik.magnet',MAGNET?'1':'0')}catch(e){} const m=$('#magb'); if(m) m.setAttribute('aria-pressed',MAGNET); toast(MAGNET?'Magnet on':'Magnet off','info')}],
-  ['t_trend','Tool: trend line',()=>setTool('trend')],['t_hline','Tool: horizontal line',()=>setTool('hline')],['t_rect','Tool: rectangle',()=>setTool('rect')],['t_fib','Tool: Fib retracement',()=>setTool('fib')],
+  ['t_trend','Tool: trend line',()=>setTool('trend')],['t_hline','Tool: horizontal line',()=>setTool('hline')],['t_rect','Tool: rectangle',()=>setTool('rect')],
   ['t_measure','Tool: measure',()=>setTool('measure')],['t_text','Tool: text',()=>setTool('text')],['t_long','Tool: long position',()=>setTool('long')],
   ['reopen','Reopen closed window',()=>reopenClosed()],
   ['wmax','Window: maximize / restore',()=>active&&toggleMax(active)],['wmin','Window: minimize',()=>active&&minimizePane(active)],['wfloat','Window: float / dock',()=>active&&toggleFloat(active)],['wclose','Window: close',()=>active&&closePane(active)],['settings','Settings',()=>openSettings(active)],['backups','Backups',()=>openBackups()],
