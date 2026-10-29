@@ -1851,12 +1851,15 @@ function drawChartOverlay(P,ctx,w,h){
   }
   // a legend row under the cursor: its name opens the settings; eye = hide / show, gear = settings, × = remove
   if(hv) for(const l of g.legend) if(hv.x>=l.x&&hv.x<=l.x+l.w&&hv.y>=l.y&&hv.y<l.y+l.h){
+    if(l.icon){ctx.fillStyle='#3a2c47'; ctx.fillRect(l.x+2,l.y+1,18,15); legIcon(ctx,P.S.legCol?'eyeoff':'eye',9,l.ty-1,'#fff');
+      ctx.font=`10px ${UI}`; ctx.textAlign='left'; ctx.textBaseline='middle'; const t=P.S.legCol?'Show indicator names':'Hide indicator names', w_=ctx.measureText(t).width+10;
+      ctx.fillStyle='rgba(20,15,26,.95)'; ctx.fillRect(l.x+26,l.y+1,w_,15); ctx.fillStyle=C.text; ctx.fillText(t,l.x+31,l.y+9); break}
     const t=l.txt(last), fs=l.fs||10.5; ctx.font=`${fs}px ${UI}`; ctx.textAlign='left'; ctx.textBaseline='top';
     const b=legBtn(l,hv), bx=l.tx+l.tw+8;
     ctx.fillStyle=g.bg; ctx.fillRect(l.x,l.y,Math.max(l.tw,ctx.measureText(t).width)+8+LEG_BTN,l.h);
     ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fillRect(l.x,l.y,l.tw+8+LEG_BTN,l.h);
     ctx.fillStyle=l.hid?C.muted:'#fff'; ctx.fillText(t,l.tx,l.ty); if(b==='name') ctx.fillRect(l.tx,l.ty+(l.fs?12:12.5),l.tw,1);
-    (l.id==='__all'?['eye','gear']:['eye','gear','del']).forEach((k,j)=>{const x=bx+j*16; if(b===k){ctx.fillStyle='#3a2c47'; ctx.fillRect(x-2,l.y,15,l.h)} legIcon(ctx,k==='eye'&&l.hid?'eyeoff':k,x,l.ty-1,b===k?'#fff':C.muted)});
+    ['eye','gear','del'].forEach((k,j)=>{const x=bx+j*16; if(b===k){ctx.fillStyle='#3a2c47'; ctx.fillRect(x-2,l.y,15,l.h)} legIcon(ctx,k==='eye'&&l.hid?'eyeoff':k,x,l.ty-1,b===k?'#fff':C.muted)});
     break;
   }
   // big trade under the mouse: its size (contracts, coins for crypto, money), side, price, how many prints (29.10)
@@ -2391,8 +2394,10 @@ function drawChart(P,ctx,w,h){
       if(hid){ctx.fillRect(8,ly+6,tw,1); legIcon(ctx,'eyeoff',8+tw+8,ly-1,C.dim)}
       V.g.legend.push({id,x:6,y:ly-2,w:tw+4+LEG_BTN,h:15,tw,tx:8,ty:ly,txt:txt||(()=>t),col,hid}); ly+=15};
     // summary row (29.10): its eye hides / shows every indicator at once, a click on it folds the list
-    const onI=IND.filter(x=>S.ind[x.id].on), cntI=onI.length+(S.studies||[]).length, allHid=cntI>0&&onI.every(x=>S.ind[x.id].hide)&&(S.studies||[]).every(Q=>!Q.on);
-    if(cntI) row('__all',`${S.legCol?'▸':'▾'} Indicators · ${cntI}${allHid?' · hidden':''}`,C.text,allHid);
+    // an eye only (29.10, like TradingView): click it to show the indicator names, click again to hide them; the indicators stay on the chart
+    const cntI=IND.filter(x=>S.ind[x.id].on).length+(S.studies||[]).length;
+    if(cntI){ctx.fillStyle=hexA(pr.bg,.55); ctx.fillRect(6,ly-2,18,15); legIcon(ctx,S.legCol?'eyeoff':'eye',9,ly-1,S.legCol?C.muted:C.text);
+      V.g.legend.push({id:'__all',x:4,y:ly-3,w:22,h:17,tw:0,tx:8,ty:ly,txt:()=>'',col:C.muted,icon:true}); ly+=15}
     if(!S.legCol){
     for(const x of IND){ const raw=S.ind[x.id]; if(!raw.on) continue;
       row(x.id,names[x.id]?names[x.id]():x.name,C.muted,!!raw.hide);
@@ -3787,7 +3792,7 @@ function removeInd(P,id){
   P.dirty=true; saveLayout(); toast(`${nm} removed · add it back in Settings`,'info');
 }
 function legendAct(P,l,b){
-  if(l.id==='__all'){if(b==='eye') hideAllInd(P); else if(b==='gear') openIndicators(P); else if(b==='name'){P.S.legCol=!P.S.legCol; P.dirty=true; saveLayout()} return}
+  if(l.id==='__all'){P.S.legCol=!P.S.legCol; P.dirty=true; saveLayout(); return}
   if(b==='eye') toggleIndHide(P,l.id); else if(b==='del') removeInd(P,l.id); else openSettings(P,l.id)}
 // hide every indicator on the window (they stay in the legend, struck through), or show them all again
 function hideAllInd(P){
@@ -5107,7 +5112,7 @@ const WS_TPL={
   'Replay · chart, DOM, account':{layout:'l3',panes:[{bt:'1m',view:'chart'},{bt:'1m',view:'acct'},{bt:'1m',view:'dom'}]},
 };
 function layoutObj(){return {layout,fr:FRAC,panes:panes.map(paneCfg),tree:TREE}}
-function paneCfg(P){return ({legCol:!!P.S.legCol,float:P.S.float||null,min:!!P.S.min,bt:P.S.bt,view:P.S.view,dom:P.S.dom,tpoRow:P.S.tpoRow,tpo:P.S.tpo,tpoCuts:P.S.tpoCuts,ind:P.S.ind,props:P.S.props,studies:P.S.studies,link:P.S.link,uid:P.S.uid,mode:P.mode,barW:P.V.barW})}
+function paneCfg(P){return ({legCol:!!P.S.legCol,legV2:true,float:P.S.float||null,min:!!P.S.min,bt:P.S.bt,view:P.S.view,dom:P.S.dom,tpoRow:P.S.tpoRow,tpo:P.S.tpo,tpoCuts:P.S.tpoCuts,ind:P.S.ind,props:P.S.props,studies:P.S.studies,link:P.S.link,uid:P.S.uid,mode:P.mode,barW:P.V.barW})}
 function loadLayout(o){
   while(panes.length){const P=panes.pop(); P.el.remove()} active=null; ws.classList.remove('max');
   FRAC=o.fr||{}; layout=COUNT[o.layout]?o.layout:'l1'; (o.panes||[]).slice(0,MAXW).forEach(c=>addPane(c)); if(!panes.length) addPane(DEFAULTS[0]);
@@ -5795,7 +5800,7 @@ function makePane(cfg){
   const el=$('#winTpl').content.firstElementChild.cloneNode(true);
   const c=JSON.parse(JSON.stringify(cfg));
   const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{}),...(c.tpo&&!c.tpo.v2?{ext100:false,ext200:false,v2:true}:{}),...(c.tpo&&!c.tpo.v3?{vp:false,v3:true}:{})},
-    tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min,legCol:!!c.legCol};
+    tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min,legCol:c.legV2?!!c.legCol:true};   // 29.10: indicator names start hidden behind the eye
   {const b=S.ind.big, ob=c.ind&&c.ind.big; if(ob&&ob.min!=null&&ob.minBuy==null){b.minBuy=b.minSell=ob.min} delete b.min; b.aggMs=BIGAGG.ms; b.aggTicks=BIGAGG.ticks; b.aggOpp=BIGAGG.opp}   // settings from older versions
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
     V:{barW:c.barW||defaultBarW(S),scroll:0,tickPx:3,center:null,autoY:true,fit:true,hover:null,g:null,lastN:0},
