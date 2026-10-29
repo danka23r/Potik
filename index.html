@@ -1401,13 +1401,13 @@ const IND=[
    fields:[['color','Line color','color'],['width','Line width','num',.5,5,.1],['glow','Soft glow','bool'],['b1','Band ±1σ','bool'],['b2','Band ±2σ','bool'],['b3','Band ±3σ','bool'],
      ['band','Band color','color'],['bandW','Band width','num',.5,4,.1],['dash','Band style','select',['solid','dashed','dotted']],['bandOp','Band opacity %','range',0,100,1],['fill','Soft fill inside the first band','bool'],['fillOp','Fill opacity %','range',0,40,1]]},
   {id:'prof',name:'Volume Profile',group:'Volume',desc:'Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.',
-   def:{on:true,side:'day',v3:true,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
+   def:{on:true,side:'day',v3:true,vaEdges:true,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
      sessions:false,sessW:70,sessOp:35,sessPoc:true,dev:false,devCol:'#ffffff',
      naked:false,nakedVA:false,nakedDays:5,nakedCol:'#ffd166',nodes:false,nodeLines:false,hvnCol:'#8fd3ff',lvnCol:'#ffd166'},
    tabs:[
     ['Side profile',[['side','Where','select',[['day','Each day, from its start (00:00) to the next day'],['right','Right side of the chart'],['left','Left side of the chart']]],['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
       ['mode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta'],['ladder','Ladder (bid left, ask right)']]],['widthPct','Width % of chart','range',5,45,1],['color','Color','color'],['poc','POC color','color'],
-      ['vaPct','Value area %','num',40,95,1],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['vaLines','POC / VAH / VAL lines across the chart','bool'],['vaCol','Line color','color'],
+      ['vaPct','Value area %','num',40,95,1],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['vaEdges','Daily profile: thin lines on the value area edges (VAH / VAL)','bool'],['vaLines','POC / VAH / VAL lines across the chart','bool'],['vaCol','Line color','color'],
       ['labels','Volume numbers on rows','bool'],['shadow','Black silhouette','bool']]],
     ['Sessions',[['sessions','Profile for every session on the chart','bool'],['sessW','Width % of the session','range',20,100,1],['sessOp','Opacity %','range',10,90,1],['sessPoc','Session POC line','bool'],
       ['dev','Developing POC / VAH / VAL lines','bool'],['devCol','Developing line color','color']]],
@@ -2002,14 +2002,23 @@ function drawChart(P,ctx,w,h){
       const rows=[]; let mx=1;
       for(let k=Math.floor(day.lo/rp)*rp;k<=day.hi;k+=rp){let b=0,av=0; for(let p=k;p<k+rp;p++){const x=day.prof.get(p); if(x){b+=x[0]; av+=x[1]}} rows.push([k,b,av]); if(b+av>mx)mx=b+av}
       if(!rows.length) continue;
-      const va=valueArea(rows.map(r=>r[1]+r[2]),Qp.vaPct), lh=Math.max(1,rp*tp-(rp*tp>3?1:0));
-      rows.forEach(([k,b,av],i)=>{const y=yOf(k+rp-1)-tp/2; if(y>pH||y+lh<0) return;
-        const inVA=i>=va.dn&&i<=va.up, op=(inVA?Qp.vaOp:Qp.outOp)/100*.75;
-        if(Qp.mode==='split'){const wb=b/mx*W, wa=av/mx*W; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,lh); ctx.fillStyle=hexA(Qp.color,op); ctx.fillRect(x0+wb,y,wa,lh)}
-        else{ctx.fillStyle=i===va.poc?hexA(Qp.poc,Math.min(1,op+.3)):hexA(Qp.color,op); ctx.fillRect(x0,y,(b+av)/mx*W,lh)}});
-      const yP=k=>Math.round(yOf(k))+.5, pocP=rows[va.poc][0]+(rp-1)/2;
-      ctx.lineWidth=1; ctx.strokeStyle=hexA(Qp.poc,.55); ctx.beginPath(); ctx.moveTo(x0,yP(pocP)); ctx.lineTo(Math.min(xE,plotW),yP(pocP)); ctx.stroke();
-      if(Qp.vaLines){ctx.setLineDash([4,4]); ctx.strokeStyle=hexA(Qp.vaCol,.5); for(const p of [rows[va.up][0]+rp-1,rows[va.dn][0]]){ctx.beginPath(); ctx.moveTo(x0,yP(p)); ctx.lineTo(Math.min(xE,plotW),yP(p)); ctx.stroke()} ctx.setLineDash([])}
+      /* look (29.10): rows fade from the day's start toward their tips, a hairline gap between rows and rounded tips;
+         the value area brighter, outside it quieter, the POC soft white; thin lines on the value area's edges (VAH / VAL) */
+      const va=valueArea(rows.map(r=>r[1]+r[2]),Qp.vaPct), rpx=rp*tp, gp=rpx>=3?1:0, lh=Math.max(1,rpx-gp), rad=Math.min(2,lh/2);
+      const grad=(col,a1,a2)=>{const g=ctx.createLinearGradient(x0,0,x0+W,0); g.addColorStop(0,hexA(col,a1)); g.addColorStop(1,hexA(col,a2)); return g};
+      const kv=(+Qp.vaOp||90)/100, ko=(+Qp.outOp||45)/100, gVA=grad(Qp.color,.62*kv,.26*kv), gOut=grad(Qp.color,.34*ko,.1*ko), gPoc=grad(Qp.poc,.85,.4);
+      const bar=(x,y,w,h)=>{if(w<=0) return; if(rad>=1&&w>3){ctx.beginPath(); ctx.roundRect(x,y,w,h,[0,rad,rad,0]); ctx.fill()} else ctx.fillRect(x,y,w,h)};
+      rows.forEach(([k,b,av],i)=>{const y=yOf(k+rp-1)-tp/2+gp/2; if(y>pH||y+lh<0) return;
+        const inVA=i>=va.dn&&i<=va.up;
+        if(Qp.mode==='split'){const op=(inVA?.62*kv:.3*ko), wb=b/mx*W, wa=av/mx*W; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,lh); ctx.fillStyle=hexA(Qp.color,op); bar(x0+wb,y,wa,lh)}
+        else{ctx.fillStyle=i===va.poc?gPoc:inVA?gVA:gOut; bar(x0,y,(b+av)/mx*W,lh)}});
+      const yP=k=>Math.round(yOf(k))+.5, pocP=rows[va.poc][0]+(rp-1)/2, xEnd=Math.min(xE,plotW);
+      ctx.lineWidth=1; ctx.strokeStyle=hexA(Qp.poc,.42); ctx.beginPath(); ctx.moveTo(x0,yP(pocP)); ctx.lineTo(xEnd,yP(pocP)); ctx.stroke();
+      if(Qp.vaLines||Qp.vaEdges){
+        const yH=Math.round(yOf(rows[va.up][0]+rp-1)-tp/2)+.5, yL=Math.round(yOf(rows[va.dn][0])+tp/2)-.5;
+        ctx.strokeStyle=hexA(Qp.vaCol,.4); ctx.beginPath(); ctx.moveTo(x0,yH); ctx.lineTo(xEnd,yH); ctx.moveTo(x0,yL); ctx.lineTo(xEnd,yL); ctx.stroke();
+        if(xEnd-x0>60){ctx.font=`500 9px ${MONO}`; ctx.fillStyle=hexA(Qp.vaCol,.7); ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('VAH',xEnd-4,yH-2); ctx.textBaseline='top'; ctx.fillText('VAL',xEnd-4,yL+2)}
+      }
       if(xS>=0){ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(Math.round(xS),0,1,pH)}   // the day's start
     }
   }
