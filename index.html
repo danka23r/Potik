@@ -53,7 +53,7 @@ button{background:none;border:0;cursor:pointer}
 .ws{position:relative;flex:1;min-height:0;display:grid;gap:4px;padding:4px;background:#0b0810;
   padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 .ws.max .win{display:none}
-.ws.max .win.maxed{display:flex;grid-area:1/1/-1/-1!important;position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important}
+.ws.max .win.maxed{display:flex;position:absolute!important;left:4px!important;top:4px!important;width:calc(100% - 8px)!important;height:calc(100% - 8px)!important;z-index:14}
 .split{position:absolute;z-index:12;border-radius:3px}
 .split.col{cursor:col-resize}.split.row{cursor:row-resize}
 .split:hover,.split:active{background:rgba(196,178,238,.35)}
@@ -343,7 +343,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 @media (max-width:699px){
   .ws{grid-template:1fr/1fr!important}
   .ws .win{display:none!important}
-  .ws .win.act{display:flex!important;grid-area:1/1/-1/-1!important}
+  .ws .win.act{display:flex!important;position:absolute!important;left:4px!important;top:4px!important;width:calc(100% - 8px)!important;height:calc(100% - 8px)!important}
   .lay{display:none}
   .wtabs{display:flex}
 }
@@ -396,17 +396,6 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
   <header class="tb">
     <button type="button" class="brand bb" id="brandb" title="Start screen">ПОТІК</button>
     <span class="sep"></span>
-    <div class="lay" id="lay" role="group" aria-label="Layout">
-      <button type="button" data-v="l1" title="One window"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/></svg></button>
-      <button type="button" data-v="l2v" title="Two side by side"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M9 .5v13"/></svg></button>
-      <button type="button" data-v="l2h" title="Two stacked"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M.5 7h17"/></svg></button>
-      <button type="button" data-v="l3" title="Three windows"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M9 .5v13M.5 7H9"/></svg></button>
-      <button type="button" data-v="l3r" title="Three in a row"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M6.2 .5v13M11.8 .5v13"/></svg></button>
-      <button type="button" data-v="l4r" title="Four in a row"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M4.75 .5v13M9 .5v13M13.25 .5v13"/></svg></button>
-      <button type="button" data-v="l4" title="Four windows"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M9 .5v13M.5 7h17"/></svg></button>
-      <button type="button" data-v="l6" title="Six windows"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M6.2 .5v13M11.8 .5v13M.5 7h17"/></svg></button>
-      <button type="button" data-v="l8" title="Eight windows"><svg viewBox="0 0 18 14" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="17" height="13" rx="1.5"/><path d="M4.75 .5v13M9 .5v13M13.25 .5v13M.5 7h17"/></svg></button>
-    </div>
     <button type="button" class="addw" id="addw">+ Window</button>
     <select id="wsSel" class="hsel" aria-label="Workspace" title="Workspace"></select>
     <div class="wtabs" id="wtabs" role="group" aria-label="Windows"></div>
@@ -1408,11 +1397,11 @@ const IND=[
    fields:[['color','Line color','color'],['width','Line width','num',.5,5,.1],['b1','Band ±1σ','bool'],['b2','Band ±2σ','bool'],['b3','Band ±3σ','bool'],
      ['band','Band color','color'],['bandW','Band width','num',.5,4,.1],['dash','Band style','select',['solid','dashed','dotted']],['bandOp','Band opacity %','range',0,100,1],['fill','Fill between bands','bool'],['fillOp','Fill opacity %','range',0,40,1]]},
   {id:'prof',name:'Volume Profile',group:'Volume',desc:'Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.',
-   def:{on:true,side:'right',period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
+   def:{on:true,side:'day',v3:true,period:'day',compDays:5,mode:'volume',widthPct:20,color:'#c4b2ee',poc:'#ffffff',vaPct:70,vaOp:90,outOp:45,shadow:false,vaLines:false,vaCol:'#c4b2ee',labels:false,
      sessions:false,sessW:70,sessOp:35,sessPoc:true,dev:false,devCol:'#ffffff',
      naked:false,nakedVA:false,nakedDays:5,nakedCol:'#ffd166',nodes:false,nodeLines:false,hvnCol:'#8fd3ff',lvnCol:'#ffd166'},
    tabs:[
-    ['Side profile',[['side','Side of the chart','select',[['right','Right'],['left','Left']]],['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
+    ['Side profile',[['side','Where','select',[['day','Each day, from its start (00:00) to the next day'],['right','Right side of the chart'],['left','Left side of the chart']]],['period','Profile','select',[['day','Today'],['prevday','Previous day'],['week','This week'],['month','This month'],['composite','Composite: last N sessions'],['visible','Visible bars']]],['compDays','Composite sessions','num',2,23,1],
       ['mode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta'],['ladder','Ladder (bid left, ask right)']]],['widthPct','Width % of chart','range',5,45,1],['color','Color','color'],['poc','POC color','color'],
       ['vaPct','Value area %','num',40,95,1],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['vaLines','POC / VAH / VAL lines across the chart','bool'],['vaCol','Line color','color'],
       ['labels','Volume numbers on rows','bool'],['shadow','Black silhouette','bool']]],
@@ -1496,6 +1485,7 @@ const DEF_PROPS={bg:'#000000',up:'#f7dcf3',down:'#e23cf0',legend:true,style:'can
 const PROP_FIELDS=[['style','Bar style','select',[['candle','Candles'],['hollow','Hollow candles'],['ohlc','OHLC bars'],['ha','Heikin Ashi'],['line','Line'],['area','Area'],['none','No bars (footprint only)']]],['bg','Background','color'],['up','Up bar color (RSI off)','color'],['down','Down bar color (RSI off)','color'],['legend','Show legend','bool']];
 function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})};
   if(src&&src.big&&!src.big.v2) Object.assign(o.big,{count:false,sweep:false,glow:false,v2:true});   // 29.10: compact big trades
+  if(src&&src.prof&&!src.prof.v3&&'period' in src.prof){if(src.prof.side==='left') o.prof.side='day'; else if(!src.prof.side) o.prof.side='right'; o.prof.v3=true}   // 29.10: a profile for each day
   return o}
 /* ---------- classic studies: any number of instances per window, on the price or in their own panel ----------
    A study: {id, name, group, place:'price'|'panel', def, fields, label(Q), calc(B,Q,ctx)} where calc returns
@@ -1863,6 +1853,16 @@ function drawChartOverlay(P,ctx,w,h){
     ['eye','gear','del'].forEach((k,j)=>{const x=bx+j*16; if(b===k){ctx.fillStyle='#3a2c47'; ctx.fillRect(x-2,l.y,15,l.h)} legIcon(ctx,k==='eye'&&l.hid?'eyeoff':k,x,l.ty-1,b===k?'#fff':C.muted)});
     break;
   }
+  // big trade under the mouse: its size (contracts, coins for crypto, money), side, price, how many prints (29.10)
+  if(inPlot&&g.bigs.length){let hit=null; for(let k=g.bigs.length-1;k>=0;k--){const b=g.bigs[k]; if(b[3]&&Math.hypot(hv.x-b[0],hv.y-b[1])<=b[2]+2){hit=b; break}}
+    if(hit){const v=hit[3], buy=v.sd>0, Q=P.S.ind.big, coins=INS.lot?v.sz*INS.lot:0, px=v.px*TICK, usd=coins?coins*px:v.sz*INS.usd/INS.tick*0;
+      const lines=[`${buy?'Buy':'Sell'} ${fK(v.sz)}${INS.unit?` · ${coins>=100?coins.toFixed(0):coins.toFixed(2)} ${INS.unit}`:''}`,`@ ${fP(Math.round(v.px))}${usd?` · $${fK(Math.round(usd))}`:''}`];
+      if(v.k>1||v.n>1) lines.push(`${v.k} prints${v.n>1?` · ${v.n} trades merged`:''}`);
+      ctx.save(); ctx.font=`600 11px ${MONO}`; const w=Math.max(...lines.map(t=>ctx.measureText(t).width))+16, h=lines.length*15+8;
+      let bx=hit[0]+hit[2]+8, by=hit[1]-h/2; if(bx+w>plotW-4) bx=hit[0]-hit[2]-8-w; by=clamp(by,4,pH-h-4);
+      ctx.fillStyle='rgba(20,15,26,.95)'; ctx.strokeStyle=buy?Q.buy:Q.sell; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(bx+.5,by+.5,w,h,6); ctx.fill(); ctx.stroke();
+      ctx.textAlign='left'; ctx.textBaseline='top'; lines.forEach((t,i)=>{ctx.fillStyle=i?C.text:'#fff'; ctx.fillText(t,bx+8,by+5+i*15)});
+      ctx.beginPath(); ctx.arc(hit[0],hit[1],hit[2]+1.5,0,6.2832); ctx.stroke(); ctx.restore()}}
 }
 // small legend icons (12 px): eye, eye crossed out, gear, ×
 const LEG_BTN=54;
@@ -1889,7 +1889,7 @@ function drawChart(P,ctx,w,h){
   const sotH=I.sot.on?Math.round(clamp(h*I.sot.height/100,40,220)):0, powH=I.dpow.on?Math.round(clamp(h*I.dpow.height/100,40,220)):0;
   const stPan=(S.studies||[]).filter(Q=>Q.on&&STUDY_BY[Q.id]&&STUDY_BY[Q.id].place==='panel').map(Q=>({Q,H:Math.round(clamp(h*(+Q.height||14)/100,40,320))}));
   const timeTop=h-TA, statTop=timeTop-stH, cvdTop=statTop-cvdH, sotTop=cvdTop-sotH, powTop=sotTop-powH, stTop0=powTop-stPan.reduce((a,x)=>a+x.H,0), pH=Math.max(60,stTop0);
-  const PW=I.prof.on?Math.round(clamp(plotW*I.prof.widthPct/100,30,420)):0, R=plotW-(I.prof.side==='left'?0:PW)-10, bw=V.barW;
+  const PW=I.prof.on?Math.round(clamp(plotW*I.prof.widthPct/100,30,420)):0, R=plotW-(I.prof.side==='right'?PW:0)-10, bw=V.barW;
   if(!isFinite(V.scroll))V.scroll=0; if(!isFinite(V.barW))V.barW=5;
   V.scroll=clamp(V.scroll,-Math.max(0,last-1),(R*.5)/bw);
   const s=V.scroll, xOf=i=>R-(last-i+s)*bw-bw/2;
@@ -1911,11 +1911,13 @@ function drawChart(P,ctx,w,h){
       V.tickPx+=(tt-V.tickPx)*.3; V.center+=(tc-V.center)*.3; P.dirty=true;
       if(Math.abs(tt-V.tickPx)<.004&&Math.abs(tc-V.center)<.05) V.fit=false;
     }
-  }else if(!V.userY&&!P.drag&&isFinite(lo)&&(lo>V.center+pH/2/V.tickPx||hi<V.center-pH/2/V.tickPx)){
-    V.center+=((lo+hi)/2-V.center)*.3; P.dirty=true;
-  }else if(!V.userY&&!P.drag&&V.scroll>=-.5){
-    const yl=pH/2-(D.last-V.center)*V.tickPx;
-    if(yl<pH*.1||yl>pH*.86){V.center+=(D.last-V.center)*.12;P.dirty=true}
+    V.yoff=0; V.base=V.center;
+  }else if(isFinite(lo)){
+    /* manual scale (29.10): the user's vertical move is an offset (yoff) from the middle of the visible bars (base), so
+       dragging up / down is free, and panning through history keeps the bars in view at the same offset and zoom */
+    const tgt=(lo+hi)/2; if(V.base==null) V.base=V.center-(V.yoff||0);
+    if(Math.abs(tgt-V.base)>.02){V.base+=(tgt-V.base)*.35; P.dirty=true} else V.base=tgt;
+    V.center=V.base+(V.yoff||0);
   }
   const tp=V.tickPx, ctr=V.center, yOf=t=>pH/2-(t-ctr)*tp;
   const secPB=barSecs(S.bt,B);
@@ -1982,9 +1984,33 @@ function drawChart(P,ctx,w,h){
     }
   }
 
+  /* a volume profile for each day (29.10): anchored at the day's first bar (00:00 UTC for crypto, the session open otherwise)
+     and spanning to the next day, on every bar type; when the day's start is scrolled off, it sticks to the left edge */
+  if(Qp.on&&Qp.side==='day'){
+    const Wmax=plotW*clamp(+Qp.widthPct||20,5,45)/100*1.5, rp=[1,2,3,4,6,8,12,16,24,40,80,160,320].find(r=>r*tp>=2.2)||640;
+    for(const [a] of segs){
+      const [s0,s1]=sessOf(a), day=D.days[dayOf(B[a].t0)]; if(!day||!day.v) continue;
+      const xS=xOf(s0)-bw/2, xE=day===D.day?Math.max(xOf(s1)+bw/2,R):xOf(s1)+bw/2, x0=Math.max(xS,0);
+      if(xE<=0||x0>=plotW) continue;
+      const W=Math.min((xE-x0)*.92,Wmax); if(W<6) continue;
+      const rows=[]; let mx=1;
+      for(let k=Math.floor(day.lo/rp)*rp;k<=day.hi;k+=rp){let b=0,av=0; for(let p=k;p<k+rp;p++){const x=day.prof.get(p); if(x){b+=x[0]; av+=x[1]}} rows.push([k,b,av]); if(b+av>mx)mx=b+av}
+      if(!rows.length) continue;
+      const va=valueArea(rows.map(r=>r[1]+r[2]),Qp.vaPct), lh=Math.max(1,rp*tp-(rp*tp>3?1:0));
+      rows.forEach(([k,b,av],i)=>{const y=yOf(k+rp-1)-tp/2; if(y>pH||y+lh<0) return;
+        const inVA=i>=va.dn&&i<=va.up, op=(inVA?Qp.vaOp:Qp.outOp)/100*.75;
+        if(Qp.mode==='split'){const wb=b/mx*W, wa=av/mx*W; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,lh); ctx.fillStyle=hexA(Qp.color,op); ctx.fillRect(x0+wb,y,wa,lh)}
+        else{ctx.fillStyle=i===va.poc?hexA(Qp.poc,Math.min(1,op+.3)):hexA(Qp.color,op); ctx.fillRect(x0,y,(b+av)/mx*W,lh)}});
+      const yP=k=>Math.round(yOf(k))+.5, pocP=rows[va.poc][0]+(rp-1)/2;
+      ctx.lineWidth=1; ctx.strokeStyle=hexA(Qp.poc,.55); ctx.beginPath(); ctx.moveTo(x0,yP(pocP)); ctx.lineTo(Math.min(xE,plotW),yP(pocP)); ctx.stroke();
+      if(Qp.vaLines){ctx.setLineDash([4,4]); ctx.strokeStyle=hexA(Qp.vaCol,.5); for(const p of [rows[va.up][0]+rp-1,rows[va.dn][0]]){ctx.beginPath(); ctx.moveTo(x0,yP(p)); ctx.lineTo(Math.min(xE,plotW),yP(p)); ctx.stroke()} ctx.setLineDash([])}
+      if(xS>=0){ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(Math.round(xS),0,1,pH)}   // the day's start
+    }
+  }
+
   // side volume profile (modes, value area, labels, high / low volume nodes)
   let sideVA=null;
-  if(Qp.on){
+  if(Qp.on&&Qp.side!=='day'){
     const Q=Qp, xR=plotW, LFT=Q.side==='left', X=x=>LFT?plotW-x:x, RX=(x,y,w,h)=>ctx.fillRect(LFT?plotW-x-w:x,y,w,h), SX=(x,y,w,h)=>ctx.strokeRect(LFT?plotW-x-w:x,y,w,h), rp=[1,2,3,4,6,8,12,16,24,40,80].find(r=>r*tp>=2.2)||160, rows=[]; let mx=1,md=1,ms=1;
     const src=profSource(Q,B,i0,i1);
     if(isFinite(src.lo)) for(let k=Math.floor(src.lo/rp)*rp;k<=src.hi;k+=rp){
@@ -2167,7 +2193,7 @@ function drawChart(P,ctx,w,h){
       if(fancy){const g=ctx.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r); g.addColorStop(0,hexA(mixHex(col,'#ffffff',.45),Math.min(1,op+.2))); g.addColorStop(1,hexA(col,op*.8)); ctx.fillStyle=g}
       else ctx.fillStyle=hexA(col,op*.85);
       if(Q.glow&&fancy&&bw>=4){ctx.shadowColor=hexA(col,op*.7); ctx.shadowBlur=r*.5}
-      ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill(); ctx.shadowBlur=0; V.g.bigs.push([x,y,r]);
+      ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill(); ctx.shadowBlur=0; V.g.bigs.push([x,y,r,v]);
       if(Q.labels&&r>=8) labs.push({x,y,r,v});
     }
     // size labels on the biggest bubbles first, never on top of each other
@@ -2340,7 +2366,7 @@ function drawChart(P,ctx,w,h){
     V.g.lg={w:legendHead(ctx,S,c)};
     ctx.font=`10.5px ${UI}`; let ly=26;
     const names={vwap:()=>`VWAP (${CRYPTO?'UTC day':ETH?"ETH":"RTH"})${[1,2,3].filter(k=>I.vwap['b'+k]).map(k=>' ±'+k+'σ').join('')}`,rsi:()=>`RSI Bars (${I.rsi.period})`,
-      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+clock(FEED.bf.loT):FEED.bf.st==='waiting'?' · Binance busy, retrying':' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
+      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+clock(FEED.bf.loT):FEED.bf.st==='waiting'?' · Binance busy, retrying':' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>I.prof.side==='day'?`Volume Profile (each ${CRYPTO?'day from 00:00 UTC':'session'})`:`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
       fp:()=>`Footprint · ${FP_MODE_NAME[F.mode1]||'Bid x Ask'}${F.mode2&&F.mode2!=='none'?' + '+FP_MODE_NAME[F.mode2]:''}${fp?'':fpLod?' (cells, zoom in for numbers)':' (zoom in)'}${F.naked||F.stackZone||F.unfin?' + level lines':''}`,
       cvd:()=>'CVD',stats:()=>`Bar Statistics (${stRows.map(r=>r[1]).join(' ')||'no rows'})`,
       heat:()=>'Liquidity Heatmap (book from today’s open)',dpow:()=>`DOM Power (${I.dpow.levels} levels)`,sot:()=>`Speed of Tape (${SOT_NAME[I.sot.stat]} / ${I.sot.interval}s)`};
@@ -2855,14 +2881,14 @@ function sotCalc(B,i0,i1,last,Q,secPB){
 /* ---------- TPO (market profile) ----------
    Periods of P minutes come from the per-minute session ranges. Profiles cover a session, week or month; the user can
    split a profile at any period and merge neighbours (stored as times, so they survive a change of letter period). */
-const TPO_DEF=()=>({period:30,tf:'day',style:'letters',gradient:true,letterCol:'#c4b2ee',curCol:'#f7dcf3',rowTotals:false,ocMarks:true,mid:false,hilo:false,stats:true,
+const TPO_DEF=()=>({onlyLetters:false,period:30,tf:'day',style:'letters',gradient:true,letterCol:'#c4b2ee',curCol:'#f7dcf3',rowTotals:false,ocMarks:true,mid:false,hilo:false,stats:true,
   vaOn:true,vaBy:'time',vaPct:70,vaFill:true,vaLines:false,vaCol:'#7b23b4',pocOn:true,pocCol:'#e23cf0',pocLine:'profile',nakedVA:false,
   ibOn:true,ibMin:60,ibCol:'#e23cf0',ext50:false,ext100:false,ext150:false,ext200:false,v2:true,orOn:true,orMin:5,orCol:'#ffd166',
   singles:true,singleCol:'#ffd166',tails:true,poor:true,
   vp:true,vpSide:'right',vpW:56,vpSplit:false,vpCol:'#c4b2ee',
   s1on:false,s1a:'09:30',s1b:'10:30',s1c:'#8fd3ff',s2on:false,s2a:'10:30',s2b:'14:00',s2c:'#c4b2ee',s3on:false,s3a:'14:00',s3b:'16:00',s3c:'#ffd166'});
 const TPO_TABS=[
-  ['General',[['period','Letter period (min)','select',[5,15,30,60]],['tf','One profile per','select',[['day','Session'],['week','Week'],['month','Month']]],
+  ['General',[['onlyLetters','Letters only (no blocks when zoomed out, no volume beside)','bool'],['period','Letter period (min)','select',[5,15,30,60]],['tf','One profile per','select',[['day','Session'],['week','Week'],['month','Month']]],
     ['style','Cells','select',[['letters','Letters, packed'],['blocks','Blocks, packed'],['aligned','Letters, one column per period']]],['gradient','Fade earlier periods','bool'],
     ['letterCol','Letter color','color'],['curCol','Current period color','color'],['rowTotals','TPO count per row','bool'],['ocMarks','Open / close markers','bool'],
     ['mid','Midpoint line','bool'],['hilo','High / low lines','bool'],['stats','Statistics under each profile','bool']]],
@@ -2933,7 +2959,7 @@ function drawTPO(P,ctx,w,h){
   const V=P.V, S=P.S, cfg=S.tpo, pr=S.props, AX=66, TA=22, stH=cfg.stats?44:0, plotW=w-AX, pH=h-TA-stH;
   ctx.fillStyle=pr.bg; ctx.fillRect(0,0,w,h); V.g=null; V.tl=[]; V.tg={plotW,pH,AX};
   const profs=tpoProfiles(cfg,S.tpoCuts); if(!profs.length) return;
-  const colW=clamp(V.tcol||10,4,18), cw=colW*.8, gap=Math.max(22,colW*2.2), ML=cfg.rowTotals?36:20, vpw=cfg.vp?+cfg.vpW+8:0;
+  const LO=!!cfg.onlyLetters, colW=clamp(V.tcol||10,LO?8:4,18), cw=colW*.8, gap=Math.max(22,colW*2.2), ML=cfg.rowTotals?36:20, vpw=cfg.vp&&!LO?+cfg.vpW+8:0;
   const Lw=pf=>Math.max(6,pf.periods.length)*cw, blockW=pf=>ML+Lw(pf)+vpw+gap;
   let total=0; for(const pf of profs) total+=blockW(pf);
   V.tscroll=clamp(V.tscroll||0,0,Math.max(0,total-plotW*.6));
@@ -2944,9 +2970,9 @@ function drawTPO(P,ctx,w,h){
   // vertical scale: price (ticks) → y. Auto fits the visible profiles until the user moves or zooms it.
   if(V.tauto!==false||V.tpt==null){V.tauto=true; V.tpt=clamp((pH-36)/(hi-lo+3),.002,60); V.tpc=(lo+hi)/2}
   const tpt=V.tpt, yOfP=p=>pH/2-(p-V.tpc)*tpt;
-  const sel=S.tpoRow, rt=sel==='auto'?([1,2,4,5,8,10,20,25,40,50,100,200,250,400,500,1000,2000,2500,5000,10000].find(r=>r*tpt>=12)||20000):Math.max(1,+sel);
+  const sel=LO&&S.tpoRow!=='auto'&&+S.tpoRow*tpt<11?'auto':S.tpoRow, rt=sel==='auto'?([1,2,4,5,8,10,20,25,40,50,100,200,250,400,500,1000,2000,2500,5000,10000].find(r=>r*tpt>=12)||20000):Math.max(1,+sel);
   const rowH=rt*tpt, yRow=r=>yOfP(r*rt+rt-.5), yP=p=>yRow(Math.floor(p/rt))+rowH/2;
-  const fs=clamp(rowH*.78,7,13), txt=rowH>=9&&colW>=7&&cfg.style!=='blocks';
+  const fs=clamp(rowH*.78,7,13), txt=LO||rowH>=9&&colW>=7&&cfg.style!=='blocks';
   const pTop=Math.floor((V.tpc+pH/2/tpt)/rt)+1, pBot=Math.floor((V.tpc-pH/2/tpt)/rt)-1;
   const sess=[1,2,3].filter(k=>cfg[`s${k}on`]).map(k=>[hm(cfg[`s${k}a`])*60,hm(cfg[`s${k}b`])*60,cfg[`s${k}c`]]);
   // price grid
@@ -3008,7 +3034,7 @@ function drawTPO(P,ctx,w,h){
     if(cfg.mid){const y=Math.round(yOfP((pf.lo+pf.hi)/2))+.5; ctx.strokeStyle=hexA('#ffffff',.4); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(x0-4,y); ctx.lineTo(xEnd,y); ctx.stroke(); ctx.setLineDash([])}
     if(cfg.hilo){ctx.fillStyle=hexA('#ffffff',.35); ctx.fillRect(x0-4,Math.round(rY(T.n-1)),lw+8,1); ctx.fillRect(x0-4,Math.round(rY(0)+rowH)-1,lw+8,1)}
     // volume profile beside the letters
-    if(cfg.vp){
+    if(cfg.vp&&!LO){
       const vx=cfg.vpSide==='left'?x0-ML-vpw+4:xEnd+6, W=+cfg.vpW; let mx=1; for(const v of T.vol) if(v>mx)mx=v;
       for(let i=0;i<T.n;i++){
         const y=rY(i), hh=Math.max(1,rowH-(rowH>4?1:0)), isP=i===T.vpoc; if(y>pH||y+rowH<0) continue;
@@ -3121,6 +3147,7 @@ function openTpoMenu(P,p,cx,cy){
   items.push({icon:'copy',label:'Merge the last…',sub:[2,3,5,10,14,21].filter(n=>n<=profs.length).map(n=>({label:`${n} profiles`,act:()=>tpoMergeRange(P,profs.length-n,profs.length-1)})).concat([{label:'All profiles (one composite)',act:()=>tpoMergeRange(P,0,profs.length-1)}])},{sep:1});
   items.push(
     {icon:'trash',label:'Clear all splits and merges',disabled:!cuts.splits.length&&!cuts.merges.length,act:()=>{cuts.splits.length=0; cuts.merges.length=0; done()}},
+    {icon:'util',label:'Letters only',on:!!P.S.tpo.onlyLetters,act:()=>{P.S.tpo.onlyLetters=!P.S.tpo.onlyLetters; tpoDone(P)}},
     {icon:'gear',label:'TPO settings…',kbd:'Ctrl P',act:()=>openTpoSettings(P)});
   showMenu(items,cx,cy);
 }
@@ -3710,7 +3737,7 @@ function indAt(P,p){
     if((R.lines||[]).some(L=>near(L.v[i]))||(R.hlines||[]).some(h=>i>=h.a&&i<=h.b&&near(h.p))) return 'st:'+Q.uid}
   if(I.vwap.on){const Q=I.vwap; if([0,...[1,2,3].filter(k=>Q['b'+k])].some(k=>near((c.vwap+k*c.sd)/TICK)||near((c.vwap-k*c.sd)/TICK))) return 'vwap'}
   if(I.ema.on&&[I.ema.p1,I.ema.p2].some(q=>near(emaArr(B,Math.max(2,+q))[i]))) return 'ema';
-  if(I.prof.on&&(I.prof.side==='left'?p.x<=g.PW:p.x>=g.plotW-g.PW)) return 'prof';
+  if(I.prof.on&&I.prof.side!=='day'&&(I.prof.side==='left'?p.x<=g.PW:p.x>=g.plotW-g.PW)) return 'prof';
   if(I.fp.on&&g.fpOn){const x=g.xOf(i), pp=g.pAt(p.y); if(Math.abs(p.x-x)<=g.bw/2&&pp>=c.l-1.5&&pp<=c.h+1.5) return 'fp'}
   if(I.rng.on){const r=ranges(B,+I.rng.minutes).find(r=>i>=r.a&&i<=r.b); if(r&&(near(r.hi)||near(r.lo))) return 'rng'}
   return null;
@@ -5007,12 +5034,13 @@ const WS_TPL={
   'Analysis · charts and TPO':{layout:'l4',panes:[{bt:'5m',view:'chart'},{bt:'30m',view:'tpo'},{bt:'1h',view:'chart',studies:[{id:'pdl'},{id:'piv'}]},{bt:'1D',view:'chart',barW:14}]},
   'Replay · chart, DOM, account':{layout:'l3',panes:[{bt:'1m',view:'chart'},{bt:'1m',view:'acct'},{bt:'1m',view:'dom'}]},
 };
-function layoutObj(){return {layout,fr:FRAC,panes:panes.map(paneCfg)}}
+function layoutObj(){return {layout,fr:FRAC,panes:panes.map(paneCfg),tree:TREE}}
 function paneCfg(P){return ({float:P.S.float||null,min:!!P.S.min,bt:P.S.bt,view:P.S.view,dom:P.S.dom,tpoRow:P.S.tpoRow,tpo:P.S.tpo,tpoCuts:P.S.tpoCuts,ind:P.S.ind,props:P.S.props,studies:P.S.studies,link:P.S.link,uid:P.S.uid,mode:P.mode,barW:P.V.barW})}
 function loadLayout(o){
   while(panes.length){const P=panes.pop(); P.el.remove()} active=null; ws.classList.remove('max');
   FRAC=o.fr||{}; layout=COUNT[o.layout]?o.layout:'l1'; (o.panes||[]).slice(0,MAXW).forEach(c=>addPane(c)); if(!panes.length) addPane(DEFAULTS[0]);
   fixPanes(); if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
+  TREE=treeFor(o);
   setActive(shown()[0]||panes[0]); updateChrome();
 }
 function switchWorkspace(name){
@@ -5368,9 +5396,9 @@ function openMenu(P,p,cx,cy,indId){
     {...st('undo','Undo'),kbd:'Ctrl Z',disabled:!UNDO.length,act:undo},
     {icon:'copy',label:'Paste',kbd:'Ctrl V',disabled:!CLIP,act:()=>paste(P)},
     {sep:1},
-    {...st('live','Go to Live'),act:()=>{P.V.scroll=0; P.V.userY=false; if(!P.V.autoY)P.V.center=D.last; P.dirty=true}},
+    {...st('live','Go to Live'),act:()=>{P.V.scroll=0; P.V.userY=false; P.V.yoff=0; P.dirty=true}},
     {...st('auto','Auto Scale'),on:P.V.autoY,act:()=>{P.V.autoY=true; P.V.fit=true; P.dirty=true}},
-    {...st('util','Volume profile'),on:!!P.S.ind.prof.on,sub:[['right','On the right'],['left','On the left']].map(([v,t])=>({label:t,on:P.S.ind.prof.on&&(P.S.ind.prof.side||'right')===v,act:()=>{P.S.ind.prof.on=true; P.S.ind.prof.side=v; P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'Off',on:!P.S.ind.prof.on,act:()=>{P.S.ind.prof.on=false; P.dirty=true; saveLayout()}}])},
+    {...st('util','Volume profile'),on:!!P.S.ind.prof.on,sub:[['day','Each day (from 00:00)'],['right','On the right'],['left','On the left']].map(([v,t])=>({label:t,on:P.S.ind.prof.on&&(P.S.ind.prof.side||'right')===v,act:()=>{P.S.ind.prof.on=true; P.S.ind.prof.side=v; P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'Off',on:!P.S.ind.prof.on,act:()=>{P.S.ind.prof.on=false; P.dirty=true; saveLayout()}}])},
     {...st('util','Footprint level lines'),on:!!(P.S.ind.fp.naked||P.S.ind.fp.stackZone||P.S.ind.fp.unfin),act:()=>{const f=P.S.ind.fp, on=!(f.naked||f.stackZone||f.unfin); f.naked=on; f.stackZone=on; f.unfin=on; f.always=on; P.dirty=true; saveLayout()}},
     {sep:1},
     {...st('ind','Indicators'),kbd:'Ctrl I',act:()=>openIndicators(P)},
@@ -5508,36 +5536,86 @@ const shown=()=>panes.filter(P=>!P.S.min);
 // after loading: at least one window on screen and at least one that is not floating
 function fixPanes(){if(!panes.length) return; if(!shown().length) panes[0].S.min=false; if(!panes.some(P=>!P.S.float)) panes[0].S.float=null}
 const fracOf=l=>{const L=LAYOUTS[l], f=FRAC[l]; return {c:f&&f.c&&f.c.length===L.c?f.c:Array(L.c).fill(1/L.c),r:f&&f.r&&f.r.length===L.r?f.r:Array(L.r).fill(1/L.r)}};
+/* ---------- window layout as a split tree (29.10): every docked window is a leaf; a node puts its children side by side
+   ('h') or stacked ('v') with fractions. + Window asks where the new one goes: right / left / above / below the active one.
+   Each splitter between two neighbours can be dragged; double-click makes that group equal. ---------- */
+let TREE=null;
+const leafs=n=>!n?[]:n.p!=null?[n.p]:n.k.flatMap(leafs);
+const tNorm=n=>{if(n&&n.k){const s=n.f.reduce((a,b)=>a+b,0)||1; n.f=n.f.map(x=>x/s)} return n};
+function treeFromPreset(l,list){
+  const L=LAYOUTS[l]||LAYOUTS.l1, f=fracOf(l), cols=[];
+  list.forEach((P,i)=>{const a=L.a[i]; if(!a) return; (cols[a[1]-1]=cols[a[1]-1]||[]).push({r:a[0],p:P.S.uid})});
+  const k=[], fr=[];
+  cols.forEach((c,ci)=>{if(!c) return; c.sort((x,y)=>x.r-y.r); fr.push(f.c[ci]||1/L.c);
+    k.push(c.length===1?{p:c[0].p}:tNorm({d:'v',k:c.map(x=>({p:x.p})),f:c.map(x=>f.r[x.r-1]||1/c.length)}))});
+  for(const P of list.slice(L.a.length)){k.push({p:P.S.uid}); fr.push(1/(k.length))}
+  return !k.length?null:k.length===1?k[0]:tNorm({d:'h',k,f:fr});
+}
+function treeRemove(n,uid){
+  if(!n) return null; if(n.p!=null) return n.p===uid?null:n;
+  const k=[], f=[]; n.k.forEach((c,i)=>{const r=treeRemove(c,uid); if(r){k.push(r); f.push(n.f[i])}});
+  return !k.length?null:k.length===1?k[0]:tNorm({d:n.d,k,f});
+}
+// put a new window (uid) next to the window target: side right / left / top / bottom
+function treeInsert(n,target,uid,side){
+  const d=side==='right'||side==='left'?'h':'v', after=side==='right'||side==='bottom', leaf={p:uid};
+  if(!n) return leaf;
+  if(target==null||!leafs(n).includes(target)) return n.d===d?(n.k.splice(after?n.k.length:0,0,leaf), n.f.splice(after?n.f.length:0,0,1/n.k.length), tNorm(n)):{d,k:after?[n,leaf]:[leaf,n],f:[.5,.5]};
+  if(n.p!=null) return {d,k:after?[n,leaf]:[leaf,n],f:[.5,.5]};
+  const i=n.k.findIndex(c=>leafs(c).includes(target)), c=n.k[i];
+  if(c.p===target&&n.d===d){const h=n.f[i]/2; n.k.splice(after?i+1:i,0,leaf); n.f.splice(i,1,h,h); return n}
+  n.k[i]=treeInsert(c,target,uid,side); return n;
+}
+// the tree always holds exactly the docked windows (closing, minimizing, floating, restoring keep it in step)
+function syncTree(){
+  const ids=docked().map(P=>P.S.uid);
+  for(const u of leafs(TREE)) if(!ids.includes(u)) TREE=treeRemove(TREE,u);
+  for(const u of ids) if(!leafs(TREE).includes(u)){const L_=leafs(TREE), t=active&&L_.includes(active.S.uid)?active.S.uid:L_[L_.length-1]; TREE=treeInsert(TREE,t,u,'right')}
+}
+function layoutRects(){
+  const cs=getComputedStyle(ws), pl=parseFloat(cs.paddingLeft)||4, pr=parseFloat(cs.paddingRight)||4, pt=parseFloat(cs.paddingTop)||4, pb=parseFloat(cs.paddingBottom)||4, G=4;
+  const out=new Map(), splits=[];
+  const rec=(n,x,y,w,h)=>{if(n.p!=null){out.set(n.p,{x,y,w,h}); return}
+    const H=n.d==='h', tot=Math.max(1,(H?w:h)-G*(n.k.length-1)); let o=H?x:y;
+    n.k.forEach((c,i)=>{const s=tot*n.f[i]; if(H) rec(c,o,y,s,h); else rec(c,x,o,w,s); o+=s; if(i<n.k.length-1){splits.push({n,i,H,pos:o+G/2,x,y,w,h,tot}); o+=G}})};
+  if(TREE) rec(TREE,pl,pt,Math.max(0,ws.clientWidth-pl-pr),Math.max(0,ws.clientHeight-pt-pb));
+  return {out,splits};
+}
 function applyLayout(){
-  const L=LAYOUTS[layout]||LAYOUTS.l1, f=fracOf(layout);
-  ws.style.gridTemplateColumns=f.c.map(x=>x+'fr').join(' '); ws.style.gridTemplateRows=f.r.map(x=>x+'fr').join(' ');
-  docked().forEach((P,i)=>{const a=L.a[i]||L.a[L.a.length-1]; P.el.style.gridArea=`${a[0]} / ${a[1]} / span ${a[2]||1} / span 1`; P.el.classList.remove('float'); Object.assign(P.el.style,{left:'',top:'',width:'',height:''})});
+  syncTree(); const {out,splits}=layoutRects();
+  for(const P of docked()){const r=out.get(P.S.uid); P.el.classList.remove('float'); if(r) Object.assign(P.el.style,{position:'absolute',gridArea:'',left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}
   for(const P of panes){P.el.classList.toggle('mini',!!P.S.min); syncWinBtns(P)}
-  for(const P of panes) if(P.S.float){const F=P.S.float, r=ws.getBoundingClientRect(); P.el.classList.add('float'); P.el.style.gridArea='';
+  for(const P of panes) if(P.S.float){const F=P.S.float, r=ws.getBoundingClientRect(); P.el.classList.add('float'); P.el.style.gridArea=''; P.el.style.position='';
     const w=clamp(F.w,220,Math.max(220,r.width-8)), h=clamp(F.h,160,Math.max(160,r.height-8));
     Object.assign(P.el.style,{left:clamp(F.x,0,Math.max(0,r.width-w))+'px',top:clamp(F.y,0,Math.max(0,r.height-h))+'px',width:w+'px',height:h+'px'})}
-  requestAnimationFrame(placeSplitters);
+  placeSplitters(splits);
 }
-// splitters sit in the gaps: one per inner column edge (full height), one per inner row edge in columns where no window spans it
-function placeSplitters(){
+function placeSplitters(splits){
   ws.querySelectorAll('.split').forEach(s=>s.remove());
-  if(ws.classList.contains('max')) return;
-  const L=LAYOUTS[layout], D_=docked(); if(!L||D_.length<2) return;
-  const wr=ws.getBoundingClientRect(), rect=i=>D_[i]&&D_[i].el.getBoundingClientRect(), at=(r,c)=>L.a.findIndex(a=>a[1]===c&&r>=a[0]&&r<a[0]+(a[2]||1));
-  for(let c=1;c<L.c;c++){const i=at(1,c), j=at(1,c+1); if(i<0||j<0||!rect(i)||!rect(j)) continue;
-    const x=(rect(i).right+rect(j).left)/2-wr.left; addSplit('col',c-1,x-3,4,6,wr.height-8)}
-  for(let c=1;c<=L.c;c++){const i=L.a.findIndex(a=>a[1]===c&&a[0]===1&&(a[2]||1)===1), j=L.a.findIndex(a=>a[1]===c&&a[0]===2); if(i<0||j<0||!rect(i)||!rect(j)) continue;
-    const y=(rect(i).bottom+rect(j).top)/2-wr.top, r1=rect(i); addSplit('row',0,r1.left-wr.left,y-3,r1.width,6)}
+  if(ws.classList.contains('max')||narrow||!splits) return;
+  for(const sp of splits){
+    const s=el_('div','split '+(sp.H?'col':'row'));
+    Object.assign(s.style,sp.H?{left:sp.pos-3+'px',top:sp.y+'px',width:'6px',height:sp.h+'px'}:{left:sp.x+'px',top:sp.pos-3+'px',width:sp.w+'px',height:'6px'});
+    s.title='Drag to resize · double-click to make equal'; ws.appendChild(s);
+    s.addEventListener('dblclick',()=>{sp.n.f=sp.n.k.map(()=>1/sp.n.k.length); applyLayout(); allDirty(); saveLayout()});
+    s.addEventListener('pointerdown',e=>{
+      e.preventDefault(); const n=sp.n, i=sp.i, a0=n.f[i], b0=n.f[i+1], p0=sp.H?e.clientX:e.clientY, min=(sp.H?160:110)/sp.tot;
+      const mv=ev=>{const d=((sp.H?ev.clientX:ev.clientY)-p0)/sp.tot, a=clamp(a0+d,Math.min(min,(a0+b0)/2),Math.max(a0+b0-min,(a0+b0)/2)); n.f[i]=a; n.f[i+1]=a0+b0-a; applyLayout(); allDirty()};
+      const up=()=>{window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up); saveLayout()};
+      window.addEventListener('pointermove',mv); window.addEventListener('pointerup',up);
+    });
+  }
 }
-function addSplit(kind,k,x,y,w,h){
-  const s=el_('div','split '+kind); Object.assign(s.style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'}); s.title='Drag to resize · double-click to make equal'; ws.appendChild(s);
-  s.addEventListener('dblclick',()=>{delete FRAC[layout]; applyLayout(); allDirty(); saveLayout()});
-  s.addEventListener('pointerdown',e=>{
-    e.preventDefault(); s.setPointerCapture(e.pointerId); const f=fracOf(layout), arr=kind==='col'?f.c.slice():f.r.slice(), tot=kind==='col'?ws.clientWidth:ws.clientHeight, a0=arr[k], b0=arr[k+1], p0=kind==='col'?e.clientX:e.clientY, min=(kind==='col'?160:110)/tot;
-    const mv=ev=>{const d=((kind==='col'?ev.clientX:ev.clientY)-p0)/tot; const a=clamp(a0+d,min,a0+b0-min); arr[k]=a; arr[k+1]=a0+b0-a; FRAC[layout]={...f,[kind==='col'?'c':'r']:arr}; applyLayout(); allDirty()};
-    const up=()=>{s.removeEventListener('pointermove',mv); s.removeEventListener('pointerup',up); saveLayout()};
-    s.addEventListener('pointermove',mv); s.addEventListener('pointerup',up);
-  });
+// + Window: ask where the new window goes
+function openAddWindow(x,y){
+  if(panes.length>=MAXW&&docked().length>=MAXW){toast(`Up to ${MAXW} windows`,'info'); return}
+  const tgt=active&&!active.S.float&&!active.S.min?active:docked()[0];
+  const add=side=>{const c=JSON.parse(JSON.stringify(DEFAULTS[0])); if(side==='float'){const r=ws.getBoundingClientRect(); c.float={x:Math.max(0,r.width/2-300),y:40,w:600,h:420}}
+    const P=addPane(c); if(side!=='float') TREE=treeInsert(TREE,tgt&&tgt.S.uid,P.S.uid,side); setActive(P); updateChrome()};
+  showMenu([{label:'Where should the new window open?',disabled:true},{sep:1},
+    {icon:'copy',label:'Right of the active window',act:()=>add('right')},{icon:'copy',label:'Left of the active window',act:()=>add('left')},
+    {icon:'copy',label:'Above the active window',act:()=>add('top')},{icon:'copy',label:'Below the active window',act:()=>add('bottom')},
+    {sep:1},{icon:'copy',label:'Floating window',act:()=>add('float')}],x,y);
 }
 /* ---------- window controls: minimize to the top bar, maximize / restore, float / dock, close ----------
    A floating window moves by its header (snaps to the workspace edges) and resizes from every edge and corner.
@@ -5665,7 +5743,7 @@ function makePane(cfg){
   q('.mx').addEventListener('click',()=>toggleMax(P));
   q('.mn').addEventListener('click',()=>minimizePane(P));
   q('.cl').addEventListener('click',()=>closePane(P));
-  P.live.addEventListener('click',()=>{P.V.scroll=0; P.V.tscroll=0; P.V.tauto=true; P.V.userY=false; if(!P.V.autoY)P.V.center=D.last; P.dirty=true});
+  P.live.addEventListener('click',()=>{P.V.scroll=0; P.V.tscroll=0; P.V.tauto=true; P.V.userY=false; P.V.yoff=0; P.dirty=true});
   el.addEventListener('pointerdown',()=>setActive(P),true);
   q('.lnk').addEventListener('click',()=>cycleLink(P)); syncLinkChip(P);
   q('.flt').addEventListener('click',()=>toggleFloat(P)); wireFloat(P); syncWinBtns(P);
@@ -5731,6 +5809,8 @@ function closePane(P,quiet){
   fixPanes(); layout=layoutFor(docked().length); if(active===P){active=null; setActive(shown()[0]||panes[0])}
   updateChrome(); if(!quiet) toast('Window closed · right-click a window header to reopen it','info');
 }
+// a saved tree is used when it holds exactly the docked windows; older layouts are turned into a tree from their grid
+function treeFor(o){const ids=docked().map(P=>P.S.uid), t=o&&o.tree, L_=leafs(t); return t&&L_.length===ids.length&&ids.every(u=>L_.includes(u))?JSON.parse(JSON.stringify(t)):treeFromPreset(layout,docked())}
 function setLayout(l){
   layout=l; const n=COUNT[l];
   for(const P of panes) if(docked().length<n&&P.S.min&&!P.S.float) P.S.min=false;   // minimized windows come back first
@@ -5738,10 +5818,10 @@ function setLayout(l){
   while(docked().length>n){const d=docked(), P=d[d.length-1]; rememberClosed(P); panes.splice(panes.indexOf(P),1); P.el.remove(); if(active===P) active=null}
   ws.classList.remove('max'); panes.forEach(P=>P.el.classList.remove('maxed'));
   if(!active||active.S.min) setActive(shown()[0]||panes[0]);
-  updateChrome();
+  TREE=treeFromPreset(l,docked()); updateChrome();
 }
 document.querySelectorAll('#lay button').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.v)));
-$('#addw').addEventListener('click',()=>{if(docked().length>=MAXW)return; const P=addPane(DEFAULTS[panes.length%DEFAULTS.length]); layout=layoutFor(docked().length); setActive(P); updateChrome()});
+$('#addw').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect(); openAddWindow(r.left,r.bottom+4)});
 
 /* ---------- canvas gestures (per window) ---------- */
 function wireCanvas(P){
@@ -5762,11 +5842,12 @@ function wireCanvas(P){
     if(z==='plot'){const h=hitTest(P,p); if(h){cv.style.cursor=h.h==='body'?'move':'pointer';return}}
     cv.style.cursor=z==='split'?'row-resize':z==='price'?'ns-resize':z==='time'?'ew-resize':z==='plot'||z==='lower'?(P.mode==='pointer'?'default':'crosshair'):'default';
   };
-  const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
+  const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,yoff:V.yoff||0,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
+  const manualY=()=>{if(V.autoY||V.base==null){V.base=V.center-(V.autoY?0:(V.yoff||0)); if(V.autoY) V.yoff=0} V.autoY=false; V.userY=true};
   const zoomX=(f,x)=>{const g=V.g; if(!g)return; const nb=clamp(V.barW*f,0.5,220);
     if(V.scroll>=-.5){V.barW=nb; return}
     const a=(g.R-x)/V.barW, b=(g.R-x)/nb; V.barW=nb; V.scroll+=b-a};
-  const zoomY=(f,y)=>{const g=V.g; if(!g)return; const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt; V.autoY=false; V.userY=true};
+  const zoomY=(f,y)=>{const g=V.g; if(!g)return; manualY(); const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt; V.yoff=V.center-V.base};
 
   cv.addEventListener('contextmenu',e=>{
     e.preventDefault(); const p=pos(e); setActive(P);
@@ -5781,7 +5862,14 @@ function wireCanvas(P){
     if(id&&id!=='fp') return openSettings(P,id);
     openMenu(P,p,e.clientX,e.clientY,id);
   });
+  // middle click (wheel button) on a drawing deletes it (29.10); Ctrl+Z brings it back
+  cv.addEventListener('mousedown',e=>{if(e.button===1) e.preventDefault()});
+  cv.addEventListener('auxclick',e=>{if(e.button===1) e.preventDefault()});
   cv.addEventListener('pointerdown',e=>{
+    if(e.button===1&&e.pointerType==='mouse'&&P.S.view==='chart'){e.preventDefault(); const p=pos(e);
+      if(zone(p)==='plot'){const h=hitTest(P,p); if(h){if(h.d.st&&h.d.st.lock){toast('This drawing is locked','info'); return}
+        snapshot(); trash([h.d]); DR=DR.filter(d=>d!==h.d); if(selId===h.d.id) selId=null; SEL.delete(h.d.id); save(); allDirty(); toast('Drawing deleted · Ctrl+Z to undo','info')}}
+      return}
     if(e.button!==0&&e.pointerType==='mouse') return;
     if(e.pointerType==='mouse'||e.isPrimary){ptrs.clear(); P.drag=null}
     try{cv.setPointerCapture(e.pointerId)}catch(_){}
@@ -5839,9 +5927,9 @@ function wireCanvas(P){
       allDirty(); return;
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
-    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(Math.abs(dy)>2||V.center!==drag.center){V.autoY=false; V.userY=true; V.center=drag.center+dy/V.tickPx}}
+    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(Math.abs(dy)>2||!V.autoY){const was=V.autoY; manualY(); if(was) drag.yoff=0; V.yoff=drag.yoff+dy/V.tickPx; V.center=V.base+V.yoff}}
     else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
-    else if(drag.z==='price'){V.autoY=false; V.userY=true; V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
+    else if(drag.z==='price'){manualY(); V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
       const [a,b]=[...ptrs.values()], nb=clamp(drag.barW*Math.max(30,Math.abs(a.x-b.x))/drag.dx,0.5,220); zoomX(nb/V.barW,drag.cx);
@@ -5879,7 +5967,7 @@ function wireCanvas(P){
     if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
-    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.userY=false; if(!V.autoY) V.center=D.last}
+    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.userY=false; V.yoff=0}
     P.dirty=true;
   });
   cv.addEventListener('wheel',e=>{
@@ -5897,7 +5985,7 @@ function wireCanvas(P){
     const p=pos(e), z=zone(p), m=e.deltaMode===1?16:e.deltaMode===2?400:1, dY=e.deltaY*m, dX=e.deltaX*m;
     if(z==='price'||e.ctrlKey||e.metaKey) zoomY(Math.exp(-dY*.0016),z==='price'&&V.g?V.g.pH/2:p.y);
     else if(e.shiftKey) V.scroll+=dY/V.barW;
-    else if(e.altKey){V.autoY=false; V.userY=true; V.center+=dY/Math.max(.05,V.tickPx)*.5}   // Alt + wheel moves the chart up and down
+    else if(e.altKey){manualY(); V.yoff=(V.yoff||0)+dY/Math.max(.05,V.tickPx)*.5; V.center=V.base+V.yoff}   // Alt + wheel moves the chart up and down
     else if(Math.abs(dX)>Math.abs(dY)) V.scroll+=dX/V.barW;
     else zoomX(Math.exp(-dY*.0016),p.x);
     P.dirty=true;
@@ -5913,6 +6001,7 @@ try{if(saved&&saved.panes&&!localStorage.getItem('potik.fplines.off')){saved.pan
 if(saved&&Array.isArray(saved.panes)&&saved.panes.length&&COUNT[saved.layout]){
   FRAC=saved.fr||{}; layout=saved.layout; saved.panes.slice(0,MAXW).forEach(c=>addPane(c));
   fixPanes(); if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
+  TREE=treeFor(saved);
 }else{
   for(let i=0;i<3;i++) addPane(DEFAULTS[i]);
 }
