@@ -1416,10 +1416,10 @@ const IND=[
   {id:'fp',name:'Footprint',group:'Order Flow',desc:'Volume at every price inside each bar: bid x ask, delta, volume, profile, ladder or trades, in one or two columns. Imbalances are found tick by tick, with stacked zones, unfinished auctions, absorption, exhaustion and naked POCs. Shown at any zoom (Show footprint: Always): numbers when they fit, coloured cells when zoomed far out. Or only when zoomed in, like before.',
    def:{on:true,view:'always',mode1:'bidask',mode2:'none',rows:'auto',minBar:70,lod:true,lodBar:16,candle:true,maxW:0,
      shade:'delta',histOn:true,hist:'#c4b2ee',buy:'#f7dcf3',sell:'#e23cf0',text:'#e9e3ef',font:11.5,sep:'x',zeros:true,sizeFilter:0,
-     poc:'#e23cf0',pocBox:true,va:false,vaPct:70,vaCol:'#a66bff',
+     poc:'#ffffff',pocFill:true,pocOp:16,pocBox:false,v2:true,va:false,vaPct:70,vaCol:'#a66bff',
      imbType:'diag',ratio:300,ratio2:450,ratio3:600,minVol:10,deltaF:0,zero1:true,imbBuy:'#f7dcf3',imb:'#e23cf0',
-     stack:true,stackN:3,stackGap:0,stackZone:false,stackBuy:'#f7dcf3',stackSell:'#e23cf0',
-     unfin:false,unfinCol:'#ffd166',absorb:true,absMult:3,absTicks:4,absCol:'#8fd3ff',exhaust:false,exhMax:2,exhCol:'#ffd166',
+     stack:false,stackN:3,stackGap:0,stackZone:false,stackBuy:'#f7dcf3',stackSell:'#e23cf0',
+     unfin:false,unfinCol:'#ffd166',absorb:false,absMult:3,absTicks:4,absCol:'#8fd3ff',exhaust:false,exhMax:2,exhCol:'#ffd166',
      naked:false,nakedCol:'#e23cf0',activeOnly:true,always:false,
      dShow:'always',totVol:false,totPct:false,minTrade:0},
    tabs:[
@@ -1430,7 +1430,7 @@ const IND=[
     ['Display',[['shade','Cell background','select',[['none','None'],['delta','By delta'],['volume','By volume']]],['histOn','Volume histogram behind numbers','bool'],['hist','Histogram color','color'],
       ['buy','Buy (ask) color','color'],['sell','Sell (bid) color','color'],['text','Number color','color'],['font','Max font size','num',7,14,.5],
       ['sep','Bid x Ask separator','select',[['x','x'],['×','×'],['|','|'],['·','·'],['none','none']]],['zeros','Show zeros','bool'],['sizeFilter','Hide numbers ≤','num',0,1000,1],
-      ['poc','POC color','color'],['pocBox','POC box','bool'],['va','Value area bracket','bool'],['vaPct','Value area %','num',40,95,1],['vaCol','Value area color','color']]],
+      ['poc','POC color','color'],['pocFill','POC: soft fill across the row','bool'],['pocOp','POC fill strength %','range',5,60,1],['pocBox','POC outline box','bool'],['va','Value area bracket','bool'],['vaPct','Value area %','num',40,95,1],['vaCol','Value area color','color']]],
     ['Imbalance',[['imbType','Compare','select',[['diag','Diagonal (ask vs bid one tick lower)'],['horiz','Horizontal (same price)']]],
       ['ratio','Level 1 ratio %','num',110,3000,10],['ratio2','Level 2 ratio % (0 = off)','num',0,5000,10],['ratio3','Level 3 ratio % (0 = off)','num',0,9000,10],
       ['minVol','Min volume','num',1,1000,1],['deltaF','Min difference (delta filter)','num',0,1000,1],['zero1','Count 0 on the other side as 1','bool'],
@@ -1484,6 +1484,7 @@ const GROUPS=['Volume','Order Flow','Price','Trend','My Indicators'];
 const DEF_PROPS={bg:'#000000',up:'#f7dcf3',down:'#e23cf0',legend:true,style:'candle'};
 const PROP_FIELDS=[['style','Bar style','select',[['candle','Candles'],['hollow','Hollow candles'],['ohlc','OHLC bars'],['ha','Heikin Ashi'],['line','Line'],['area','Area'],['none','No bars (footprint only)']]],['bg','Background','color'],['up','Up bar color (RSI off)','color'],['down','Down bar color (RSI off)','color'],['legend','Show legend','bool']];
 function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})};
+  if(src&&src.fp&&!src.fp.v2) Object.assign(o.fp,{stack:false,absorb:false,pocBox:false,poc:'#ffffff',pocFill:true,pocOp:16,v2:true});   // 29.10: no boxes, soft white POC
   if(src&&src.big&&!src.big.v2) Object.assign(o.big,{count:false,sweep:false,glow:false,v2:true});   // 29.10: compact big trades
   if(src&&src.prof&&!src.prof.v3&&'period' in src.prof){if(src.prof.side==='left') o.prof.side='day'; else if(!src.prof.side) o.prof.side='right'; o.prof.v3=true}   // 29.10: a profile for each day
   return o}
@@ -2480,11 +2481,12 @@ function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
     const y=yT(r); if(y>pH||y+rh<0) continue;
     const b=r.b, a=r.a, v=a+b, d=a-b, yc=y+rh/2;
     if(mode==='cells'){ctx.fillStyle=hexA(d>=0?BU:SE,.1+.72*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
+    if(r.poc&&F.pocFill&&mode!=='cells'&&mode!=='profile'){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}
     else if(shade==='delta'){ctx.fillStyle=hexA(d>=0?BU:SE,.04+.28*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
     else if(shade==='volume'){ctx.fillStyle=hexA(F.hist,.04+.3*v/R.mx); ctx.fillRect(x,y+.5,w,h)}
     switch(mode){
       case 'bidask':{
-        if(F.histOn){ctx.fillStyle=r.poc?hexA(F.poc,.45):hexA(F.hist,.2); ctx.fillRect(x,y+1,Math.max(1,v/R.mx*w),hb)}
+        if(F.histOn){ctx.fillStyle=r.poc?hexA(F.poc,F.pocFill?.18:.45):hexA(F.hist,.2); ctx.fillRect(x,y+1,Math.max(1,v/R.mx*w),hb)}
         if(r.bl>=3){ctx.fillStyle=hexA(F.imb,.32); ctx.fillRect(x,y+.5,w/2,h)}
         if(r.al>=3){ctx.fillStyle=hexA(F.imbBuy,.32); ctx.fillRect(x+w/2,y+.5,w/2,h)}
         if(txt){
@@ -2499,7 +2501,7 @@ function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
         if(txt){const s=fpTxt(Math.abs(d),F); ctx.font=`600 ${fs}px ${MONO}`; ctx.fillStyle=d>0?BUt:d<0?SEt:C.muted; ctx.textAlign='center'; ctx.fillText(s&&d?(d>0?'+':'-')+s:s,x+w/2,yc+.5)}
         break}
       case 'volume':{
-        if(F.histOn){ctx.fillStyle=r.poc?hexA(F.poc,.45):hexA(F.hist,.25); ctx.fillRect(x,y+1,Math.max(1,v/R.mx*w),hb)}
+        if(F.histOn){ctx.fillStyle=r.poc?hexA(F.poc,F.pocFill?.2:.45):hexA(F.hist,.25); ctx.fillRect(x,y+1,Math.max(1,v/R.mx*w),hb)}
         if(txt){ctx.font=`${r.poc?700:500} ${fs}px ${MONO}`; ctx.fillStyle=F.text; ctx.textAlign='center'; ctx.fillText(fpTxt(v,F),x+w/2,yc+.5)}
         break}
       case 'trades':{
@@ -2571,7 +2573,6 @@ function foot(ctx,c,A,cx,bw,yOf,tp,pH,rt,col,F,lod){
   if(F.dShow==='always'||(F.dShow==='divergent'&&div)){
     const s=(c.delta<0?'-':c.delta>0?'+':'')+fN(Math.abs(c.delta)), y=rowsBot+4;
     ctx.font=`700 ${fz}px ${MONO}`; ctx.textAlign='center'; ctx.textBaseline='top';
-    if(div){const tw=ctx.measureText(s).width+8; ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1; ctx.strokeRect(Math.round(ccx-tw/2)+.5,Math.round(y-2)+.5,Math.round(tw),Math.round(fz+4))}
     ctx.fillStyle=c.delta>=0?F.buy:F.sell; ctx.fillText(s,ccx,y);
   }
   let ya=rowsTop-4; ctx.textBaseline='bottom';
@@ -5406,6 +5407,7 @@ function openMenu(P,p,cx,cy,indId){
     {...st('live','Go to Live'),act:()=>{P.V.scroll=0; P.V.userY=false; P.V.yoff=0; P.dirty=true}},
     {...st('auto','Auto Scale'),on:P.V.autoY,act:()=>{P.V.autoY=true; P.V.fit=true; P.dirty=true}},
     {...st('util','Volume profile'),on:!!P.S.ind.prof.on,sub:[['day','Each day (from 00:00)'],['right','On the right'],['left','On the left']].map(([v,t])=>({label:t,on:P.S.ind.prof.on&&(P.S.ind.prof.side||'right')===v,act:()=>{P.S.ind.prof.on=true; P.S.ind.prof.side=v; P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'Off',on:!P.S.ind.prof.on,act:()=>{P.S.ind.prof.on=false; P.dirty=true; saveLayout()}}])},
+    {...st('util','Footprint POC color'),sub:[['#ffffff','Soft white'],['#e23cf0','Magenta'],['#ffd166','Yellow'],['#8fd3ff','Blue'],['#5fe0bd','Green']].map(([c,t])=>({label:t,on:P.S.ind.fp.poc===c,act:()=>{Object.assign(P.S.ind.fp,{poc:c,pocFill:true}); P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'POC outline box',on:!!P.S.ind.fp.pocBox,act:()=>{P.S.ind.fp.pocBox=!P.S.ind.fp.pocBox; P.dirty=true; saveLayout()}},{label:'All footprint colors…',act:()=>openSettings(P,'fp')}])},
     {...st('util','Footprint level lines'),on:!!(P.S.ind.fp.naked||P.S.ind.fp.stackZone||P.S.ind.fp.unfin),act:()=>{const f=P.S.ind.fp, on=!(f.naked||f.stackZone||f.unfin); f.naked=on; f.stackZone=on; f.unfin=on; f.always=on; P.dirty=true; saveLayout()}},
     {sep:1},
     {...st('ind','Indicators'),kbd:'Ctrl I',act:()=>openIndicators(P)},
