@@ -487,8 +487,12 @@ function clamp_(v,a,b){return v<a?a:v>b?b:v}
 const exSec=ms=>CRYPTO?ms/1000:etSec(ms);   // epoch ms → seconds on the session clock (UTC for crypto, New York otherwise)
 // an imported tick file is read from the browser database, a WebSocket feed waits for its first trade, before anything is built
 let DS=null, WSF=null, BNL=null, BOOT_MSG='';
+// inside Claude's artifact viewer the page may not connect to other sites, so live Binance data only works on the site itself
+const SITE_URL='https://danka23r.github.io/Potik/';
+const IN_CLAUDE=(()=>{const h=location.hostname; if(location.protocol==='file:'||/github\.io$/.test(h)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(h)) return false; if(/claude/i.test(h)) return true; try{return window.top!==window.self}catch(e){return true}})();
 if(DCFG.src==='csv'){try{DS=await dsLoad(DCFG.ds)}catch(e){console.error(e)} if(DS) DCFG.sym=DS.meta.sym; else BOOT_MSG='The imported data set could not be read, so the simulator is running.'}
-if(DCFG.src==='bnc'&&CRYPTO){try{BNL=await bncLoad(INSTR[DCFG.sym],HIST_DAYS,DCFG.bnc,f=>{const m=document.getElementById('busyMsg'); if(m) m.textContent=`Loading ${INSTR[DCFG.sym].bsym} from Binance · ${Math.round(f*100)}%`})}catch(e){BOOT_MSG=`Binance could not be reached (${e.message||e}), so the simulator is running.`}}
+if(DCFG.src==='bnc'&&CRYPTO&&IN_CLAUDE) BOOT_MSG='Live Binance data cannot load inside Claude, so the simulator is running. For real prices open the site: '+SITE_URL;
+else if(DCFG.src==='bnc'&&CRYPTO){try{BNL=await bncLoad(INSTR[DCFG.sym],HIST_DAYS,DCFG.bnc,f=>{const m=document.getElementById('busyMsg'); if(m) m.textContent=`Loading ${INSTR[DCFG.sym].bsym} from Binance · ${Math.round(f*100)}%`})}catch(e){BOOT_MSG=`Binance could not be reached (${e.message||e}), so the simulator is running.`}}
 if(DCFG.src==='ws'){WSF=makeWsFeed(DCFG.wsUrl,DCFG.wsSub); const ok=await WSF.ready; if(!ok){BOOT_MSG=`No trade arrived from ${DCFG.wsUrl||'the WebSocket'} (${WSF.status}), so the simulator is running.`; WSF.close(); WSF=null}}
 if(!INSTR[DCFG.sym]) DCFG.sym='NQ';
 /* a simulated crypto market starts at the real price: Binance's current price if it answers within 3 s,
@@ -496,7 +500,7 @@ if(!INSTR[DCFG.sym]) DCFG.sym='NQ';
 const LPX_KEY='potik.lastpx.'+DCFG.sym;
 let SIMBASE=null;
 if(INSTR[DCFG.sym].crypto&&!BNL&&!DS&&!WSF){
-  const live=await Promise.race([bncPrice(INSTR[DCFG.sym].bsym),new Promise(r=>setTimeout(()=>r(null),3000))]);
+  const live=IN_CLAUDE?null:await Promise.race([bncPrice(INSTR[DCFG.sym].bsym),new Promise(r=>setTimeout(()=>r(null),3000))]);
   if(live){SIMBASE=live; try{localStorage.setItem(LPX_KEY,String(live))}catch(e){}}
   else{try{const v=+localStorage.getItem(LPX_KEY); if(v>0) SIMBASE=v}catch(e){}}
 }
@@ -4755,7 +4759,11 @@ const UK={
 "Ticks (trades)":"Тіки (угоди)","Size":"Розмір","Apply":"Застосувати",
 };
 Object.assign(UK,{"Settings: every tool in one place": "Налаштування: усі інструменти в одному місці"});
-Object.assign(UK,{"SIM · not real prices":"SIM · не реальні ціни","Simulated market, not real prices. Click to switch to live Binance data":"Симуляція ринку, ціни не реальні. Клік — перейти на живі дані Binance"});
+Object.assign(UK,{"Live data":"Живі дані","Copy link":"Скопіювати посилання","Copied":"Скопійовано",
+  "Claude’s viewer does not let this page connect to Binance, so here the market is always simulated and the prices are not real. Live Binance data works on the site:":"Переглядач Claude не дозволяє сторінці підключатися до Binance, тому тут ринок завжди симульований і ціни не реальні. Живі дані Binance працюють на сайті:",
+  "Settings, layouts and drawings are kept separately for each address. To move them: Aa → Export settings… here, then Aa → Import settings… on the site.":"Налаштування, розкладки й малюнки зберігаються окремо для кожної адреси. Щоб перенести: Aa → «Експорт налаштувань…» тут, потім Aa → «Імпорт налаштувань…» на сайті.",
+  "Live Binance data cannot load inside Claude, so the simulator is running. For real prices open the site: https://danka23r.github.io/Potik/":"Живі дані Binance не завантажуються всередині Claude, тому працює симулятор. Реальні ціни — на сайті: https://danka23r.github.io/Potik/",
+  "SIM · not real prices":"SIM · не реальні ціни","Simulated market, not real prices. Click to switch to live Binance data":"Симуляція ринку, ціни не реальні. Клік — перейти на живі дані Binance"});
 Object.assign(UK,{"Minimize (to the bar at the top)":"Згорнути (на панель угорі)","Minimize":"Згорнути","Float this window":"Зробити вікно плаваючим","Dock this window back into the grid":"Повернути вікно в сітку",
   "Restore window":"Відновити вікно","Restore size":"Відновити розмір","Float":"Плаваюче","Dock into the grid":"Повернути в сітку","Floating size":"Розмір плаваючого вікна","Small":"Мале","Medium":"Середнє","Large":"Велике",
   "Fill the workspace":"На весь робочий простір","Duplicate window":"Дублювати вікно","Restore all minimized":"Відновити всі згорнуті","Close other windows":"Закрити інші вікна","Window":"Вікно","Minimized windows":"Згорнуті вікна",
@@ -5742,7 +5750,14 @@ function updateSource(){
 }
 setPlaying(G.playing); updateSource();
 $('#srcb').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();
-  if(CRYPTO&&FEED.kind==='sim'&&!RP.on) showMenu([{icon:'live',label:`Switch to live Binance data (real ${INS.bsym} prices)`,act:()=>{DCFG={...DCFG,src:'bnc'}; saveDcfg(); location.reload()}},{sep:1},{icon:'gear',label:'Data…',act:openDataDialog}],r.left,r.bottom+4);
+  if(CRYPTO&&FEED.kind==='sim'&&!RP.on&&IN_CLAUDE) openDialog('Live data',body=>{
+    body.appendChild(el_('p','idesc','Claude’s viewer does not let this page connect to Binance, so here the market is always simulated and the prices are not real. Live Binance data works on the site:'));
+    const row=el_('div','dact'), a=el_('a','btn2',SITE_URL), cp=el_('button','btn2','Copy link'); a.href=SITE_URL; a.target='_blank'; a.rel='noopener'; a.style.textDecoration='none'; cp.type='button';
+    cp.addEventListener('click',()=>{navigator.clipboard.writeText(SITE_URL).then(()=>{cp.textContent='Copied'},()=>{const r=document.createRange(); r.selectNodeContents(a); const s=getSelection(); s.removeAllRanges(); s.addRange(r)})});
+    row.append(a,cp); body.appendChild(row);
+    body.appendChild(el_('p','acnote','Settings, layouts and drawings are kept separately for each address. To move them: Aa → Export settings… here, then Aa → Import settings… on the site.'));
+  });
+  else if(CRYPTO&&FEED.kind==='sim'&&!RP.on) showMenu([{icon:'live',label:`Switch to live Binance data (real ${INS.bsym} prices)`,act:()=>{DCFG={...DCFG,src:'bnc'}; saveDcfg(); location.reload()}},{sep:1},{icon:'gear',label:'Data…',act:openDataDialog}],r.left,r.bottom+4);
   else openDataDialog()});
 // remember the last real price, so a simulator started later on this device begins there
 if(FEED.kind==='bnc'){const keep=()=>{try{if(D.last) localStorage.setItem(LPX_KEY,String(D.last*TICK))}catch(e){}}; keep(); setInterval(keep,30000)}
