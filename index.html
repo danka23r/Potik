@@ -58,12 +58,33 @@ button{background:none;border:0;cursor:pointer}
 .split:hover,.split:active{background:rgba(196,178,238,.35)}
 .win.float{position:absolute;z-index:15;box-shadow:0 14px 40px rgba(0,0,0,.65);border-color:#4a2a58}
 .win.float .wh{cursor:move}
-.frz{display:none;position:absolute;right:0;bottom:0;width:14px;height:14px;z-index:8;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#5a2f68 50%)}
+.frz{display:none;position:absolute;z-index:8}
 .win.float .frz{display:block}
+.win.maxed .frz{display:none!important}
+.win.float.maxed .wh{cursor:default}
+.frz.n{top:0;left:10px;right:10px;height:5px;cursor:ns-resize}.frz.s{bottom:0;left:10px;right:10px;height:5px;cursor:ns-resize}
+.frz.e{right:0;top:10px;bottom:10px;width:5px;cursor:ew-resize}.frz.w{left:0;top:10px;bottom:10px;width:5px;cursor:ew-resize}
+.frz.nw{left:0;top:0;width:10px;height:10px;cursor:nwse-resize}.frz.ne{right:0;top:0;width:10px;height:10px;cursor:nesw-resize}
+.frz.sw{left:0;bottom:0;width:10px;height:10px;cursor:nesw-resize}.frz.se{right:0;bottom:0;width:14px;height:14px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,#5a2f68 50%)}
+.ws .win.mini.mini{display:none!important}
+.mtray{display:flex;gap:4px;flex:none}
+.mtray[hidden]{display:none}
+.mchip{display:flex;align-items:center;gap:2px;height:24px;padding:0 2px 0 8px;border:1px solid #3a3042;border-radius:5px;background:#120d16;color:#ddd4e6;font-size:11.5px}
+.mchip:hover{border-color:#5a2f68;background:#1c1424}
+.mchip .mres{display:flex;align-items:center;gap:6px;height:100%;color:inherit}
+.mchip .mres svg{width:11px;height:11px;color:var(--muted)}
+.mchip .mx2{width:20px;height:20px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.mchip .mx2:hover{background:#3b1426;color:#ffd0e2}
+.mchip .mx2 svg{width:10px;height:10px}
 
 .win{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .win.act{border-color:#4a2a58}
-.wh{display:flex;align-items:center;gap:6px;height:30px;flex:none;padding:0 6px 0 8px;background:var(--bar);border-bottom:1px solid var(--line);white-space:nowrap;overflow:visible;position:relative}
+.wh{display:flex;align-items:center;gap:6px;height:30px;flex:none;padding:0 4px 0 8px;background:var(--bar);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;position:relative;user-select:none;-webkit-user-select:none}
+.wl{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.wl::-webkit-scrollbar{display:none}
+.wc{display:flex;align-items:center;gap:1px;flex:none;margin-left:auto}
+.wsep{width:1px;height:14px;background:var(--line);margin:0 3px}
+.ic.cl:hover{background:#3b1426;color:#ffd0e2}
 .wsym{font-family:var(--f-num);font-weight:600;font-size:11.5px;margin-right:2px}
 .wh select{background:#120d17;border:1px solid var(--line);border-radius:4px;padding:2px 4px;font-family:var(--f-num);font-size:11px;color:var(--text)}
 .seg{display:flex;gap:1px;flex:none}
@@ -345,6 +366,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
     <button type="button" class="addw" id="addw">+ Window</button>
     <select id="wsSel" class="hsel" aria-label="Workspace" title="Workspace"></select>
     <div class="wtabs" id="wtabs" role="group" aria-label="Windows"></div>
+    <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
     <div class="right">
       <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)">⌘ K</button>
       <button type="button" class="hbtn" id="setb" title="Settings: every tool in one place">Settings</button>
@@ -400,6 +422,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 <template id="winTpl">
   <section class="win">
     <div class="wh">
+      <div class="wl">
       <span class="wsym">NQZ6</span>
       <select class="btSel" aria-label="Bar type">
         <option>250T</option><option>500T</option><option>1000T</option><option>1m</option><option>5m</option><option>15m</option><option>30m</option>
@@ -408,12 +431,16 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
       <button type="button" class="stb indb" title="Indicators (Ctrl+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19V11M10 19V5M15 19v-6M20 19V9"/></svg>Indicators</button>
       <button type="button" class="tgl dom" title="Show the DOM beside the chart">+DOM</button>
       <select class="tpoRow" aria-label="TPO row size"><option value="auto">Row: Auto</option><option value="1">Row: 0.25</option><option value="2">Row: 0.5</option><option value="4">Row: 1</option><option value="5">Row: 1.25</option><option value="10">Row: 2.5</option><option value="20">Row: 5</option><option value="40">Row: 10</option><option value="100">Row: 25</option></select>
-      <span class="sp"></span>
+      </div>
+      <div class="wc">
       <button type="button" class="lnk" aria-label="Link window">⛓</button>
       <button type="button" class="ic propb" title="Chart properties (Ctrl+,)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></button>
-      <button type="button" class="ic flt" title="Float / dock this window"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="4" width="7.5" height="7.5" rx="1"/><path d="M4.5 4V1.5h7v7H9"/></svg></button>
-      <button type="button" class="ic mx" title="Maximize"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="10" height="10" rx="1"/></svg></button>
+      <span class="wsep"></span>
+      <button type="button" class="ic mn" title="Minimize (to the bar at the top)"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 9.5h8"/></svg></button>
+      <button type="button" class="ic flt" title="Float this window"></button>
+      <button type="button" class="ic mx" title="Maximize"></button>
       <button type="button" class="ic cl" title="Close window"><svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 2.5l8 8M10.5 2.5l-8 8"/></svg></button>
+      </div>
     </div>
     <div class="body"><canvas></canvas><canvas class="ov" aria-hidden="true"></canvas><button type="button" class="live" hidden>Go to live →</button></div>
   </section>
@@ -421,7 +448,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 
 <script>
 (async()=>{
-const APP_VER='2026.10.28';
+const APP_VER='2026.10.29';
 // every saved setting exactly as it was when the page opened: kept as an automatic backup before this version changes anything
 const BOOT_KEYS=(()=>{const o={}; try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i); if(k&&k.startsWith('potik.')) o[k]=localStorage.getItem(k)}}catch(e){} return o})();
 const $=s=>document.querySelector(s);
@@ -4710,6 +4737,12 @@ const UK={
 "Ticks (trades)":"Тіки (угоди)","Size":"Розмір","Apply":"Застосувати",
 };
 Object.assign(UK,{"Settings: every tool in one place": "Налаштування: усі інструменти в одному місці"});
+Object.assign(UK,{"Minimize (to the bar at the top)":"Згорнути (на панель угорі)","Minimize":"Згорнути","Float this window":"Зробити вікно плаваючим","Dock this window back into the grid":"Повернути вікно в сітку",
+  "Restore window":"Відновити вікно","Restore size":"Відновити розмір","Float":"Плаваюче","Dock into the grid":"Повернути в сітку","Floating size":"Розмір плаваючого вікна","Small":"Мале","Medium":"Середнє","Large":"Велике",
+  "Fill the workspace":"На весь робочий простір","Duplicate window":"Дублювати вікно","Restore all minimized":"Відновити всі згорнуті","Close other windows":"Закрити інші вікна","Window":"Вікно","Minimized windows":"Згорнуті вікна",
+  "Keep at least one window on screen":"Хоча б одне вікно має лишатися на екрані","Keep at least one docked window":"Хоча б одне вікно має лишатися в сітці","Resize":"Змінити розмір",
+  "Window closed · right-click a window header to reopen it":"Вікно закрито · ПКМ на шапці вікна, щоб відкрити знову","Other windows closed · Reopen closed window brings them back":"Інші вікна закрито · «Відкрити закрите вікно» поверне їх",
+  "Window: maximize / restore":"Вікно: розгорнути / відновити","Window: minimize":"Вікно: згорнути","Window: float / dock":"Вікно: плаваюче / в сітку","Window: close":"Вікно: закрити","Dbl-click":"Подв. клік"});
 Object.assign(UK,{"Session VWAP with ±1σ, ±2σ and ±3σ standard deviation bands.": "VWAP сесії зі смугами стандартного відхилення ±1σ, ±2σ і ±3σ.", "Volume at every price. A side profile docked on the right (today, previous day, week, month, a composite of N days or the visible bars), a profile for every session on the chart, developing POC / value area lines, naked POC / VAH / VAL of past sessions until price touches them, and high / low volume nodes.": "Об’єм на кожній ціні. Бічний профіль праворуч (сьогодні, попередній день, тиждень, місяць, композит за N днів або видимі бари), профіль для кожної сесії на графіку, лінії POC / зони вартості, що формуються, «голі» POC / VAH / VAL минулих сесій, доки ціна їх не торкнеться, і вузли високого / низького об’єму.", "A compact TPO (market profile) for every session drawn on the price chart, starting at the session open: blocks or letters per period, value area and POC.": "Компактний TPO (ринковий профіль) для кожної сесії прямо на ціновому графіку, від відкриття сесії: блоки або літери за періодами, зона вартості й POC.", "Volume at every price inside each bar: bid x ask, delta, volume, profile, ladder or trades, in one or two columns. Imbalances are found tick by tick, with stacked zones, unfinished auctions, absorption, exhaustion and naked POCs. Shown at any zoom (Show footprint: Always): numbers when they fit, coloured cells when zoomed far out. Or only when zoomed in, like before.": "Об’єм на кожній ціні всередині бару: bid x ask, дельта, об’єм, профіль, драбина або кількість угод, в одній чи двох колонках. Дисбаланси шукаються потиково, зі стековими зонами, незавершеними аукціонами, поглинанням, виснаженням і «голими» POC. Показується за будь-якого масштабу (Показувати футпринт: Завжди): числа, коли поміщаються, кольорові клітинки при сильному віддаленні. Або лише при наближенні, як раніше.", "Bubbles for large trades, with a separate minimum for buys and sells. A big order usually fills as many small prints in a row, so with “Combine consecutive prints” on, prints on one side that follow each other quickly are added up into one trade (5 prints of 10 = one bubble of 50).": "Бульбашки великих угод з окремим мінімумом для купівель і продажів. Великий ордер зазвичай виконується багатьма дрібними принтами поспіль, тому з увімкненим «Об’єднувати послідовні принти» принти однієї сторони, що швидко йдуть один за одним, додаються в одну угоду (5 принтів по 10 = одна бульбашка 50).", "Running sum of buy minus sell volume, in its own panel.": "Накопичена сума об’єму купівель мінус продажів, в окремій панелі.", "Rows of per-bar totals under the chart. Pick any rows: volume, average volume at price (AVAP), delta, cumulative delta, delta change, min/max intrabar delta, delta %, number of trades, bar duration.": "Рядки підсумків для кожного бару під графіком: об’єм, середній об’єм на ціну (AVAP), дельта, кумулятивна дельта, зміна дельти, мін./макс. дельта всередині бару, дельта %, кількість угод, тривалість бару.", "Resting limit orders from the simulated order book, drawn behind the bars: the brighter, the more size waits at that price. You can watch walls hold, get eaten or get pulled. The book is recorded once a second from today’s open.": "Лімітні ордери зі стакану, намальовані за барами: що яскравіше, то більший обсяг чекає на цій ціні. Видно, як стіни тримаються, з’їдаються або знімаються. Стакан записується щосекунди від відкриття сьогоднішньої сесії.", "Average resting size on the ask (up) and the bid (down) across the first N levels during each bar, with bid minus ask as a line. Recorded from today’s open.": "Середній обсяг лімітних ордерів на ask (вгору) і bid (вниз) у перших N рівнях за кожен бар, плюс лінія bid мінус ask. Записується від відкриття сьогоднішньої сесії.", "How fast the tape runs in each bar: trades, volume, ask volume, bid volume or delta per N seconds. Bars above the moving-average filter are highlighted and can paint the price bars.": "Як швидко йде стрічка в кожному барі: угоди, об’єм, об’єм ask, об’єм bid або дельта за N секунд. Бари вище фільтра ковзної середньої підсвічуються і можуть фарбувати цінові бари.", "Colours every bar by its RSI value.": "Фарбує кожен бар за значенням RSI.", "Boxes around fixed time blocks with high, low, size and volume.": "Рамки навколо фіксованих блоків часу з максимумом, мінімумом, розміром і об’ємом.", "Two exponential moving averages.": "Дві експоненційні ковзні середні."});
 Object.assign(UK,{"Settings": "Налаштування", "Search settings": "Пошук налаштувань", "On the chart": "На графіку", "Visible": "Видимий", "Copy to all chart windows": "Скопіювати в усі графіки", "Add a study": "Додати індикатор", "＋ Add a study": "＋ Додати індикатор", "Classic studies: each can be added more than once, on the price chart or in its own panel.": "Класичні індикатори: кожен можна додати кілька разів, на ціновий графік або в окрему панель.", "Studies on this chart": "Індикатори на цьому графіку", "Price & trend": "Ціна й тренд", "Trading": "Торгівля", "Drawings (object tree)": "Малюнки (дерево об’єктів)", "Application": "Застосунок", "Data & instrument": "Дані та інструмент", "Backups": "Резервні копії", "TPO window": "Вікно TPO", "Bar type…": "Тип барів…", "Copy indicators to all windows": "Скопіювати індикатори в усі вікна", "Commission, slippage, order size and how you trade from the DOM and the chart.": "Комісія, прослизання, розмір ордера і як ви торгуєте зі стакану та графіка.", "Open a chart window to change its indicators.": "Відкрийте вікно графіка, щоб змінити його індикатори.", "Show footprint": "Показувати футпринт", "Always, at any zoom (footprint only)": "Завжди, за будь-якого масштабу (лише футпринт)", "Only when zoomed in": "Лише при наближенні", "Filter": "Фільтр", "Combine prints": "Об’єднання принтів", "Buys: show from size (contracts)": "Купівлі: показувати від розміру (контракти)", "Sells: show from size (contracts)": "Продажі: показувати від розміру (контракти)", "Up to size (0 = no limit)": "До розміру (0 = без обмеження)", "Combine consecutive prints on one side into one trade": "Об’єднувати послідовні принти однієї сторони в одну угоду", "… while the next print comes within ms": "… поки наступний принт приходить протягом мс", "… and stays within N ticks of the first price": "… і в межах N тіків від першої ціни", "An opposite print ends the trade": "Принт протилежної сторони завершує угоду", "Show how many prints were combined": "Показувати, скільки принтів об’єднано", "Line over the prices a combined trade swept": "Лінія через ціни, які пройшла об’єднана угода", "Toolbar position: right, left or floating": "Панель: справа, зліва або плаваюча", "Right side": "Справа", "Left side": "Зліва", "Floating": "Плаваюча", "Reopen closed window": "Відкрити закрите вікно", "Save a snapshot now": "Зберегти копію зараз", "Export to a file…": "Експорт у файл…", "Import a file…": "Імпорт із файлу…", "Restore": "Відновити", "Download": "Завантажити", "Click again to restore": "Натисніть ще раз, щоб відновити", "No snapshots yet.": "Копій ще немає.", "Saved": "Збережено", "Why": "Причина", "page opened": "сторінку відкрито", "every 5 minutes": "кожні 5 хвилин", "saved by you": "збережено вами", "before restoring a backup": "перед відновленням копії", "Recently deleted": "Нещодавно видалені", "Restore all": "Відновити всі", "Empty the bin": "Очистити кошик", "Deleted": "Видалено", "Days of history (TPO, profiles)": "Днів історії (TPO, профілі)", "Binance market": "Ринок Binance", "USDⓈ-M futures (perpetual)": "USDⓈ-M ф’ючерси (безстрокові)", "Spot": "Спот", "Binance · crypto, real data (live)": "Binance · крипта, реальні дані (наживо)", "Merge from here to the latest": "Об’єднати звідси до останнього", "Undo the joins in this profile": "Скасувати об’єднання в цьому профілі", "Merge the last…": "Об’єднати останні…", "All profiles (one composite)": "Усі профілі (один композит)", "Labels and info box": "Підписи та інфо-блок", "Price tags on the right edge": "Цінові мітки справа", "Live P&L band from the fill": "Смуга P&L від входу", "Best / worst price reached (MFE / MAE)": "Найкраща / найгірша ціна (MFE / MAE)", "Size by risk to the stop, $ (0 = use contracts)": "Розмір за ризиком до стопу, $ (0 = контракти)", "Three in a row": "Три в ряд", "Four in a row": "Чотири в ряд", "No closed windows to reopen": "Немає закритих вікон", "Window reopened": "Вікно відкрито знову", "Data…": "Дані…"});
 const UK_RX=[
@@ -4772,12 +4805,12 @@ const WS_TPL={
   'Replay · chart, DOM, account':{layout:'l3',panes:[{bt:'1m',view:'chart'},{bt:'1m',view:'acct'},{bt:'1m',view:'dom'}]},
 };
 function layoutObj(){return {layout,fr:FRAC,panes:panes.map(paneCfg)}}
-function paneCfg(P){return ({float:P.S.float||null,bt:P.S.bt,view:P.S.view,dom:P.S.dom,tpoRow:P.S.tpoRow,tpo:P.S.tpo,tpoCuts:P.S.tpoCuts,ind:P.S.ind,props:P.S.props,studies:P.S.studies,link:P.S.link,uid:P.S.uid,mode:P.mode,barW:P.V.barW})}
+function paneCfg(P){return ({float:P.S.float||null,min:!!P.S.min,bt:P.S.bt,view:P.S.view,dom:P.S.dom,tpoRow:P.S.tpoRow,tpo:P.S.tpo,tpoCuts:P.S.tpoCuts,ind:P.S.ind,props:P.S.props,studies:P.S.studies,link:P.S.link,uid:P.S.uid,mode:P.mode,barW:P.V.barW})}
 function loadLayout(o){
   while(panes.length){const P=panes.pop(); P.el.remove()} active=null; ws.classList.remove('max');
   FRAC=o.fr||{}; layout=COUNT[o.layout]?o.layout:'l1'; (o.panes||[]).slice(0,MAXW).forEach(c=>addPane(c)); if(!panes.length) addPane(DEFAULTS[0]);
-  if(!docked().length) panes[0].S.float=null; if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
-  setActive(panes[0]); updateChrome();
+  fixPanes(); if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
+  setActive(shown()[0]||panes[0]); updateChrome();
 }
 function switchWorkspace(name){
   if(name===WSP.cur) return; WSP.list[WSP.cur]=JSON.parse(JSON.stringify(layoutObj(),(k,v)=>k[0]==='_'?undefined:v));
@@ -4814,11 +4847,12 @@ const HK_ACT=[
   ['magnet','Magnet on / off',()=>{MAGNET=!MAGNET; try{localStorage.setItem('potik.magnet',MAGNET?'1':'0')}catch(e){} const m=$('#magb'); if(m) m.setAttribute('aria-pressed',MAGNET); toast(MAGNET?'Magnet on':'Magnet off','info')}],
   ['t_trend','Tool: trend line',()=>setTool('trend')],['t_hline','Tool: horizontal line',()=>setTool('hline')],['t_rect','Tool: rectangle',()=>setTool('rect')],['t_fib','Tool: Fib retracement',()=>setTool('fib')],
   ['t_measure','Tool: measure',()=>setTool('measure')],['t_text','Tool: text',()=>setTool('text')],['t_long','Tool: long position',()=>setTool('long')],
-  ['reopen','Reopen closed window',()=>reopenClosed()],['settings','Settings',()=>openSettings(active)],['backups','Backups',()=>openBackups()],
+  ['reopen','Reopen closed window',()=>reopenClosed()],
+  ['wmax','Window: maximize / restore',()=>active&&toggleMax(active)],['wmin','Window: minimize',()=>active&&minimizePane(active)],['wfloat','Window: float / dock',()=>active&&toggleFloat(active)],['wclose','Window: close',()=>active&&closePane(active)],['settings','Settings',()=>openSettings(active)],['backups','Backups',()=>openBackups()],
   ['rplay','Replay: play / pause',()=>{if(!FEED.live) setPlaying(!G.playing)}],['rnext','Replay: next bar',()=>stepBar(1)],['rprev','Replay: previous bar',()=>stepBar(-1)],
 ];
 const HK_DEF={palette:'Ctrl+K',indicators:'Ctrl+I',props:'Ctrl+,',pointer:'Alt+P',cross:'Alt+C',hand:'Alt+H',gcross:'Alt+G',zoomout:'Alt+R',live:'Alt+End',buy:'Shift+B',sell:'Shift+S',flat:'Shift+F',rev:'Shift+R',cxl:'Shift+X',
-  datawin:'Alt+D',shot:'Alt+S',objtree:'Alt+O',magnet:'Alt+M',t_trend:'Alt+T',t_hline:'Alt+L',t_rect:'Alt+B',t_fib:'Alt+F',t_measure:'Alt+U',t_text:'Alt+X',t_long:'Alt+W',reopen:'Ctrl+Shift+T',settings:'',backups:'',rplay:'Space',rnext:'.',rprev:','};
+  datawin:'Alt+D',shot:'Alt+S',objtree:'Alt+O',magnet:'Alt+M',t_trend:'Alt+T',t_hline:'Alt+L',t_rect:'Alt+B',t_fib:'Alt+F',t_measure:'Alt+U',t_text:'Alt+X',t_long:'Alt+W',reopen:'Ctrl+Shift+T',wmax:'Alt+Enter',wmin:'Alt+N',wfloat:'',wclose:'',settings:'',backups:'',rplay:'Space',rnext:'.',rprev:','};
 let HK={...HK_DEF}; try{HK={...HK_DEF,...(JSON.parse(localStorage.getItem('potik.hk')||'null')||{})}}catch(e){}
 const saveHk=()=>{try{localStorage.setItem('potik.hk',JSON.stringify(HK))}catch(e){}};
 const keyName=c=>c.startsWith('Key')?c.slice(3):c.startsWith('Digit')?c.slice(5):({Comma:',',Period:'.',Slash:'/',Semicolon:';',Quote:"'",BracketLeft:'[',BracketRight:']',Minus:'-',Equal:'=',Backquote:'`',Backslash:'\\'}[c]||c);
@@ -5142,6 +5176,7 @@ function openMenu(P,p,cx,cy,indId){
     {icon:'copy',label:'Save chart image (PNG)',kbd:'Alt S',act:()=>chartImage(P,'save')},
     {icon:'copy',label:'Copy chart image',act:()=>chartImage(P,'copy')},
     {icon:'eye',label:'Link window',sub:[0,1,2,3].map(k=>({label:k?'Group '+LINK_NAME[k]:'Not linked',on:(P.S.link||0)===k,act:()=>{P.S.link=k; syncLinkChip(P); saveLayout(); linkSync(P,true); allDirty()}}))},
+    {icon:'util',label:'Window',sub:winItems(P)},
   );
   showMenu(items,cx,cy);
 }
@@ -5264,12 +5299,16 @@ const MAXW=8;
 // the layout for n docked windows; windows in a row stay in a row (up to 4)
 const layoutFor=n=>{const L=LAYOUTS[layout]; if(L&&L.r===1&&n<=4) return ['l1','l1','l2v','l3r','l4r'][n]; if(L&&L.c===1&&n<=3) return ['l1','l1','l2h','l3c'][n]; return FOR[n]||'l1'};
 let FRAC={};   // layout → {c:[fractions], r:[fractions]}
-const docked=()=>panes.filter(P=>!P.S.float);
+const docked=()=>panes.filter(P=>!P.S.float&&!P.S.min);
+const shown=()=>panes.filter(P=>!P.S.min);
+// after loading: at least one window on screen and at least one that is not floating
+function fixPanes(){if(!panes.length) return; if(!shown().length) panes[0].S.min=false; if(!panes.some(P=>!P.S.float)) panes[0].S.float=null}
 const fracOf=l=>{const L=LAYOUTS[l], f=FRAC[l]; return {c:f&&f.c&&f.c.length===L.c?f.c:Array(L.c).fill(1/L.c),r:f&&f.r&&f.r.length===L.r?f.r:Array(L.r).fill(1/L.r)}};
 function applyLayout(){
   const L=LAYOUTS[layout]||LAYOUTS.l1, f=fracOf(layout);
   ws.style.gridTemplateColumns=f.c.map(x=>x+'fr').join(' '); ws.style.gridTemplateRows=f.r.map(x=>x+'fr').join(' ');
   docked().forEach((P,i)=>{const a=L.a[i]||L.a[L.a.length-1]; P.el.style.gridArea=`${a[0]} / ${a[1]} / span ${a[2]||1} / span 1`; P.el.classList.remove('float'); Object.assign(P.el.style,{left:'',top:'',width:'',height:''})});
+  for(const P of panes){P.el.classList.toggle('mini',!!P.S.min); syncWinBtns(P)}
   for(const P of panes) if(P.S.float){const F=P.S.float, r=ws.getBoundingClientRect(); P.el.classList.add('float'); P.el.style.gridArea='';
     const w=clamp(F.w,220,Math.max(220,r.width-8)), h=clamp(F.h,160,Math.max(160,r.height-8));
     Object.assign(P.el.style,{left:clamp(F.x,0,Math.max(0,r.width-w))+'px',top:clamp(F.y,0,Math.max(0,r.height-h))+'px',width:w+'px',height:h+'px'})}
@@ -5296,22 +5335,99 @@ function addSplit(kind,k,x,y,w,h){
     s.addEventListener('pointermove',mv); s.addEventListener('pointerup',up);
   });
 }
-// a floating window: dragged by its header, resized from the corner, above the grid
-function toggleFloat(P){
-  if(P.S.float){P.S.float=null}
-  else{if(docked().length<=1){toast('Keep at least one docked window','info'); return} const r=P.el.getBoundingClientRect(), wr=ws.getBoundingClientRect(); P.S.float={x:r.left-wr.left+30,y:r.top-wr.top+30,w:Math.min(r.width,560),h:Math.min(r.height,420)}}
-  P.el.classList.remove('maxed'); ws.classList.remove('max'); layout=layoutFor(docked().length); updateChrome();
+/* ---------- window controls: minimize to the top bar, maximize / restore, float / dock, close ----------
+   A floating window moves by its header (snaps to the workspace edges) and resizes from every edge and corner.
+   Double-click a header to maximize / restore it; right-click a header for the window menu. */
+const WICON={
+  max:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="10" height="10" rx="1"/></svg>',
+  res:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="3.8" width="7.7" height="7.7" rx="1"/><path d="M4 3.8V1.5h7.5V9H9.2"/></svg>',
+  pop:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 2.5h-3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-3"/><path d="M7.5 1.5h4v4M11.5 1.5L6 7"/></svg>',
+  dock:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="10" height="10" rx="1"/><path d="M1.5 7.5h10"/><path d="M6.5 2.8v3.4M5 4.8l1.5 1.5L8 4.8"/></svg>',
+  up:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5-3.5L10 8.5"/></svg>',
+  x:'<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3l7 7M10 3l-7 7"/></svg>'};
+const isMax=P=>P.el.classList.contains('maxed');
+function syncWinBtns(P){
+  const q=s=>P.el.querySelector(s), m=isMax(P), f=!!P.S.float, mx=q('.mx'), fl=q('.flt');
+  const k1=m?'res':'max', k2=f?'dock':'pop';
+  if(mx._k!==k1){mx.innerHTML=WICON[k1]; mx._k=k1} mx.title=m?'Restore':'Maximize'; mx.setAttribute('aria-label',mx.title);
+  if(fl._k!==k2){fl.innerHTML=WICON[k2]; fl._k=k2} fl.title=f?'Dock this window back into the grid':'Float this window'; fl.setAttribute('aria-label',fl.title);
+  const mn=q('.mn'); mn.setAttribute('aria-label',mn.title); const cl=q('.cl'); cl.setAttribute('aria-label',cl.title);
 }
+function unmax(){ws.classList.remove('max'); panes.forEach(x=>x.el.classList.remove('maxed'))}
+function toggleMax(P,on_){
+  if(on_==null) on_=!isMax(P); if(P.S.min) P.S.min=false;
+  unmax(); if(on_){P.el.classList.add('maxed'); ws.classList.add('max')}
+  setActive(P); updateChrome();
+}
+function toggleFloat(P){
+  if(P.S.float){if(docked().length>=MAXW){toast(`Up to ${MAXW} windows in the grid`,'info'); return} P.S.float=null}
+  else{if(docked().length<=1){toast('Keep at least one docked window','info'); return} const r=P.el.getBoundingClientRect(), wr=ws.getBoundingClientRect(); P.S.float={x:r.left-wr.left+30,y:r.top-wr.top+30,w:Math.min(r.width,560),h:Math.min(r.height,420)}}
+  if(isMax(P)) unmax(); layout=layoutFor(docked().length); updateChrome();
+}
+function minimizePane(P){
+  if(P.S.min) return; if(shown().length<=1){toast('Keep at least one window on screen','info'); return}
+  if(isMax(P)) unmax(); P.S.min=true; layout=layoutFor(docked().length);
+  if(active===P){active=null; setActive(shown()[0])}
+  updateChrome();
+}
+function restorePane(P){
+  if(!P.S.min){setActive(P); return}
+  if(!P.S.float&&docked().length>=MAXW){P.S.float={x:40,y:40,w:560,h:420}}
+  P.S.min=false; layout=layoutFor(docked().length); setActive(P); updateChrome();
+}
+function winLabel(P){return `${panes.indexOf(P)+1} · ${{tpo:'TPO',dom:'DOM',tape:'Tape',acct:'Acct'}[P.S.view]||btLabel(P.S.bt)}`}
+function renderTray(){
+  const t=$('#mtray'); if(!t) return; t.innerHTML=''; const list=panes.filter(P=>P.S.min); t.hidden=!list.length;
+  for(const P of list){
+    const c=el_('div','mchip'), r=el_('button','mres'), x=el_('button','mx2'); r.type=x.type='button';
+    r.innerHTML=WICON.up; r.appendChild(el_('span',null,winLabel(P))); r.title='Restore window'; x.innerHTML=WICON.x; x.title='Close window'; x.setAttribute('aria-label','Close window');
+    r.addEventListener('click',()=>restorePane(P)); x.addEventListener('click',()=>closePane(P));
+    c.append(r,x); t.appendChild(c);
+  }
+}
+// the same actions as a menu: right-click a header, the chart menu, the command palette
+function winItems(P){
+  const many=panes.length>1;
+  return [
+    {icon:'auto',label:isMax(P)?'Restore size':'Maximize',kbd:'Dbl-click',act:()=>toggleMax(P)},
+    {icon:'undo',label:'Minimize',disabled:shown().length<=1,act:()=>minimizePane(P)},
+    {icon:'copy',label:P.S.float?'Dock into the grid':'Float',disabled:!P.S.float&&docked().length<=1,act:()=>toggleFloat(P)},
+    ...(P.S.float?[{icon:'util',label:'Floating size',sub:[['Small',420,300],['Medium',640,440],['Large',900,600],['Fill the workspace',1e5,1e5]].map(([n,w,h])=>({label:n,act:()=>{const r=ws.getBoundingClientRect(), F=P.S.float; F.w=Math.min(w,r.width-8); F.h=Math.min(h,r.height-8); if(w>=1e5){F.x=4; F.y=4} applyLayout(); P.dirty=true; saveLayout()}}))}]:[]),
+    {sep:1},
+    {icon:'copy',label:'Duplicate window',disabled:docked().length>=MAXW&&!P.S.float,act:()=>{const c=JSON.parse(JSON.stringify(paneCfg(P),(k,v)=>k[0]==='_'?undefined:v)); delete c.uid; c.min=false; if(c.float){c.float={...c.float,x:c.float.x+28,y:c.float.y+28}} const Q=addPane(c); layout=layoutFor(docked().length); setActive(Q); updateChrome()}},
+    {icon:'undo',label:'Reopen closed window',act:()=>reopenClosed()},
+    ...(panes.some(Q=>Q.S.min)?[{icon:'eye',label:'Restore all minimized',act:()=>{for(const Q of panes) if(Q.S.min){if(!Q.S.float&&docked().length>=MAXW) Q.S.float={x:40,y:40,w:560,h:420}; Q.S.min=false} layout=layoutFor(docked().length); updateChrome()}}]:[]),
+    {sep:1},
+    {icon:'trash',label:'Close window',danger:true,disabled:!many,act:()=>closePane(P)},
+    {icon:'trash',label:'Close other windows',danger:true,disabled:!many,act:()=>{for(const Q of panes.slice()) if(Q!==P) closePane(Q,true); toast('Other windows closed · Reopen closed window brings them back','info')}},
+  ];
+}
+const FMIN_W=220, FMIN_H=160, SNAP=10;
 function wireFloat(P){
-  const hd=P.el.querySelector('.wh'), rz=el_('div','frz'); rz.title='Resize'; P.el.appendChild(rz);
+  const hd=P.el.querySelector('.wh');
+  for(const d of ['n','s','e','w','nw','ne','sw','se']){
+    const rz=el_('div','frz '+d); rz.title='Resize'; P.el.appendChild(rz);
+    rz.addEventListener('pointerdown',e=>{
+      if(!P.S.float||isMax(P)) return; e.preventDefault(); e.stopPropagation(); rz.setPointerCapture(e.pointerId);
+      const F=P.S.float, x0=e.clientX, y0=e.clientY, o={x:F.x,y:F.y,w:F.w,h:F.h};
+      const mv=ev=>{const dx=ev.clientX-x0, dy=ev.clientY-y0, wr=ws.getBoundingClientRect();
+        if(d.includes('e')) F.w=Math.max(FMIN_W,Math.min(o.w+dx,wr.width-o.x));
+        if(d.includes('s')) F.h=Math.max(FMIN_H,Math.min(o.h+dy,wr.height-o.y));
+        if(d.includes('w')){const w=Math.max(FMIN_W,Math.min(o.w-dx,o.x+o.w)); F.x=o.x+o.w-w; F.w=w}
+        if(d.includes('n')){const h=Math.max(FMIN_H,Math.min(o.h-dy,o.y+o.h)); F.y=o.y+o.h-h; F.h=h}
+        applyLayout(); P.dirty=true};
+      const up=()=>{rz.removeEventListener('pointermove',mv); rz.removeEventListener('pointerup',up); saveLayout(); allDirty()};
+      rz.addEventListener('pointermove',mv); rz.addEventListener('pointerup',up)});
+  }
   hd.addEventListener('pointerdown',e=>{
-    if(!P.S.float||e.target.closest('button,select,input')) return; e.preventDefault(); hd.setPointerCapture(e.pointerId); const F=P.S.float, x0=e.clientX, y0=e.clientY, fx=F.x, fy=F.y;
-    const mv=ev=>{F.x=fx+ev.clientX-x0; F.y=fy+ev.clientY-y0; applyLayout()}; const up=()=>{hd.removeEventListener('pointermove',mv); hd.removeEventListener('pointerup',up); saveLayout(); allDirty()};
+    if(!P.S.float||isMax(P)||e.button!==0||e.target.closest('button,select,input')) return; e.preventDefault(); hd.setPointerCapture(e.pointerId); const F=P.S.float, x0=e.clientX, y0=e.clientY, fx=F.x, fy=F.y;
+    const mv=ev=>{const wr=ws.getBoundingClientRect(); let x=fx+ev.clientX-x0, y=fy+ev.clientY-y0;
+      if(Math.abs(x)<SNAP) x=0; if(Math.abs(y)<SNAP) y=0; if(Math.abs(wr.width-(x+F.w))<SNAP) x=wr.width-F.w; if(Math.abs(wr.height-(y+F.h))<SNAP) y=wr.height-F.h;
+      F.x=x; F.y=y; applyLayout()};
+    const up=()=>{hd.removeEventListener('pointermove',mv); hd.removeEventListener('pointerup',up); saveLayout(); allDirty()};
     hd.addEventListener('pointermove',mv); hd.addEventListener('pointerup',up)});
-  rz.addEventListener('pointerdown',e=>{
-    if(!P.S.float) return; e.preventDefault(); e.stopPropagation(); rz.setPointerCapture(e.pointerId); const F=P.S.float, x0=e.clientX, y0=e.clientY, w0=F.w, h0=F.h;
-    const mv=ev=>{F.w=Math.max(220,w0+ev.clientX-x0); F.h=Math.max(160,h0+ev.clientY-y0); applyLayout(); P.dirty=true}; const up=()=>{rz.removeEventListener('pointermove',mv); rz.removeEventListener('pointerup',up); saveLayout()};
-    rz.addEventListener('pointermove',mv); rz.addEventListener('pointerup',up)});
+  hd.addEventListener('dblclick',e=>{if(e.target.closest('button,select,input')) return; toggleMax(P)});
+  hd.addEventListener('contextmenu',e=>{if(e.target.closest('select,input')) return; e.preventDefault(); setActive(P); showMenu(winItems(P),e.clientX,e.clientY)});
   P.el.addEventListener('pointerdown',()=>{if(P.S.float){panes.forEach(Q=>Q.el.style.zIndex=''); P.el.style.zIndex='16'}},true);
 }
 const panes=[]; let active=null, layout='l3';
@@ -5324,7 +5440,7 @@ function makePane(cfg){
   const el=$('#winTpl').content.firstElementChild.cloneNode(true);
   const c=JSON.parse(JSON.stringify(cfg));
   const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{})},
-    tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null};
+    tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min};
   {const b=S.ind.big, ob=c.ind&&c.ind.big; if(ob&&ob.min!=null&&ob.minBuy==null){b.minBuy=b.minSell=ob.min} delete b.min; b.aggMs=BIGAGG.ms; b.aggTicks=BIGAGG.ticks; b.aggOpp=BIGAGG.opp}   // settings from older versions
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
     V:{barW:c.barW||defaultBarW(S),scroll:0,tickPx:3,center:null,autoY:true,fit:true,hover:null,g:null,lastN:0},
@@ -5342,12 +5458,13 @@ function makePane(cfg){
   q('.propb').addEventListener('click',()=>openProps(P));
   dom.addEventListener('click',()=>{S.dom=!S.dom; sync(); P.dirty=true; saveLayout()});
   rowSel.addEventListener('change',()=>{S.tpoRow=rowSel.value; P.dirty=true; saveLayout()});
-  q('.mx').addEventListener('click',()=>{const on_=!el.classList.contains('maxed'); panes.forEach(x=>x.el.classList.remove('maxed')); el.classList.toggle('maxed',on_); ws.classList.toggle('max',on_); q('.mx').title=on_?'Restore':'Maximize'; setActive(P); placeSplitters(); allDirty()});
+  q('.mx').addEventListener('click',()=>toggleMax(P));
+  q('.mn').addEventListener('click',()=>minimizePane(P));
   q('.cl').addEventListener('click',()=>closePane(P));
   P.live.addEventListener('click',()=>{P.V.scroll=0; P.V.tscroll=0; if(!P.V.autoY)P.V.center=D.last; P.dirty=true});
   el.addEventListener('pointerdown',()=>setActive(P),true);
   q('.lnk').addEventListener('click',()=>cycleLink(P)); syncLinkChip(P);
-  q('.flt').addEventListener('click',()=>toggleFloat(P)); wireFloat(P);
+  q('.flt').addEventListener('click',()=>toggleFloat(P)); wireFloat(P); syncWinBtns(P);
   P.tb=makeTradeBar(P);
   P.ac=el_('div','acct'); P.ac.addEventListener('pointerdown',e=>e.stopPropagation()); P.ac.addEventListener('wheel',e=>e.stopPropagation()); el.querySelector('.body').appendChild(P.ac);
   wireCanvas(P);
@@ -5383,15 +5500,15 @@ function openBtDialog(P){
 function setActive(P){if(active===P) return; active=P; panes.forEach(x=>x.el.classList.toggle('act',x===P)); renderTabs(); allDirty()}
 function renderTabs(){
   const t=$('#wtabs'); t.innerHTML='';
-  panes.forEach((P,i)=>{const b=el_('button',null,`${i+1} · ${{tpo:'TPO',dom:'DOM',tape:'Tape',acct:'Acct'}[P.S.view]||btLabel(P.S.bt)}`); b.type='button';
-    b.setAttribute('aria-pressed',P===active); b.addEventListener('click',()=>setActive(P)); t.appendChild(b)});
+  panes.forEach((P,i)=>{const b=el_('button',null,winLabel(P)); b.type='button';
+    b.setAttribute('aria-pressed',P===active); b.addEventListener('click',()=>P.S.min?restorePane(P):setActive(P)); t.appendChild(b)});
 }
 function updateChrome(){
   ws.className='ws'+(ws.classList.contains('max')?' max':''); applyLayout();
   document.querySelectorAll('#lay button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===layout));
   $('#addw').disabled=docked().length>=MAXW;
-  panes.forEach(P=>{P.el.querySelector('.cl').disabled=panes.length<=1});
-  renderTabs(); allDirty(); saveLayout();
+  panes.forEach(P=>{P.el.querySelector('.cl').disabled=panes.length<=1; P.el.querySelector('.mn').disabled=!P.S.min&&shown().length<=1});
+  renderTabs(); renderTray(); allDirty(); saveLayout();
 }
 function addPane(cfg){const P=makePane(cfg); panes.push(P); ws.appendChild(P.el); return P}
 // closed windows are remembered (last 10): Reopen closed window brings one back with its settings and its drawings
@@ -5401,21 +5518,22 @@ function reopenClosed(){
   let a=[]; try{a=JSON.parse(localStorage.getItem(CLOSED_KEY)||'[]')}catch(e){}
   if(!a.length){toast('No closed windows to reopen','info'); return} if(panes.length>=MAXW){toast(`Up to ${MAXW} windows`,'info'); return}
   const c=a.shift(); try{localStorage.setItem(CLOSED_KEY,JSON.stringify(a))}catch(e){}
-  c.float=null; if(panes.some(P=>P.S.uid===c.uid)) delete c.uid; const P=addPane(c); layout=layoutFor(docked().length); setActive(P); updateChrome(); toast('Window reopened','info');
+  c.float=null; c.min=false; if(panes.some(P=>P.S.uid===c.uid)) delete c.uid; const P=addPane(c); layout=layoutFor(docked().length); setActive(P); updateChrome(); toast('Window reopened','info');
 }
-function closePane(P){
-  if(panes.length<=1) return;
+function closePane(P,quiet){
+  if(panes.length<=1||!panes.includes(P)) return;
   rememberClosed(P); panes.splice(panes.indexOf(P),1); P.el.remove();
   if(P.el.classList.contains('maxed')) ws.classList.remove('max');
-  layout=layoutFor(docked().length); if(active===P){active=null; setActive(panes[0])}
-  updateChrome();
+  fixPanes(); layout=layoutFor(docked().length); if(active===P){active=null; setActive(shown()[0]||panes[0])}
+  updateChrome(); if(!quiet) toast('Window closed · right-click a window header to reopen it','info');
 }
 function setLayout(l){
   layout=l; const n=COUNT[l];
+  for(const P of panes) if(docked().length<n&&P.S.min&&!P.S.float) P.S.min=false;   // minimized windows come back first
   while(docked().length<n) addPane(DEFAULTS[panes.length%DEFAULTS.length]);
   while(docked().length>n){const d=docked(), P=d[d.length-1]; rememberClosed(P); panes.splice(panes.indexOf(P),1); P.el.remove(); if(active===P) active=null}
   ws.classList.remove('max'); panes.forEach(P=>P.el.classList.remove('maxed'));
-  if(!active) setActive(panes[0]);
+  if(!active||active.S.min) setActive(shown()[0]||panes[0]);
   updateChrome();
 }
 document.querySelectorAll('#lay button').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.v)));
@@ -5580,11 +5698,11 @@ if(!saved){try{saved=JSON.parse(localStorage.getItem('potik.layout.v2')||'null')
 try{if(saved&&saved.panes&&!localStorage.getItem('potik.fplines.off')){saved.panes.forEach(c=>{const f=c&&c.ind&&c.ind.fp; if(f){f.naked=false; f.stackZone=false; f.unfin=false; f.always=false}}); localStorage.setItem('potik.fplines.off','1')}}catch(e){}
 if(saved&&Array.isArray(saved.panes)&&saved.panes.length&&COUNT[saved.layout]){
   FRAC=saved.fr||{}; layout=saved.layout; saved.panes.slice(0,MAXW).forEach(c=>addPane(c));
-  if(!docked().length) panes[0].S.float=null; if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
+  fixPanes(); if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
 }else{
   for(let i=0;i<3;i++) addPane(DEFAULTS[i]);
 }
-setActive(narrow?panes[panes.length-1]:panes[0]); updateChrome();
+{const v=shown(); setActive(narrow?v[v.length-1]:v[0])} updateChrome();
 buildToolbar();
 requestAnimationFrame(()=>setTbMode(TB_MODE));
 new ResizeObserver(()=>{if(TB_MODE==='float') placeBar(parseFloat(dt.style.left)||0,parseFloat(dt.style.top)||40); applyLayout(); allDirty()}).observe(ws);
