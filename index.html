@@ -391,7 +391,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ssres:hover{color:var(--text)}
 @media (max-width:699px){.ssm{min-width:64px;padding:8px 10px;font-size:12px}.sslogo{font-size:20px}.ss{align-items:flex-start}}
 /* 29.10: a quieter window header */
-.vw button[data-v="tape"],.vw button[data-v="acct"],.wh .indb,.wh .tgl.dom,.wc .lnk,.wc .propb,.wc .wsep:first-of-type{display:none!important}
+.wh .vw,.wh .indb,.wh .tgl.dom,.wc .lnk,.wc .propb,.wc .wsep:first-of-type{display:none!important}
 </style>
 
 <div class="app">
@@ -399,7 +399,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
     <button type="button" class="brand bb" id="brandb" title="Start screen">ПОТІК</button>
     <span class="sep"></span>
     <button type="button" class="addw" id="addw">+ Window</button>
-    <select id="wsSel" class="hsel" aria-label="Workspace" title="Workspace"></select>
+    <select id="wsSel" class="hsel" aria-label="Workspace" title="Workspace" hidden></select>
     <div class="wtabs" id="wtabs" role="group" aria-label="Windows"></div>
     <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
     <div class="right">
@@ -5687,16 +5687,26 @@ function placeSplitters(splits){
     });
   }
 }
-// + Window: ask where the new window goes
-function openAddWindow(x,y){
-  if(panes.length>=MAXW&&docked().length>=MAXW){toast(`Up to ${MAXW} windows`,'info'); return}
+// + Window (29.10): the same choice as the start screen (Chart, Heatmap, Footprint, DOM, TPO) and where it goes
+const ADDW_SIDES=[['right','Right'],['left','Left'],['top','Above'],['bottom','Below'],['float','Floating']];
+let ADDW_SIDE='right'; try{ADDW_SIDE=localStorage.getItem('potik.addw.side')||'right'}catch(e){}
+function openAddWindow(){
+  if(docked().length>=MAXW&&panes.length>=MAXW){toast(`Up to ${MAXW} windows`,'info'); return}
   const tgt=active&&!active.S.float&&!active.S.min?active:docked()[0];
-  const add=side=>{const c=JSON.parse(JSON.stringify(DEFAULTS[0])); if(side==='float'){const r=ws.getBoundingClientRect(); c.float={x:Math.max(0,r.width/2-300),y:40,w:600,h:420}}
-    const P=addPane(c); if(side!=='float') TREE=treeInsert(TREE,tgt&&tgt.S.uid,P.S.uid,side); setActive(P); updateChrome()};
-  showMenu([{label:'Where should the new window open?',disabled:true},{sep:1},
-    {icon:'copy',label:'Right of the active window',act:()=>add('right')},{icon:'copy',label:'Left of the active window',act:()=>add('left')},
-    {icon:'copy',label:'Above the active window',act:()=>add('top')},{icon:'copy',label:'Below the active window',act:()=>add('bottom')},
-    {sep:1},{icon:'copy',label:'Floating window',act:()=>add('float')}],x,y);
+  openDialog('New window',body=>{
+    body.appendChild(el_('p','idesc','Pick what to open. It goes next to the active window, on the side chosen below.'));
+    const tiles=el_('div','sstiles'); body.appendChild(tiles);
+    for(const k of ['chart','heat','fp','dom','tpo']){
+      const b=el_('button','sstile'); b.type='button'; b.innerHTML=`<svg class="ssg" viewBox="0 0 140 70" aria-hidden="true">${SS_PIC[k]}</svg><span></span>`; b.querySelector('span').textContent=SS_WS[k].name;
+      b.addEventListener('click',()=>{closeDialog(true); const c=JSON.parse(JSON.stringify(SS_WS[k].lay().panes[0])), side=ADDW_SIDE;
+        if(side==='float'){const r=ws.getBoundingClientRect(); c.float={x:Math.max(0,r.width/2-320),y:40,w:640,h:440}}
+        const P=addPane(c); if(side!=='float') TREE=treeInsert(TREE,tgt&&tgt.S.uid,P.S.uid,side); setActive(P); updateChrome()});
+      tiles.appendChild(b);
+    }
+    const row=el_('div','ssrow'); row.appendChild(el_('b',null,'Where')); body.appendChild(row);
+    for(const [v,t] of ADDW_SIDES){const b=el_('button','sschip',t); b.type='button'; b.setAttribute('aria-pressed',v===ADDW_SIDE);
+      b.addEventListener('click',()=>{ADDW_SIDE=v; try{localStorage.setItem('potik.addw.side',v)}catch(e){} row.querySelectorAll('.sschip').forEach(x=>x.setAttribute('aria-pressed',x===b))}); row.appendChild(b)}
+  });
 }
 /* ---------- window controls: minimize to the top bar, maximize / restore, float / dock, close ----------
    A floating window moves by its header (snaps to the workspace edges) and resizes from every edge and corner.
@@ -5752,6 +5762,7 @@ function renderTray(){
 function winItems(P){
   const many=panes.length>1;
   return [
+    {icon:'eye',label:'Show as',sub:[['chart','Chart'],['tpo','TPO'],['dom','DOM'],['tape','Time & Sales'],['acct','Account']].map(([v,t])=>({label:t,on:P.S.view===v,act:()=>{const b=P.el.querySelector(`.vw button[data-v="${v}"]`); if(b) b.click()}}))},{sep:1},
     {icon:'auto',label:isMax(P)?'Restore size':'Maximize',kbd:'Dbl-click',act:()=>toggleMax(P)},
     {icon:'undo',label:'Minimize',disabled:shown().length<=1,act:()=>minimizePane(P)},
     {icon:'copy',label:P.S.float?'Dock into the grid':'Float',disabled:!P.S.float&&docked().length<=1,act:()=>toggleFloat(P)},
@@ -5902,7 +5913,7 @@ function setLayout(l){
   TREE=treeFromPreset(l,docked()); updateChrome();
 }
 document.querySelectorAll('#lay button').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.v)));
-$('#addw').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect(); openAddWindow(r.left,r.bottom+4)});
+$('#addw').addEventListener('click',()=>openAddWindow());
 
 /* ---------- canvas gestures (per window) ---------- */
 function wireCanvas(P){
