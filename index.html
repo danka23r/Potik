@@ -4218,7 +4218,9 @@ function makeWsFeed(url,sub){
    from its real trades, and from then on every trade and the top 20 book levels arrive over a WebSocket.
    USDⓈ-M futures (perpetual) first, spot as the fallback. Sizes are whole lots of the instrument (BTC 0.01, ETH 0.1, SOL 1). */
 function bncEp(mk){return mk==='spot'?{rest:['https://api.binance.com/api/v3','https://data-api.binance.vision/api/v3'],ws:'wss://stream.binance.com:9443/stream?streams=',lim:1000,name:'Binance spot'}
-  :{rest:['https://fapi.binance.com/fapi/v1'],ws:'wss://fstream.binance.com/stream?streams=',lim:1500,name:'Binance futures'}}   // a function: it is needed before this part of the page has run
+  :{rest:['https://fapi.binance.com/fapi/v1'],ws:'wss://fstream.binance.com/stream?streams=',
+    // since April 2026 Binance futures serves trades on /market and the order book on /public; the old address only sends the book
+    wsT:'wss://fstream.binance.com/market/stream?streams=',wsB:'wss://fstream.binance.com/public/stream?streams=',lim:1500,name:'Binance futures'}}   // a function: it is needed before this part of the page has run
 async function bncGet(ep,path){
   let err; for(const base of ep.rest){try{const r=await fetch(base+path,{cache:'no-store'}); if(r.ok) return await r.json(); err=new Error('HTTP '+r.status)}catch(e){err=e}}
   throw err;
@@ -4272,7 +4274,7 @@ function makeBncFeed(L,ins){
     finalize();
   }
   const F={kind:'bnc',real:true,live:true,name:`${L.ep.name} · ${ins.bsym}`,status:'connecting',q:[],ws:null,book:false,n:0,lastA:0,wall:0,bid:0,ask:0,lastPx:0,tries:0,first:{price:L.first},
-    close(){this.closing=true; try{this.ws&&this.ws.close()}catch(e){}},
+    close(){this.closing=true; for(const w of this.socks||[]) try{w&&w.close()}catch(e){}},
     history(i){openSession(i); const end=dayMs(i+1); while(kPos<K.n&&K.t[kPos]<end){if(K.t[kPos]>=dayMs(i)) synth(i,kPos); kPos++} sim.t=i*DAY+CLOSE},
     open(i){
       BK.on=true; sim.p=Math.round(L.first/TICK)+.5; openSession(i);
@@ -4282,14 +4284,20 @@ function makeBncFeed(L,ins){
       this.wall=performance.now(); this.connect();
     },
     step(){return true},
+    // one socket for trades and one for the book (futures), or one combined socket (spot)
     connect(){
-      const s=ins.bsym.toLowerCase(), url=L.ep.ws+`${s}@aggTrade/${s}@depth20@100ms`;
-      try{this.ws=new WebSocket(url)}catch(e){this.status=e.message; return}
-      this.ws.onopen=()=>{const back=this.tries>0; this.status='connected'; this.tries=0;
-        if(back&&this.lastA) bncGet(L.ep,`/aggTrades?symbol=${ins.bsym}&fromId=${this.lastA+1}&limit=1000`).then(a=>{if(Array.isArray(a)) this.q.unshift(...a)}).catch(()=>{})};   // fill the gap after a reconnect
-      this.ws.onmessage=e=>{let m; try{m=JSON.parse(e.data)}catch(_){return} const d=m&&m.data||m; if(d) this.q.push(d)};
-      this.ws.onerror=()=>{this.status='connection error'};
-      this.ws.onclose=()=>{this.status='reconnecting'; if(this.closing) return; this.tries++; setTimeout(()=>this.connect(),Math.min(30000,1000*2**Math.min(5,this.tries)))};
+      const s=ins.bsym.toLowerCase();
+      const urls=L.ep.wsT?[[L.ep.wsT+`${s}@aggTrade`,true],[L.ep.wsB+`${s}@depth20@100ms`,false]]:[[L.ep.ws+`${s}@aggTrade/${s}@depth20@100ms`,true]];
+      this.socks=[]; this.tr=[]; urls.forEach(([u,trades],k)=>this.open1(u,k,trades));
+    },
+    open1(url,k,trades){
+      let ws; try{ws=new WebSocket(url)}catch(e){this.status=e.message; return}
+      this.socks[k]=ws;
+      ws.onopen=()=>{const back=(this.tr[k]||0)>0; this.tr[k]=0; this.status='connected';
+        if(back&&trades&&this.lastA) bncGet(L.ep,`/aggTrades?symbol=${ins.bsym}&fromId=${this.lastA+1}&limit=1000`).then(a=>{if(Array.isArray(a)) this.q.unshift(...a)}).catch(()=>{})};   // fill the gap after a reconnect
+      ws.onmessage=e=>{let m; try{m=JSON.parse(e.data)}catch(_){return} const d=m&&m.data||m; if(d) this.q.push(d)};
+      ws.onerror=()=>{this.status='connection error'};
+      ws.onclose=()=>{if(this.closing) return; this.status='reconnecting'; this.tr[k]=(this.tr[k]||0)+1; setTimeout(()=>this.open1(url,k,trades),Math.min(30000,1000*2**Math.min(5,this.tr[k])))};
     },
     // apply queued messages; the clock follows real time between trades
     drain(){
