@@ -2399,7 +2399,7 @@ function drawChart(P,ctx,w,h){
     V.g.lg={w:legendHead(ctx,S,c)};
     ctx.font=`10.5px ${UI}`; let ly=26;
     const names={vwap:()=>`VWAP (${CRYPTO?'UTC day':ETH?"ETH":"RTH"})${[1,2,3].filter(k=>I.vwap['b'+k]).map(k=>' ±'+k+'σ').join('')}`,rsi:()=>`RSI Bars (${I.rsi.period})`,
-      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+clock(FEED.bf.loT):FEED.bf.st==='waiting'?' · Binance busy, retrying':' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>I.prof.side==='day'?`Volume Profile (each ${CRYPTO?'day from 00:00 UTC':'session'})`:`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
+      rng:()=>`Range (${I.rng.minutes}m)`,big:()=>`Big Trades (${I.big.minBuy===I.big.minSell?'≥'+I.big.minBuy:'buy ≥'+I.big.minBuy+' · sell ≥'+I.big.minSell}${I.big.agg?' · combined':''})${FEED.bf&&FEED.bf.st!=='done'?(FEED.bf.st==='loading'?' · loading history, now at '+(dayOf(FEED.bf.loT)===dayOf(sim.t)?'':realDate(FEED.bf.loT)+' ')+clock(FEED.bf.loT):FEED.bf.st==='waiting'?' · Binance busy, retrying':' · history stopped'):''}`,ema:()=>`EMA ${I.ema.p1} / ${I.ema.p2}`,prof:()=>I.prof.side==='day'?`Volume Profile (each ${CRYPTO?'day from 00:00 UTC':'session'})`:`Volume Profile (${{day:'today',prevday:'previous day',week:'this week',month:'this month',composite:`last ${I.prof.compDays} sessions`,visible:'visible bars'}[I.prof.period]||'today'}${I.prof.mode!=='volume'?', '+I.prof.mode:''})`,tpoov:()=>`TPO Overlay (${I.tpoov.period}m)`,
       fp:()=>`Footprint · ${FP_MODE_NAME[F.mode1]||'Bid x Ask'}${F.mode2&&F.mode2!=='none'?' + '+FP_MODE_NAME[F.mode2]:''}${fp?'':fpLod?' (cells, zoom in for numbers)':' (zoom in)'}${F.naked||F.stackZone||F.unfin?' + level lines':''}`,
       cvd:()=>'CVD',stats:()=>`Bar Statistics (${stRows.map(r=>r[1]).join(' ')||'no rows'})`,
       heat:()=>'Liquidity Heatmap (book from today’s open)',dpow:()=>`DOM Power (${I.dpow.levels} levels)`,sot:()=>`Speed of Tape (${SOT_NAME[I.sot.stat]} / ${I.sot.interval}s)`};
@@ -4622,7 +4622,7 @@ function makeBncFeed(L,ins){
       let last=0;
       const get=async path=>{for(let tries=0;;tries++){
         if(this.closing) throw new Error('closed');
-        const w=last+700-performance.now(); if(w>0) await new Promise(r=>setTimeout(r,w)); last=performance.now();
+        const w=last+600-performance.now(); if(w>0) await new Promise(r=>setTimeout(r,w)); last=performance.now();
         let r; try{r=await fetch(base+path,{cache:'no-store'})}catch(e){if(tries>=4) throw e; await new Promise(r=>setTimeout(r,5000)); continue}
         if(r.ok) return r.json();
         if(r.status===418) throw new Error('Binance blocked requests from this address for a while');
@@ -4640,11 +4640,12 @@ function makeBncFeed(L,ins){
       const back=async(lo,hi,onStep)=>{for(let b=hi;b>lo;){const a=Math.max(lo,b-3e5);
         for(let k=0;;k++){try{await chunk(a,b); break}catch(e){if(k>=5||/blocked|closed/.test(e.message||'')) throw e; B.st='waiting'; allDirty(); await new Promise(r=>setTimeout(r,60000)); B.st='loading'}}
         b=a; onStep(a); B.loT=tOf(B.lo)}};
-      // save the big prints this page holds, one record per UTC day, for days fully or partly covered
+      // save the big prints this page holds, one record per UTC day: the stretch of the day that real trades cover (cov)
+      const cov={};
       const save=async()=>{try{
-        const now=Date.now(), from=B.lo, recs=[];
-        for(let d=Math.floor(from/864e5);d<=Math.floor(now/864e5);d++){
-          const a=Math.max(from,d*864e5), b=Math.min(now,(d+1)*864e5), ta=tOf(a), tb=tOf(b), s=[], r=[];
+        const now=Date.now(), recs=[];
+        for(const dk in cov){const d=+dk, c=cov[d];
+          const a=Math.max(c.from,d*864e5), b=c.live?Math.min(now,(d+1)*864e5):Math.min(c.to,(d+1)*864e5); if(b<=a) continue; const ta=tOf(a), tb=tOf(b), s=[], r=[];
           for(let i=BIG.lower(ta);i<BIG.n&&BIG.t[i]<tb;i++) s.push(msOf(BIG.t[i]),BIG.px[i],BIG.sz[i],BIG.sd[i]);
           if(BIGAGG.agg) for(let i=BAG.lower(ta);i<BAG.n&&BAG.t[i]<tb;i++) r.push(msOf(BAG.t[i]),msOf(BAG.t1[i]),BAG.px[i],BAG.lo[i],BAG.hi[i],BAG.sz[i],BAG.sd[i],BAG.k[i]);
           recs.push({id:key(d),sym:S,mk,day:d,from:a,to:b,sig:BIGAGG.agg?sig:'',s:Float64Array.from(s),r:Float64Array.from(r)});
@@ -4658,15 +4659,26 @@ function makeBncFeed(L,ins){
       (async()=>{
         let recs=[]; try{recs=(await idbDo('big','readonly',st=>st.getAll())).filter(x=>x.sym===S&&x.mk===mk)}catch(e){}
         const old=recs.filter(x=>x.day<L.day0); if(old.length) idbDo('big','readwrite',st=>{for(const x of old) st.delete(x.id)}).catch(()=>{});
-        for(const x of recs) if(x.day>=L.day0&&x.day<today) load(x);
+        for(const x of recs) if(x.day>=L.day0&&x.day<today){load(x); cov[x.day]={from:x.from,to:x.to}}
         const rec=recs.find(x=>x.day===today&&x.to>dS);
         try{
           // what was saved shows at once; the gap since then is fetched first (newest first), then older trades of the day
           if(rec) load(rec);
           if(rec&&rec.to<L.cur) await back(Math.max(dS,rec.to),L.cur,a=>{B.lo=a});
-          if(rec){B.lo=rec.from; B.loT=tOf(B.lo)}
+          const ct=cov[today]={from:rec?Math.max(dS,rec.from):L.cur,to:L.cur,live:true}; B.lo=ct.from; B.loT=tOf(B.lo);
           setInterval(save,60000); window.addEventListener('pagehide',save); save();
-          let nk=0; if(B.lo>dS) await back(dS,B.lo,a=>{B.lo=a; if(++nk%6===0) save()});
+          let nk=0; if(B.lo>dS) await back(dS,B.lo,a=>{B.lo=ct.from=a; if(++nk%6===0) save()});
+          save();
+          /* 30.10: then every earlier day on the chart, newest first, so big trades are everywhere, not only today.
+             Binance gives about an hour of BTC trades a minute or two, so the whole history fills over a while;
+             each day is kept in the browser, so the next visit shows it at once and fetches only what is still missing. */
+          for(let d=today-1;d>=L.day0;d--){
+            const D0=d*864e5, D1=D0+864e5; let c=cov[d];
+            if(c&&c.from<=D0&&c.to>=D1) continue;
+            if(c&&c.to<D1){await back(c.to,D1,a=>{B.lo=a}); c.to=D1; save()}   // the day was still running when it was last seen
+            c=cov[d]||(cov[d]={from:D1,to:D1}); B.lo=c.from; B.loT=tOf(B.lo);
+            await back(D0,c.from,a=>{B.lo=c.from=a; if(++nk%6===0) save()}); save();
+          }
           B.st='done'; save();
         }catch(e){B.st='stopped'; B.err=e.message||String(e); console.warn('big trades history',e); save()}
         allDirty();
