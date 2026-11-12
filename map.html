@@ -36,6 +36,9 @@ a{color:#a99cff;text-decoration:none}
 #card .x{position:absolute;right:6px;top:4px;border:0;background:none;color:var(--mu);font-size:16px}
 #card h3{margin:0 18px 4px 0;font-size:14px}
 #card .m{color:var(--mu);font-size:12px}
+#styles{position:absolute;right:12px;top:12px;display:flex;border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:rgba(12,16,23,.85)}
+#styles button{border:0;border-radius:0;background:none;padding:5px 11px;font-size:12px;color:var(--mu)}
+#styles button.on{background:#211c3d;color:#fff}
 #legend{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:60%}
 #legend button{font-size:11.5px;padding:3px 8px;background:rgba(12,16,23,.8)}
 #legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
@@ -94,6 +97,7 @@ aside{background:var(--pn);border-left:1px solid var(--ln);display:flex;flex-dir
     <div id="globe"></div>
     <div id="next" hidden><div class="k">Наступна подія</div><div class="t"></div><div class="c"></div></div>
     <div id="card" hidden><button class="x">×</button><h3></h3><div class="m"></div></div>
+    <div id="styles"></div>
     <div id="legend"></div>
   </div>
   <aside>
@@ -114,6 +118,7 @@ const CFG_DEF = {
   quakeMin: 6, gdacsMin: 'Orange', stormMin: 2,
   calCur: ['USD'], calMed: false, calLead: 5,
   kw: 'Fed, Powell, FOMC, tariff, OPEC, missile, sanctions, SEC, ETF, Bitcoin, Binance, Nvidia, Taiwan, Strait of Hormuz',
+  style: 'night',
   layers: {quake: true, storm: true, fire: false, volcano: true, flood: true, gdacs: true, other: true}
 };
 let CFG = (() => { try { const s = JSON.parse(localStorage.getItem('potik.map.cfg') || '{}'); return {...CFG_DEF, ...s, layers: {...CFG_DEF.layers, ...(s.layers || {})}}; } catch (e) { return {...CFG_DEF}; } })();
@@ -412,6 +417,15 @@ $('#bell').onclick = async () => {
 
 /* ---------- globe ---------- */
 const IMG = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/';
+const STYLES = {
+  night: {name: 'Ніч', hint: 'Нічні вогні міст, NASA Black Marble', max: 8,
+    url: (x, y, l) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/${l}/${y}/${x}.png`},
+  map: {name: 'Карта', hint: 'Темна карта з кордонами й назвами міст (CARTO)', max: 18,
+    url: (x, y, l) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/dark_all/${l}/${x}/${y}@2x.png`},
+  sat: {name: 'Супутник', hint: 'Супутникові знімки (Esri World Imagery)', max: 18,
+    url: (x, y, l) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${l}/${y}/${x}`},
+  classic: {name: 'Проста', hint: 'Одна картинка, найлегша для слабкого ПК', url: null},
+};
 const gel = $('#globe');
 let G = null;
 try {
@@ -428,6 +442,8 @@ try {
     .pathPoints('pts').pathPointLat(p => p[0]).pathPointLng(p => p[1]).pathColor(d => [rgba(d.color, .15), rgba(d.color, .9)])
     .pathStroke(1.4).pathDashLength(.04).pathDashGap(.012).pathDashAnimateTime(9000)
     .pointOfView({lat: 30, lng: -40, altitude: 2.3});
+  try { G.renderer().setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); } catch (e) {}
+  setStyle(CFG.style);
   const ctl = G.controls(); ctl.autoRotate = true; ctl.autoRotateSpeed = .3;
   gel.addEventListener('pointerdown', () => { ctl.autoRotate = false; });
   new ResizeObserver(() => G.width(gel.clientWidth).height(gel.clientHeight)).observe(gel);
@@ -435,6 +451,18 @@ try {
   gel.innerHTML = `<div class="empty" style="padding-top:30vh">Не вдалося запустити глобус: ${esc(e.message)}.<br>Стрічка і календар справа працюють.</div>`;
   G = null;
 }
+/* map tiles: sharper as you zoom in (detail loads per tile) */
+function setStyle(k) {
+  if (!STYLES[k]) k = 'night';
+  CFG.style = k; saveCfg();
+  $('#styles').innerHTML = Object.entries(STYLES).map(([id, v]) => `<button data-s="${id}" class="${id === k ? 'on' : ''}" title="${esc(v.hint)}">${v.name}</button>`).join('');
+  if (!G) return;
+  const st = STYLES[k];
+  if (!st.url) { G.globeTileEngineUrl(null); G.globeImageUrl(IMG + 'earth-night.jpg'); return; }
+  try { G.globeTileEngineClearCache(); } catch (e) {}
+  G.globeTileEngineMaxLevel(st.max).globeTileEngineUrl(st.url);
+}
+$('#styles').onclick = e => { const b = e.target.closest('button'); if (b) setStyle(b.dataset.s); };
 function focusEv(ev) {
   if (ev.lat == null) { if (ev.url) window.open(ev.url, '_blank', 'noopener'); return; }
   SEL = ev;
