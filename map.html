@@ -104,6 +104,7 @@ aside{background:var(--pn);border-left:1px solid var(--ln);display:flex;flex-dir
   </aside>
 </div>
 <div id="toasts"></div>
+<div id="offl" hidden style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:#111722;border:1px solid #2b3550;border-radius:12px;padding:22px 26px;max-width:460px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)"><div style="font-size:16px;font-weight:600;margin-bottom:8px">Тут карта не може отримати дані</div><div style="color:#9aa4b6;margin-bottom:14px">Цей переглядач блокує запити до USGS, NASA, новин і календаря, тому все порожнє. Відкрий карту в Chrome за адресою:</div><a id="offlA" href="https://danka23r.github.io/Potik/map.html" target="_blank" rel="noopener" style="font-size:15px">danka23r.github.io/Potik/map.html ↗</a></div>
 <script>
 'use strict';
 /* ---------- settings ---------- */
@@ -559,6 +560,14 @@ pollGDACS(); setInterval(pollGDACS, 600e3);
 pollNHC(); setInterval(pollNHC, 600e3);
 setTimeout(pollNews, 1500); setInterval(pollNews, 300e3);
 pollCal(); setInterval(() => pollCal(), 3600e3 + 5e3);
+const SITE_URL = 'https://danka23r.github.io/Potik/map.html';
+const IN_CLAUDE = /claude\.ai|claudeusercontent|anthropic/i.test(location.hostname) || location.protocol === 'file:' && !location.href.includes('Potik');
+function offlineCheck() {
+  const allBad = Object.values(SRC).every(s => s.state === 'bad');
+  if ((allBad || typeof Globe === 'undefined') && location.href !== SITE_URL) $('#offl').hidden = false;
+}
+if (IN_CLAUDE) $('#offl').hidden = false;
+setTimeout(offlineCheck, 12000);
 </script>
 </body>
 </html>
