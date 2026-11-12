@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Потік · Карта</title>
+<style>
+:root{--bg:#06080c;--pn:#0c1017;--pn2:#111722;--ln:#1c2433;--tx:#d8dde6;--mu:#7d8798;--ac:#8f7cf6;--ok:#43c47a;--bad:#ff4d5e;--warn:#ffb340}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;background:var(--pn2);border:1px solid var(--ln);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{border-color:#2d3a52}
+button.on{background:#211c3d;border-color:var(--ac);color:#fff}
+input,select,textarea{font:inherit;color:var(--tx);background:#0a0e14;border:1px solid var(--ln);border-radius:6px;padding:4px 8px}
+textarea{width:100%;min-height:70px;resize:vertical}
+a{color:#a99cff;text-decoration:none}
+#top{height:42px;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--pn);border-bottom:1px solid var(--ln)}
+#brand{font-weight:700;letter-spacing:.14em;font-size:12px}
+#brand span{color:var(--mu);font-weight:500;letter-spacing:.04em;margin-left:6px}
+#srcs{display:flex;gap:10px;flex-wrap:wrap;margin-left:6px}
+.src{display:flex;align-items:center;gap:5px;color:var(--mu);font-size:11.5px;cursor:default}
+.dot{width:7px;height:7px;border-radius:50%;background:#4a5263;flex:none}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.dot.bad{background:var(--bad)}
+#clock{margin-left:auto;font-variant-numeric:tabular-nums;color:#c9cfdb}
+#bell{padding:4px 9px}
+#main{display:grid;grid-template-columns:1fr 380px;height:calc(100vh - 42px)}
+#gw{position:relative;overflow:hidden}
+#globe{position:absolute;inset:0}
+#next{position:absolute;left:14px;top:12px;background:rgba(12,16,23,.82);border:1px solid var(--ln);border-radius:8px;padding:8px 12px;backdrop-filter:blur(6px);min-width:220px}
+#next .k{color:var(--mu);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+#next .t{font-size:15px;font-weight:600;margin-top:2px}
+#next .c{font-variant-numeric:tabular-nums;color:var(--warn);font-size:18px;font-weight:600}
+#card{position:absolute;left:14px;bottom:14px;max-width:420px;background:rgba(12,16,23,.9);border:1px solid var(--ln);border-radius:10px;padding:10px 14px;backdrop-filter:blur(6px)}
+#card[hidden]{display:none}
+#card .x{position:absolute;right:6px;top:4px;border:0;background:none;color:var(--mu);font-size:16px}
+#card h3{margin:0 18px 4px 0;font-size:14px}
+#card .m{color:var(--mu);font-size:12px}
+#legend{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:60%}
+#legend button{font-size:11.5px;padding:3px 8px;background:rgba(12,16,23,.8)}
+#legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
+aside{background:var(--pn);border-left:1px solid var(--ln);display:flex;flex-direction:column;min-height:0}
+#tabs{display:flex;border-bottom:1px solid var(--ln)}
+#tabs button{flex:1;border:0;border-radius:0;background:none;padding:10px 0;color:var(--mu);border-bottom:2px solid transparent}
+#tabs button.on{color:#fff;border-bottom-color:var(--ac);background:none}
+.pane{flex:1;overflow:auto;min-height:0}
+.pane[hidden]{display:none}
+#ffil{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--pn);z-index:1}
+#ffil button{font-size:12px;padding:3px 9px}
+.it{display:flex;gap:9px;padding:8px 12px;border-bottom:1px solid #141a25;cursor:pointer}
+.it:hover{background:#0f141d}
+.it.hot{background:linear-gradient(90deg,rgba(255,77,94,.09),transparent 60%)}
+.it .dot{margin-top:5px}
+.it .b{flex:1;min-width:0}
+.it .h{font-weight:550;overflow:hidden;text-overflow:ellipsis}
+.it .s{color:var(--mu);font-size:11.5px}
+.it .tm{color:var(--mu);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.it .lk{color:var(--mu);padding:0 2px}
+.it .lk:hover{color:#fff}
+.tag{display:inline-block;font-size:10px;padding:0 5px;border-radius:3px;background:#1a2130;color:#9aa4b6;margin-right:4px;vertical-align:1px}
+.empty{color:var(--mu);padding:20px 14px;text-align:center}
+.cal{display:grid;grid-template-columns:62px 36px 1fr auto;gap:2px 8px;padding:7px 12px;border-bottom:1px solid #141a25;align-items:center}
+.cal.past{opacity:.45}
+.cal.soon{background:rgba(255,179,64,.08)}
+.cal .imp{width:8px;height:8px;border-radius:2px}
+.cal .fc{grid-column:3/5;color:var(--mu);font-size:11.5px}
+.day{padding:8px 12px 4px;color:var(--ac);font-size:11px;text-transform:uppercase;letter-spacing:.08em;position:sticky;top:0;background:var(--pn)}
+.set{padding:12px 14px;border-bottom:1px solid #141a25}
+.set h4{margin:0 0 8px;font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.08em}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.note{color:var(--mu);font-size:11.5px}
+.srow{display:flex;gap:8px;align-items:flex-start;margin:5px 0}
+.srow .dot{margin-top:5px}
+#toasts{position:fixed;right:396px;top:52px;display:flex;flex-direction:column;gap:8px;z-index:20;max-width:360px}
+.toast{background:#141a26;border:1px solid #2b3550;border-left:3px solid var(--bad);border-radius:8px;padding:9px 12px;box-shadow:0 8px 30px rgba(0,0,0,.5);cursor:pointer;animation:tin .25s ease-out}
+.toast b{display:block;margin-bottom:2px}
+.toast span{color:#aab3c3;font-size:12px}
+@keyframes tin{from{transform:translateX(20px);opacity:0}}
+.scene-tooltip{font:12px system-ui!important;background:rgba(10,13,19,.92)!important;border:1px solid #2a3346;border-radius:6px;padding:5px 8px!important}
+@media (max-width:860px){#main{grid-template-columns:1fr;grid-template-rows:55vh 1fr}aside{border-left:0;border-top:1px solid var(--ln)}#toasts{right:10px}#srcs{display:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2"></script>
+</head>
+<body>
+<div id="top">
+  <div id="brand">ПОТІК<span>Карта подій</span></div>
+  <div id="srcs"></div>
+  <div id="clock"></div>
+  <button id="bell" title="Сповіщення">🔔</button>
+</div>
+<div id="main">
+  <div id="gw">
+    <div id="globe"></div>
+    <div id="next" hidden><div class="k">Наступна подія</div><div class="t"></div><div class="c"></div></div>
+    <div id="card" hidden><button class="x">×</button><h3></h3><div class="m"></div></div>
+    <div id="legend"></div>
+  </div>
+  <aside>
+    <div id="tabs"><button data-t="feed" class="on">Стрічка</button><button data-t="cal">Календар</button><button data-t="set">Налаштування</button></div>
+    <div class="pane" id="p-feed"><div id="ffil"></div><div id="feed"></div></div>
+    <div class="pane" id="p-cal" hidden></div>
+    <div class="pane" id="p-set" hidden></div>
+  </aside>
+</div>
+<div id="toasts"></div>
+<script>
+'use strict';
+/* ---------- settings ---------- */
+const TZ = localStorage.getItem('potik.tz') || 'Europe/Berlin';
+const CFG_DEF = {
+  notify: true, sound: true, newsAlerts: false,
+  quakeMin: 6, gdacsMin: 'Orange', stormMin: 2,
+  calCur: ['USD'], calMed: false, calLead: 5,
+  kw: 'Fed, Powell, FOMC, tariff, OPEC, missile, sanctions, SEC, ETF, Bitcoin, Binance, Nvidia, Taiwan, Strait of Hormuz',
+  layers: {quake: true, storm: true, fire: false, volcano: true, flood: true, gdacs: true, other: true}
+};
+let CFG = (() => { try { const s = JSON.parse(localStorage.getItem('potik.map.cfg') || '{}'); return {...CFG_DEF, ...s, layers: {...CFG_DEF.layers, ...(s.layers || {})}}; } catch (e) { return {...CFG_DEF}; } })();
+const saveCfg = () => { try { localStorage.setItem('potik.map.cfg', JSON.stringify(CFG)); } catch (e) {} };
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const fmtT = ms => new Date(ms).toLocaleTimeString('uk-UA', {timeZone: TZ, hour: '2-digit', minute: '2-digit'});
+const fmtD = ms => new Date(ms).toLocaleDateString('uk-UA', {timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long'});
+const fmtDT = ms => new Date(ms).toLocaleString('uk-UA', {timeZone: TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+const tzName = () => { try { return new Intl.DateTimeFormat('en-GB', {timeZone: TZ, timeZoneName: 'short'}).formatToParts(new Date()).find(p => p.type === 'timeZoneName').value; } catch (e) { return ''; } };
+function ago(ms) {
+  const s = (Date.now() - ms) / 1000;
+  if (s < 60) return 'щойно';
+  if (s < 3600) return Math.floor(s / 60) + ' хв';
+  if (s < 86400) return Math.floor(s / 3600) + ' год';
+  return Math.floor(s / 86400) + ' д';
+}
+function cdown(ms) {
+  let s = Math.max(0, Math.round(ms / 1000));
+  const d = Math.floor(s / 86400); s -= d * 86400;
+  const h = Math.floor(s / 3600); s -= h * 3600;
+  const m = Math.floor(s / 60); s -= m * 60;
+  const p = n => String(n).padStart(2, '0');
+  return (d ? d + 'д ' : '') + p(h) + ':' + p(m) + ':' + p(s);
+}
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+async function getJSON(url, ms = 20000) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+  try {
+    const r = await fetch(url, {signal: c.signal, cache: 'no-store'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch (e) { throw new Error(txt.slice(0, 120) || 'порожня відповідь'); }
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('таймаут');
+    if (e instanceof TypeError) throw new Error('джерело не пускає запит з браузера (CORS) або немає мережі');
+    throw e;
+  } finally { clearTimeout(t); }
+}
+
+/* ---------- kinds / layers ---------- */
+const KIND = {
+  quake:   {name: 'Землетруси', color: '#ffb340'},
+  storm:   {name: 'Шторми', color: '#5ad1ff'},
+  fire:    {name: 'Пожежі', color: '#ff7a3d'},
+  volcano: {name: 'Вулкани', color: '#ff3d8b'},
+  flood:   {name: 'Повені', color: '#4d8cff'},
+  gdacs:   {name: 'GDACS тривоги', color: '#ff3355'},
+  other:   {name: 'Інше', color: '#b3b9c6'},
+};
+const quakeColor = m => m >= 6 ? '#ff4d5e' : m >= 4.5 ? '#ffb340' : '#e8d07a';
+const GDACS_COL = {Red: '#ff3355', Orange: '#ff9933', Green: '#43c47a'};
+const GDACS_RANK = {Green: 0, Orange: 1, Red: 2};
+const GDACS_T = {EQ: 'землетрус', TC: 'циклон', FL: 'повінь', VO: 'вулкан', DR: 'посуха', WF: 'пожежа', TS: 'цунамі'};
+
+/* ---------- state ---------- */
+const EV = new Map();      // map events: id -> ev
+const NEWS = new Map();    // news: id -> item
+const SRC = {
+  usgs:  {name: 'USGS', title: 'Землетруси (USGS), щохвилини'},
+  eonet: {name: 'NASA', title: 'Природні події (NASA EONET), кожні 10 хв'},
+  gdacs: {name: 'GDACS', title: 'Тривоги про катастрофи (GDACS), кожні 10 хв'},
+  nhc:   {name: 'NHC', title: 'Урагани Атлантики й Тихого океану (NHC), кожні 10 хв'},
+  news:  {name: 'Новини', title: 'Новини (GDELT), кожні 5 хв'},
+  cal:   {name: 'Календар', title: 'Економічний календар (ForexFactory), щогодини'},
+};
+for (const k in SRC) Object.assign(SRC[k], {state: 'wait', msg: 'завантаження…', primed: false, at: 0});
+let CAL = [];
+let SEL = null;
+
+function setSrc(k, ok, msg) {
+  Object.assign(SRC[k], {state: ok ? 'ok' : 'bad', msg, at: Date.now()});
+  drawSrcs(); if (!$('#p-set').hidden) drawSet();
+}
+function drawSrcs() {
+  $('#srcs').innerHTML = Object.entries(SRC).map(([k, s]) =>
+    `<div class="src" title="${esc(s.title + '\n' + s.msg)}"><i class="dot ${s.state === 'ok' ? 'ok' : s.state === 'bad' ? 'bad' : ''}"></i>${esc(s.name)}</div>`).join('');
+}
+
+/* upsert: alertFn(prev) -> [title, body] | null. Alerts only after the source's first load. */
+function upsert(ev, alertFn) {
+  const prev = EV.get(ev.id);
+  ev.seen = prev ? prev.seen : Date.now();
+  ev.hot = prev ? prev.hot : false;
+  if (SRC[ev.src].primed && alertFn) {
+    const a = alertFn(prev);
+    if (a) { ev.hot = true; alertUser(a[0], a[1], ev); }
+  }
+  EV.set(ev.id, ev);
+}
+function prune(src, ids) { for (const [id, e] of EV) if (e.src === src && !ids.has(id)) EV.delete(id); }
+
+/* ---------- sources ---------- */
+async function pollUSGS() {
+  try {
+    const j = await getJSON('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
+    const ids = new Set();
+    for (const f of j.features || []) {
+      const p = f.properties, [lng, lat, dep] = f.geometry.coordinates, m = +p.mag || 0;
+      const id = 'q:' + f.id; ids.add(id);
+      upsert({id, src: 'usgs', kind: 'quake', lat, lng, t: p.time, mag: m, color: quakeColor(m),
+        sev: m >= 7 ? 3 : m >= 6 ? 2 : m >= 4.5 ? 1 : 0,
+        title: `M${m.toFixed(1)} · ${p.place || 'землетрус'}`,
+        sub: `землетрус · глибина ${Math.round(dep)} км${p.tsunami ? ' · можливе цунамі' : ''}`, url: p.url},
+        prev => !prev && m >= CFG.quakeMin ? [`Землетрус M${m.toFixed(1)}`, p.place || ''] : null);
+    }
+    prune('usgs', ids); SRC.usgs.primed = true;
+    setSrc('usgs', true, `${ids.size} поштовхів M2.5+ за добу, оновлено ${fmtT(Date.now())}`);
+  } catch (e) { setSrc('usgs', false, e.message); }
+  render();
+}
+
+const EONET_KIND = {severeStorms: 'storm', wildfires: 'fire', volcanoes: 'volcano', floods: 'flood'};
+async function pollEONET() {
+  try {
+    const j = await getJSON('https://eonet.gsfc.nasa.gov/api/v3/events?status=open&days=30&limit=400');
+    const ids = new Set();
+    for (const e of j.events || []) {
+      const cat = e.categories?.[0]?.id || '';
+      if (cat === 'earthquakes' || cat === 'seaLakeIce') continue;
+      const g = (e.geometry || []).filter(x => x.type === 'Point');
+      if (!g.length) continue;
+      const last = g[g.length - 1], [lng, lat] = last.coordinates;
+      const kind = EONET_KIND[cat] || 'other';
+      let sev = kind === 'volcano' ? 1 : 0, extra = '';
+      if (kind === 'storm') {
+        const kt = +last.magnitudeValue || 0;
+        sev = kt >= 96 ? 3 : kt >= 64 ? 2 : 1;
+        if (kt) extra = ` · ${Math.round(kt)} вузлів${kt >= 64 ? ' (ураган/тайфун)' : ''}`;
+      }
+      const id = 'e:' + e.id; ids.add(id);
+      upsert({id, src: 'eonet', kind, lat, lng, t: Date.parse(last.date), sev, color: KIND[kind].color,
+        title: e.title, sub: (e.categories?.[0]?.title || '') + extra, url: e.sources?.[0]?.url || e.link,
+        track: kind === 'storm' && g.length > 1 ? g.map(x => [x.coordinates[1], x.coordinates[0]]) : null},
+        prev => kind === 'storm' && sev >= CFG.stormMin && (!prev || prev.sev < sev)
+          ? [sev >= 3 ? 'Сильний ураган/тайфун' : 'Ураган/тайфун', e.title + extra] : null);
+    }
+    prune('eonet', ids); SRC.eonet.primed = true;
+    setSrc('eonet', true, `${ids.size} активних подій, оновлено ${fmtT(Date.now())}`);
+  } catch (e) { setSrc('eonet', false, e.message); }
+  render();
+}
+
+async function pollGDACS() {
+  try {
+    const j = await getJSON('https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventlist=EQ;TC;FL;VO;DR;WF');
+    const ids = new Set();
+    for (const f of j.features || []) {
+      if (f.geometry?.type !== 'Point') continue;
+      const p = f.properties || {}, lvl = p.alertlevel || 'Green';
+      if (p.eventtype === 'EQ' && lvl === 'Green') continue; // USGS already shows these
+      const id = 'g:' + p.eventtype + p.eventid; if (ids.has(id)) continue; ids.add(id);
+      const [lng, lat] = f.geometry.coordinates, rank = GDACS_RANK[lvl] ?? 0;
+      upsert({id, src: 'gdacs', kind: 'gdacs', lat, lng, t: Date.parse(p.todate || p.fromdate) || Date.now(),
+        sev: rank + 1, lvl, color: GDACS_COL[lvl] || '#999',
+        title: p.name || p.description || 'GDACS',
+        sub: `${GDACS_T[p.eventtype] || p.eventtype} · рівень ${lvl}${p.country ? ' · ' + p.country : ''}${p.severitydata?.severitytext ? ' · ' + p.severitydata.severitytext : ''}`,
+        url: p.url?.report},
+        prev => rank >= GDACS_RANK[CFG.gdacsMin] && (!prev || (GDACS_RANK[prev.lvl] ?? 0) < rank)
+          ? [`GDACS ${lvl}: ${GDACS_T[p.eventtype] || p.eventtype}`, p.name || p.description || ''] : null);
+    }
+    prune('gdacs', ids); SRC.gdacs.primed = true;
+    setSrc('gdacs', true, `${ids.size} подій, оновлено ${fmtT(Date.now())}`);
+  } catch (e) { setSrc('gdacs', false, e.message); }
+  render();
+}
+
+const NHC_CLS = {HU: 'ураган', TS: 'тропічний шторм', TD: 'тропічна депресія', STS: 'субтропічний шторм', SD: 'субтропічна депресія', PTC: 'потенційний циклон', PC: 'посттропічний'};
+async function pollNHC() {
+  try {
+    const j = await getJSON('https://www.nhc.noaa.gov/CurrentStorms.json');
+    const ids = new Set();
+    for (const s of j.activeStorms || []) {
+      const kt = +s.intensity || 0, sev = s.classification === 'HU' ? (kt >= 96 ? 3 : 2) : s.classification === 'TS' ? 1 : 0;
+      const id = 'n:' + s.id; ids.add(id);
+      upsert({id, src: 'nhc', kind: 'storm', lat: +s.latitudeNumeric, lng: +s.longitudeNumeric, t: Date.parse(s.lastUpdate) || Date.now(),
+        sev, color: '#5ad1ff', title: `${s.name} (NHC)`,
+        sub: `${NHC_CLS[s.classification] || s.classification} · ${kt} вузлів · рух ${s.movementDir ?? ''}° ${s.movementSpeed ?? ''} mph`,
+        url: s.publicAdvisory?.url || 'https://www.nhc.noaa.gov/'},
+        prev => sev >= CFG.stormMin - 1 && (!prev || prev.sev < sev)
+          ? [`NHC: ${NHC_CLS[s.classification] || ''} ${s.name}`, `${kt} вузлів`] : null);
+    }
+    prune('nhc', ids); SRC.nhc.primed = true;
+    setSrc('nhc', true, ids.size ? `${ids.size} активних штормів, оновлено ${fmtT(Date.now())}` : `зараз активних штормів немає (${fmtT(Date.now())})`);
+  } catch (e) { setSrc('nhc', false, e.message); }
+  render();
+}
+
+const kwList = () => CFG.kw.split(',').map(s => s.trim()).filter(s => s.length >= 3);
+const normT = s => s.toLowerCase().replace(/[^a-z0-9а-яіїєґ]+/gi, ' ').trim();
+function parseGd(s) { const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(s || ''); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : Date.now(); }
+async function pollNews() {
+  const kws = kwList();
+  if (!kws.length) { setSrc('news', false, 'немає ключових слів у налаштуваннях'); return; }
+  try {
+    const q = '(' + kws.map(k => k.includes(' ') ? `"${k}"` : k).join(' OR ') + ') sourcelang:english';
+    const j = await getJSON('https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=75&sort=datedesc&timespan=6h&query=' + encodeURIComponent(q));
+    const titles = new Set([...NEWS.values()].map(n => normT(n.title)));
+    let added = 0;
+    for (const a of (j.articles || []).slice().reverse()) {
+      const id = 'w:' + a.url; if (NEWS.has(id)) continue;
+      const nt = normT(a.title); if (!nt || titles.has(nt)) continue; titles.add(nt);
+      const hit = kws.find(k => new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(a.title));
+      const it = {id, src: 'news', kind: 'news', t: parseGd(a.seendate), title: a.title, sub: a.domain + (a.sourcecountry ? ' · ' + a.sourcecountry : ''), url: a.url, kw: hit, color: '#a99cff', sev: hit ? 1 : 0};
+      if (SRC.news.primed && CFG.newsAlerts && hit) { it.hot = true; alertUser('Новина: ' + hit, a.title, it); }
+      NEWS.set(id, it); added++;
+    }
+    // keep the last 300
+    const all = [...NEWS.values()].sort((a, b) => b.t - a.t);
+    for (const n of all.slice(300)) NEWS.delete(n.id);
+    SRC.news.primed = true;
+    setSrc('news', true, `${NEWS.size} новин за 6 год (+${added}), оновлено ${fmtT(Date.now())}`);
+  } catch (e) { setSrc('news', false, e.message); }
+  render();
+}
+
+/* calendar: cached for an hour (the source blocks frequent requests) */
+async function pollCal(force) {
+  try {
+    let data = null;
+    try { const c = JSON.parse(localStorage.getItem('potik.map.cal') || 'null'); if (c && !force && Date.now() - c.at < 3600e3) data = c.data; } catch (e) {}
+    if (!data) {
+      data = await getJSON('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+      try { localStorage.setItem('potik.map.cal', JSON.stringify({at: Date.now(), data})); } catch (e) {}
+    }
+    CAL = data.map(x => ({t: Date.parse(x.date), title: x.title, cur: x.country, imp: x.impact, fc: x.forecast, pr: x.previous, act: x.actual}))
+      .filter(x => x.t).sort((a, b) => a.t - b.t);
+    setSrc('cal', true, `${CAL.length} подій цього тижня, оновлено ${fmtT(Date.now())}`);
+  } catch (e) { setSrc('cal', false, e.message); }
+  drawCal();
+}
+const calPick = x => CFG.calCur.includes(x.cur) && (x.imp === 'High' || (CFG.calMed && x.imp === 'Medium'));
+const FIRED = new Set(JSON.parse(sessionStorage.getItem('potik.map.fired') || '[]'));
+function calTick() {
+  const now = Date.now();
+  const up = CAL.filter(x => calPick(x) && x.t > now - 60e3);
+  const nx = up.find(x => x.t > now);
+  const box = $('#next');
+  if (nx) {
+    box.hidden = false;
+    box.querySelector('.t').textContent = `${nx.cur} · ${nx.title}`;
+    box.querySelector('.c').textContent = cdown(nx.t - now) + '  ·  ' + fmtT(nx.t);
+  } else box.hidden = true;
+  for (const x of up) {
+    const k1 = 'pre:' + x.t + x.title, k2 = 'now:' + x.t + x.title;
+    const lead = CFG.calLead * 60e3;
+    if (x.imp === 'High' && x.t - now <= lead && x.t - now > 0 && !FIRED.has(k1)) { FIRED.add(k1); alertUser(`Через ${CFG.calLead} хв: ${x.cur} ${x.title}`, `прогноз ${x.fc || '—'} · попереднє ${x.pr || '—'}`); }
+    if (x.t <= now && now - x.t < 60e3 && !FIRED.has(k2)) { FIRED.add(k2); alertUser(`Зараз: ${x.cur} ${x.title}`, `прогноз ${x.fc || '—'} · попереднє ${x.pr || '—'}`); }
+  }
+  try { sessionStorage.setItem('potik.map.fired', JSON.stringify([...FIRED])); } catch (e) {}
+}
+
+/* ---------- alerts ---------- */
+let AC = null;
+document.addEventListener('pointerdown', () => { if (!AC) try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }, {once: true});
+function beep() {
+  if (!AC || !CFG.sound) return;
+  const t = AC.currentTime;
+  [880, 1320].forEach((f, i) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.value = f; o.type = 'sine';
+    g.gain.setValueAtTime(0, t + i * .16); g.gain.linearRampToValueAtTime(.18, t + i * .16 + .02); g.gain.exponentialRampToValueAtTime(.001, t + i * .16 + .3);
+    o.connect(g).connect(AC.destination); o.start(t + i * .16); o.stop(t + i * .16 + .32);
+  });
+}
+const baseTitle = document.title; let unread = 0;
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { unread = 0; document.title = baseTitle; } });
+function alertUser(title, body, ev) {
+  const el = document.createElement('div'); el.className = 'toast';
+  el.innerHTML = `<b>${esc(title)}</b><span>${esc(body)}</span>`;
+  el.onclick = () => { if (ev) focusEv(ev); el.remove(); };
+  $('#toasts').prepend(el); setTimeout(() => el.remove(), 15000);
+  while ($('#toasts').children.length > 5) $('#toasts').lastChild.remove();
+  beep();
+  if (document.hidden) { unread++; document.title = `(${unread}) ● ${baseTitle}`; }
+  if (CFG.notify && 'Notification' in window && Notification.permission === 'granted') {
+    try { const n = new Notification(title, {body, tag: ev?.id}); n.onclick = () => { window.focus(); if (ev) focusEv(ev); n.close(); }; } catch (e) {}
+  }
+}
+function drawBell() {
+  const p = 'Notification' in window ? Notification.permission : 'denied';
+  $('#bell').classList.toggle('on', CFG.notify && p === 'granted');
+  $('#bell').title = p === 'granted' ? (CFG.notify ? 'Сповіщення увімкнені' : 'Сповіщення вимкнені') : p === 'denied' ? 'Браузер заблокував сповіщення — дозволь їх у налаштуваннях сайту' : 'Увімкнути сповіщення';
+}
+async function askNotify() {
+  if (!('Notification' in window)) return alert('Цей браузер не підтримує сповіщення');
+  if (Notification.permission === 'default') await Notification.requestPermission();
+  CFG.notify = Notification.permission === 'granted' ? true : CFG.notify; saveCfg(); drawBell(); drawSet();
+}
+$('#bell').onclick = async () => {
+  if ('Notification' in window && Notification.permission !== 'granted') return askNotify();
+  CFG.notify = !CFG.notify; saveCfg(); drawBell(); drawSet();
+};
+
+/* ---------- globe ---------- */
+const IMG = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/';
+const gel = $('#globe');
+let G = null;
+try {
+  try { G = new Globe(gel, {animateIn: true}); } catch (e) { G = Globe()(gel); }
+  G.globeImageUrl(IMG + 'earth-night.jpg').bumpImageUrl(IMG + 'earth-topology.png').backgroundImageUrl(IMG + 'night-sky.png')
+    .showAtmosphere(true).atmosphereColor('#4a7fd6').atmosphereAltitude(.17)
+    .pointLat('lat').pointLng('lng').pointColor('color').pointsMerge(false).pointResolution(10)
+    .pointAltitude(d => .004 + d.sev * .012 + (d === SEL ? .03 : 0))
+    .pointRadius(d => d.kind === 'quake' ? .14 + Math.max(0, d.mag - 2.5) * .13 : d.kind === 'fire' ? .16 : .32 + d.sev * .08)
+    .pointLabel(d => `<b>${esc(d.title)}</b><br><span style="color:#9aa4b6">${esc(d.sub)}<br>${fmtDT(d.t)} · ${ago(d.t)} тому</span>`)
+    .onPointClick(d => focusEv(d))
+    .ringLat('lat').ringLng('lng').ringColor(d => t => rgba(d.color, Math.max(0, 1 - t)))
+    .ringMaxRadius(d => 2 + d.sev * 1.6).ringPropagationSpeed(d => 1.5 + d.sev * .5).ringRepeatPeriod(d => 1600 - d.sev * 250)
+    .pathPoints('pts').pathPointLat(p => p[0]).pathPointLng(p => p[1]).pathColor(d => [rgba(d.color, .15), rgba(d.color, .9)])
+    .pathStroke(1.4).pathDashLength(.04).pathDashGap(.012).pathDashAnimateTime(9000)
+    .pointOfView({lat: 30, lng: -40, altitude: 2.3});
+  const ctl = G.controls(); ctl.autoRotate = true; ctl.autoRotateSpeed = .3;
+  gel.addEventListener('pointerdown', () => { ctl.autoRotate = false; });
+  new ResizeObserver(() => G.width(gel.clientWidth).height(gel.clientHeight)).observe(gel);
+} catch (e) {
+  gel.innerHTML = `<div class="empty" style="padding-top:30vh">Не вдалося запустити глобус: ${esc(e.message)}.<br>Стрічка і календар справа працюють.</div>`;
+  G = null;
+}
+function focusEv(ev) {
+  if (ev.lat == null) { if (ev.url) window.open(ev.url, '_blank', 'noopener'); return; }
+  SEL = ev;
+  if (G) { G.controls().autoRotate = false; G.pointOfView({lat: ev.lat, lng: ev.lng, altitude: 1.4}, 1200); }
+  const c = $('#card'); c.hidden = false;
+  c.querySelector('h3').textContent = ev.title;
+  c.querySelector('.m').innerHTML = `${esc(ev.sub)}<br>${fmtDT(ev.t)} (${tzName()}) · ${ago(ev.t)} тому${ev.url ? ` · <a href="${esc(ev.url)}" target="_blank" rel="noopener">джерело ↗</a>` : ''}`;
+  render();
+}
+$('#card .x').onclick = () => { $('#card').hidden = true; SEL = null; render(); };
+
+/* ---------- render ---------- */
+let rq = 0;
+function render() { if (!rq) rq = requestAnimationFrame(() => { rq = 0; doRender(); }); }
+const layerOf = e => e.src === 'gdacs' ? 'gdacs' : e.kind;
+const visible = () => [...EV.values()].filter(e => CFG.layers[layerOf(e)] !== false && Number.isFinite(e.lat) && Number.isFinite(e.lng));
+function doRender() {
+  const vis = visible();
+  if (G) {
+    G.pointsData(vis);
+    const now = Date.now();
+    G.ringsData(vis.filter(e => e.sev >= 2 || e.hot || (e.kind === 'quake' && now - e.t < 3600e3 && e.mag >= 4.5) || e === SEL));
+    G.pathsData(vis.filter(e => e.track).map(e => ({pts: e.track, color: e.color})));
+  }
+  drawLegend(); drawFeed();
+}
+function drawLegend() {
+  const cnt = {}; for (const e of EV.values()) cnt[layerOf(e)] = (cnt[layerOf(e)] || 0) + 1;
+  $('#legend').innerHTML = Object.entries(KIND).map(([k, v]) =>
+    `<button data-l="${k}" class="${CFG.layers[k] !== false ? 'on' : ''}"><i style="background:${v.color}"></i>${v.name} ${cnt[k] || 0}</button>`).join('');
+}
+$('#legend').onclick = e => { const b = e.target.closest('button'); if (!b) return; const k = b.dataset.l; CFG.layers[k] = CFG.layers[k] === false; saveCfg(); render(); };
+
+let FF = 'all';
+const FFS = {all: 'Усе', hot: 'Важливе', map: 'Події', news: 'Новини'};
+function drawFeed() {
+  $('#ffil').innerHTML = Object.entries(FFS).map(([k, v]) => `<button data-f="${k}" class="${FF === k ? 'on' : ''}">${v}</button>`).join('');
+  let items = [];
+  if (FF !== 'news') items.push(...visible().filter(e => e.kind !== 'fire' || FF === 'map'));
+  if (FF === 'all' || FF === 'news' || FF === 'hot') items.push(...NEWS.values());
+  if (FF === 'hot') items = items.filter(e => e.hot || e.sev >= 2 || (e.kind === 'news' && e.kw));
+  items.sort((a, b) => b.t - a.t);
+  items = items.slice(0, 250);
+  window.__feed = items;
+  $('#feed').innerHTML = items.length ? items.map((e, i) =>
+    `<div class="it${e.hot ? ' hot' : ''}" data-i="${i}"><i class="dot" style="background:${e.color}"></i><div class="b"><div class="h">${e.kw ? `<span class="tag">${esc(e.kw)}</span>` : ''}${esc(e.title)}</div><div class="s">${esc(e.sub)}</div></div><div class="tm">${ago(e.t)}${e.url ? `<br><a class="lk" href="${esc(e.url)}" target="_blank" rel="noopener" title="Відкрити джерело">↗</a>` : ''}</div></div>`).join('')
+    : `<div class="empty">Поки нічого. Джерела завантажуються, статус угорі.</div>`;
+}
+$('#ffil').onclick = e => { const b = e.target.closest('button'); if (b) { FF = b.dataset.f; drawFeed(); } };
+$('#feed').onclick = e => { if (e.target.closest('a')) return; const r = e.target.closest('.it'); if (r) focusEv(window.__feed[+r.dataset.i]); };
+
+function drawCal() {
+  const p = $('#p-cal'), now = Date.now();
+  const list = CAL.filter(calPick);
+  if (SRC.cal.state === 'bad' && !CAL.length) { p.innerHTML = `<div class="empty">Календар не завантажився: ${esc(SRC.cal.msg)}</div>`; return; }
+  if (!list.length) { p.innerHTML = `<div class="empty">${CAL.length ? 'Цього тижня немає подій під вибрані фільтри (валюти й важливість у Налаштуваннях).' : 'Завантаження…'}</div>`; return; }
+  let html = '', day = '';
+  const nx = list.find(x => x.t > now);
+  for (const x of list) {
+    const d = fmtD(x.t); if (d !== day) { day = d; html += `<div class="day">${esc(d)}</div>`; }
+    const cls = x.t < now - 60e3 ? 'past' : x === nx || (x.t - now < 3600e3 && x.t > now) ? 'soon' : '';
+    html += `<div class="cal ${cls}"><b style="font-variant-numeric:tabular-nums">${fmtT(x.t)}</b><span class="tag">${esc(x.cur)}</span><span>${esc(x.title)}</span><i class="imp" style="background:${x.imp === 'High' ? '#ff4d5e' : '#ffb340'}"></i><div class="fc">прогноз ${esc(x.fc || '—')} · попереднє ${esc(x.pr || '—')}${x.act ? ' · факт <b>' + esc(x.act) + '</b>' : ''}</div></div>`;
+  }
+  p.innerHTML = html;
+}
+
+function drawSet() {
+  const perm = 'Notification' in window ? Notification.permission : 'немає';
+  const cur = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF'];
+  $('#p-set').innerHTML = `
+  <div class="set"><h4>Сповіщення</h4>
+    <div class="row">${perm === 'granted' ? `<label><input type="checkbox" id="s-not" ${CFG.notify ? 'checked' : ''}> спливаючі сповіщення Windows / Chrome</label>` : `<button id="s-ask">Дозволити сповіщення</button><span class="note">${perm === 'denied' ? 'браузер заблокував — дозволь у налаштуваннях сайту (значок біля адреси)' : ''}</span>`}</div>
+    <div class="row"><label><input type="checkbox" id="s-snd" ${CFG.sound ? 'checked' : ''}> звук</label><button id="s-test">Перевірити</button></div>
+    <div class="note">Працює, поки ця вкладка відкрита (можна у фоні або на іншому моніторі).</div></div>
+  <div class="set"><h4>Коли сповіщати</h4>
+    <div class="row">Землетрус від M <select id="s-q">${[5, 5.5, 6, 6.5, 7].map(v => `<option ${v == CFG.quakeMin ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+    <div class="row">GDACS від рівня <select id="s-g"><option value="Orange" ${CFG.gdacsMin === 'Orange' ? 'selected' : ''}>Orange</option><option value="Red" ${CFG.gdacsMin === 'Red' ? 'selected' : ''}>Red</option></select></div>
+    <div class="row">Шторми <select id="s-st"><option value="1" ${CFG.stormMin == 1 ? 'selected' : ''}>від тропічного шторму</option><option value="2" ${CFG.stormMin == 2 ? 'selected' : ''}>від урагану</option><option value="3" ${CFG.stormMin == 3 ? 'selected' : ''}>лише сильні урагани</option></select></div>
+    <div class="row">Календар: за <select id="s-lead">${[1, 2, 5, 10, 15].map(v => `<option ${v == CFG.calLead ? 'selected' : ''}>${v}</option>`).join('')}</select> хв до важливої події і в момент виходу</div>
+    <div class="row"><label><input type="checkbox" id="s-na" ${CFG.newsAlerts ? 'checked' : ''}> сповіщати про новини з ключовими словами в заголовку</label></div></div>
+  <div class="set"><h4>Ключові слова новин</h4>
+    <textarea id="s-kw">${esc(CFG.kw)}</textarea>
+    <div class="row"><button id="s-kws">Зберегти й оновити</button><span class="note">через кому, англійською</span></div></div>
+  <div class="set"><h4>Календар</h4>
+    <div class="row">${cur.map(c => `<label><input type="checkbox" data-cur="${c}" ${CFG.calCur.includes(c) ? 'checked' : ''}>${c}</label>`).join('')}</div>
+    <div class="row"><label><input type="checkbox" id="s-med" ${CFG.calMed ? 'checked' : ''}> показувати й середньої важливості</label></div></div>
+  <div class="set"><h4>Джерела</h4>
+    ${Object.values(SRC).map(s => `<div class="srow"><i class="dot ${s.state === 'ok' ? 'ok' : s.state === 'bad' ? 'bad' : ''}"></i><div><b>${esc(s.title)}</b><div class="note">${esc(s.msg)}</div></div></div>`).join('')}
+    <div class="note" style="margin-top:8px">Час показано в зоні ${esc(TZ)} (${esc(tzName())}), як у Потоці.</div></div>`;
+  const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+  on('s-ask', 'click', askNotify);
+  on('s-not', 'change', e => { CFG.notify = e.target.checked; saveCfg(); drawBell(); });
+  on('s-snd', 'change', e => { CFG.sound = e.target.checked; saveCfg(); });
+  on('s-test', 'click', () => { if (!AC) try { AC = new AudioContext(); } catch (e) {} alertUser('Тестове сповіщення', 'Так виглядатиме сповіщення про подію'); });
+  on('s-q', 'change', e => { CFG.quakeMin = +e.target.value; saveCfg(); });
+  on('s-g', 'change', e => { CFG.gdacsMin = e.target.value; saveCfg(); });
+  on('s-st', 'change', e => { CFG.stormMin = +e.target.value; saveCfg(); });
+  on('s-lead', 'change', e => { CFG.calLead = +e.target.value; saveCfg(); });
+  on('s-na', 'change', e => { CFG.newsAlerts = e.target.checked; saveCfg(); });
+  on('s-med', 'change', e => { CFG.calMed = e.target.checked; saveCfg(); drawCal(); });
+  on('s-kws', 'click', () => { CFG.kw = $('#s-kw').value; saveCfg(); NEWS.clear(); SRC.news.primed = false; pollNews(); });
+  $('#p-set').querySelectorAll('[data-cur]').forEach(cb => cb.onchange = () => {
+    CFG.calCur = [...$('#p-set').querySelectorAll('[data-cur]:checked')].map(x => x.dataset.cur); saveCfg(); drawCal();
+  });
+}
+
+/* ---------- tabs, clock ---------- */
+$('#tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('#tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  for (const t of ['feed', 'cal', 'set']) $('#p-' + t).hidden = t !== b.dataset.t;
+  if (b.dataset.t === 'set') drawSet(); if (b.dataset.t === 'cal') drawCal();
+};
+function clock() { $('#clock').textContent = new Date().toLocaleTimeString('uk-UA', {timeZone: TZ}) + ' ' + tzName(); }
+
+/* ---------- start ---------- */
+drawSrcs(); drawBell(); render(); clock();
+setInterval(() => { clock(); calTick(); }, 1000);
+setInterval(drawFeed, 60e3);              // refresh "x min ago"
+pollUSGS(); setInterval(pollUSGS, 60e3);
+pollEONET(); setInterval(pollEONET, 600e3);
+pollGDACS(); setInterval(pollGDACS, 600e3);
+pollNHC(); setInterval(pollNHC, 600e3);
+setTimeout(pollNews, 1500); setInterval(pollNews, 300e3);
+pollCal(); setInterval(() => pollCal(), 3600e3 + 5e3);
+</script>
+</body>
+</html>
