@@ -529,7 +529,7 @@ const INSTR={
   ETH:{name:'Ether / USDT',tick:.1,usd:.01,base:4100,vol:1.3,dec:1,months:[],grp:'ETHU',crypto:true,lot:.1,unit:'ETH',bsym:'ETHUSDT'},
   SOL:{name:'Solana / USDT',tick:.01,usd:.01,base:195,vol:1,dec:2,months:[],grp:'SOL',crypto:true,lot:1,unit:'SOL',bsym:'SOLUSDT'},
 };
-const DCFG_DEF=()=>({sym:'NQ',ses:'rth',src:'sim',ds:'',wsUrl:'',wsSub:'',bnc:'fut',days:21});
+const DCFG_DEF=()=>({sym:'NQ',ses:'rth',src:'sim',ds:'',wsUrl:'',wsSub:'',bnc:'fut',days:21,qtPort:8765,qtDays:5});
 let DCFG=DCFG_DEF(); try{DCFG={...DCFG,...(JSON.parse(localStorage.getItem('potik.data.v1')||'null')||{})}}catch(e){}
 const saveDcfg=()=>{try{localStorage.setItem('potik.data.v1',JSON.stringify(DCFG))}catch(e){}};
 {const b=document.getElementById('busy'); if(b){document.getElementById('busyMsg').textContent='Building the market…'; b.hidden=false; await new Promise(r=>setTimeout(r,40))}}
@@ -543,10 +543,15 @@ const exSec=ms=>CRYPTO?ms/1000:etSec(ms);   // epoch ms → seconds on the sessi
 let DS=null, WSF=null, BNL=null, BOOT_MSG='';
 // inside Claude's artifact viewer the page may not connect to other sites, so live Binance data only works on the site itself
 const SITE_URL='https://danka23r.github.io/Potik/';
+// Quantower bridge (PotikBridge strategy) listens on this computer only
+function QT_URL(){return 'ws://127.0.0.1:'+(clamp_(Math.round(+DCFG.qtPort||8765),1024,65535))}
 const IN_CLAUDE=(()=>{const h=location.hostname; if(location.protocol==='file:'||/github\.io$/.test(h)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(h)) return false; if(/claude/i.test(h)) return true; try{return window.top!==window.self}catch(e){return true}})();
 if(DCFG.src==='csv'){try{DS=await dsLoad(DCFG.ds)}catch(e){console.error(e)} if(DS) DCFG.sym=DS.meta.sym; else BOOT_MSG='The imported data set could not be read, so the simulator is running.'}
 if(DCFG.src==='bnc'&&CRYPTO&&IN_CLAUDE) BOOT_MSG='Live Binance data cannot load inside Claude, so the simulator is running. For real prices open the site: '+SITE_URL;
 else if(DCFG.src==='bnc'&&CRYPTO){try{BNL=await bncLoad(INSTR[DCFG.sym],HIST_DAYS,DCFG.bnc,f=>{const m=document.getElementById('busyMsg'); if(m) m.textContent=`Loading ${INSTR[DCFG.sym].bsym} from Binance · ${Math.round(f*100)}%`})}catch(e){BOOT_MSG=`Binance could not be reached (${e.message||e}), so the simulator is running.`}}
+if(DCFG.src==='qt'&&INSTR[DCFG.sym]&&INSTR[DCFG.sym].crypto) DCFG.src='sim';
+if(DCFG.src==='qt'&&IN_CLAUDE) BOOT_MSG='Quantower data cannot load inside Claude, so the simulator is running. Open the site: '+SITE_URL;
+else if(DCFG.src==='qt'){WSF=makeWsFeed(QT_URL(),JSON.stringify({type:'subscribe',symbol:DCFG.sym,days:clamp_(+DCFG.qtDays||5,1,30),session:DCFG.ses}),{qt:true}); const ok=await WSF.ready; if(!ok){BOOT_MSG=`Quantower: ${WSF.status}. The simulator is running.`; WSF.close(); WSF=null} else{let n=''; try{n=sessionStorage.getItem('potik.qt.note')||''; sessionStorage.removeItem('potik.qt.note')}catch(e){} if(n) BOOT_MSG=n; else if(WSF.hello&&WSF.hello.warn) BOOT_MSG='Quantower: '+WSF.hello.warn}}
 if(DCFG.src==='ws'){WSF=makeWsFeed(DCFG.wsUrl,DCFG.wsSub); const ok=await WSF.ready; if(!ok){BOOT_MSG=`No trade arrived from ${DCFG.wsUrl||'the WebSocket'} (${WSF.status}), so the simulator is running.`; WSF.close(); WSF=null}}
 if(!INSTR[DCFG.sym]) DCFG.sym='NQ';
 /* a simulated crypto market starts at the real price: Binance's current price if it answers within 3 s,
@@ -576,6 +581,7 @@ try{const mq=matchMedia('(max-width: 699px)'); mq.addEventListener('change',e=>{
    RTH: 9:30–16:00 ET. ETH: 18:00 ET of the evening before to 17:00 ET; the clock is shifted by 6 h so a session never crosses midnight. */
 const CAL=[];
 if(DS) for(const n of DS.dnum) CAL.push(new Date(n*864e5));
+else if(WSF&&WSF.H) for(const n of WSF.H.dnum) CAL.push(new Date(n*864e5));
 else if(WSF) CAL.push(new Date(WSF.dnum*864e5));
 else if(CRYPTO){const today=BNL?BNL.today:Math.floor(Date.now()/864e5); for(let n=today-HIST_DAYS;n<=today;n++) CAL.push(new Date(n*864e5))}
 else (()=>{let d=new Date(); d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
@@ -1254,6 +1260,9 @@ if(FEED.kind==='sim'){
   replayBuild(CAL.length-1,RTH_O); G.playing=false;
 }else if(FEED.kind==='bnc'){
   // Binance: N days of history from candles, then today up to now, then live
+  buildDays(0,CAL.length-1); D.tkOn=true; FEED.open(CAL.length-1); FEED.drain();
+}else if(FEED.H){
+  // Quantower: real tick history (every print with its side), the last session up to now, then live
   buildDays(0,CAL.length-1); D.tkOn=true; FEED.open(CAL.length-1); FEED.drain();
 }else{
   D.tkOn=true; FEED.open(0); FEED.drain();
@@ -4467,15 +4476,51 @@ function wsNorm(x){
   if(ty.startsWith('b')||ty==='depth') return {type:'book',ms,bids:Array.isArray(x.bids)?x.bids:[],asks:Array.isArray(x.asks)?x.asks:[]};
   return null;
 }
-function makeWsFeed(url,sub){
-  const F={kind:'ws',real:true,live:true,name:'WebSocket',url,status:'connecting',q:[],first:null,dnum:0,live:false,book:false,ws:null,bid:0,ask:0,lastPx:0,lastSd:1,wall:0,n:0,
+/* Quantower bridge (PotikBridge strategy) speaks the same messages and, before them, the tick history:
+   → {"type":"subscribe","symbol":"NQ","days":5}
+   ← {"type":"hello","symbol":"NQZ6","root":"NQ","tick":0.25}   {"type":"progress","text":"…"}
+   ← {"type":"hist","tick":0.25,"t0":ms,"dt":[ms steps],"p":[price in ticks],"s":[sizes],"d":[1 buy,-1 sell,0 unknown]}   (chunks, in time order)
+   ← {"type":"hist_end","n":123456,"to":ms}   then live trade / quote / book messages from "to" on
+   ← {"type":"error","msg":"…"} */
+// cut tick chunks into sessions of the current RTH / ETH setting (like an imported data set); unknown sides by the tick rule
+function wsCut(chunks){
+  let n=0; for(const c of chunks) n+=c.t.length;
+  const T=new Float64Array(n), P=new Int32Array(n), Z=new Int32Array(n), S=new Int8Array(n), dnum=[], dayA=[]; let m=0, cur=null, lp=0, ls=1, lastMs=0;
+  for(const c of chunks) for(let k=0;k<c.t.length;k++){
+    const ms=c.t[k], px=c.p[k]; let sd=c.d[k]; if(!sd) sd=px>lp?1:px<lp?-1:ls; lp=px; ls=sd; if(ms>lastMs) lastMs=ms;
+    const sh=exSec(ms)+TOFF, dn=Math.floor(sh/DAY), s=sh-dn*DAY; if(s<OPEN||s>=CLOSE) continue;
+    const wd=new Date(dn*864e5).getUTCDay(); if(!CRYPTO&&(wd===0||wd===6)) continue;
+    if(dn!==cur){cur=dn; dnum.push(dn); dayA.push(m)}
+    T[m]=(dnum.length-1)*DAY+s; P[m]=px; Z[m]=c.s[k]; S[m]=sd; m++;
+  }
+  dayA.push(m);
+  return {dnum,dayA:Int32Array.from(dayA),T:T.subarray(0,m),P:P.subarray(0,m),Z:Z.subarray(0,m),S:S.subarray(0,m),n:m,lastMs,lastPx:lp,lastSd:ls};
+}
+function makeWsFeed(url,sub,opt){
+  opt=opt||{};
+  const F={kind:'ws',real:true,live:true,name:opt.qt?'Quantower':'WebSocket',qt:!!opt.qt,url,status:'connecting',q:[],first:null,dnum:0,live:false,book:false,ws:null,bid:0,ask:0,lastPx:0,lastSd:1,wall:0,n:0,
+    H:null,hello:null,chunks:[],histN:0,
     close(){try{this.ws&&this.ws.close()}catch(e){}},
-    history(){}, step(){return true},
-    open(i){BK.on=true; sim.p=Math.round(this.first.price/TICK)+.5; openSession(i); this.live=true; this.wall=performance.now()},
+    // a past session from the tick history (sessions without history stay empty)
+    history(i){const H=this.H; openSession(i); if(H&&i<H.dnum.length){const a=H.dayA[i], b=H.dayA[i+1]; for(let k=a;k<b;k++) addTrade(H.T[k],H.S[k],H.Z[k],H.P[k])} sim.t=i*DAY+CLOSE},
+    step(){return true},
+    open(i){
+      const H=this.H;
+      if(H&&i<H.dnum.length){
+        const a=H.dayA[i], b=H.dayA[i+1];
+        sim.p=(a<b?H.P[a]:Math.round(this.first.price/TICK))+.5; BK.on=true; openSession(i); BK.on=false;
+        for(let k=a;k<b;k++) addTrade(H.T[k],H.S[k],H.Z[k],H.P[k]);
+        if(b>a){sim.t=H.T[b-1]; sim.p=H.P[b-1]+.5}
+        BK.on=true; bkInit(sim.p); BK.lastSnap=-1e9;
+        this.lastPx=H.lastPx; this.lastSd=H.lastSd;
+      }else{BK.on=true; sim.p=Math.round(this.first.price/TICK)+.5; openSession(i)}
+      this.live=true; this.wall=performance.now();
+    },
     // apply queued messages in arrival order; the clock keeps running between prints
     drain(){
-      const q=this.q; this.q=[]; let k=0;
+      const q=this.q; this.q=[]; let k=0; const h0=this.H?this.H.lastMs:0;
       for(const r of q){
+        if(r.type==='trade'&&r.ms<h0) continue;   // already in the history
         const sh=exSec(r.ms)+TOFF, dn=Math.floor(sh/DAY), s=sh-dn*DAY, cur=Math.round(CAL[CAL.length-1].getTime()/864e5);
         if(dn<cur||s<OPEN||s>=CLOSE) continue;
         if(dn>cur){CAL.push(new Date(dn*864e5)); BRK.dayBal=ACC.balance; openSession(CAL.length-1)}
@@ -4503,21 +4548,47 @@ function makeWsFeed(url,sub){
       if(BK.on&&dt>0){if(this.book){if(sim.t-BK.lastSnap>=1){BK.lastSnap=sim.t; HM.push()}} else bkStep(dt)}
       return k>0;
     }};
-  let done; F.ready=new Promise(r=>{done=r});
-  const timer=setTimeout(()=>{if(!F.first){F.status='no trade within 20 s'; done(false)}},20000);
-  const bm=document.getElementById('busyMsg'), bb=document.getElementById('busy'); if(bm){bm.textContent=`Connecting to ${url||'(no address)'} · waiting for the first trade`; bb.hidden=false}
-  try{F.ws=new WebSocket(url)}catch(e){F.status=e.message; clearTimeout(timer); done(false); return F}
+  let done, settled=false; F.ready=new Promise(r=>{done=v=>{if(!settled){settled=true; clearTimeout(timer); r(v)}}});
+  const bm=document.getElementById('busyMsg'), bb=document.getElementById('busy'), say=t=>{if(bm){bm.textContent=t; bb.hidden=false}};
+  // plain WebSocket: wait up to 20 s for the first trade; Quantower: 8 s for the bridge to answer, then as long as the history keeps coming
+  let timer=0; const arm=(ms,why)=>{clearTimeout(timer); timer=setTimeout(()=>{if(!settled){F.status=why; done(false)}},ms)};
+  if(F.qt){arm(8000,`the bridge is not answering at ${url} (is Quantower open with the PotikBridge strategy running?)`); say(`Connecting to Quantower (${url})…`)}
+  else{arm(20000,'no trade within 20 s'); say(`Connecting to ${url||'(no address)'} · waiting for the first trade`)}
+  const waitFirst=()=>{F.H=null; arm(20000,'no history and no trade within 20 s'); say('Quantower sent no history · waiting for the first live trade')};
+  try{F.ws=new WebSocket(url)}catch(e){F.status=e.message; done(false); return F}
   F.ws.onopen=()=>{F.status='connected'; if(sub) try{F.ws.send(sub)}catch(e){}};
-  F.ws.onerror=()=>{F.status='connection error'; if(!F.first){clearTimeout(timer); done(false)}};
-  F.ws.onclose=()=>{F.status='closed'; if(F.live) try{toast('WebSocket closed','alert')}catch(e){}};
+  F.ws.onerror=()=>{F.status=F.qt?`no connection to ${url} (is Quantower open with the PotikBridge strategy running? did the browser block access to this computer?)`:'connection error'; done(false)};
+  F.ws.onclose=()=>{if(settled&&F.status!=='connected'&&!F.live) return; F.status='closed'; if(!settled) done(false); if(F.live) try{toast(F.qt?'Quantower bridge disconnected (data stopped)':'WebSocket closed','alert')}catch(e){}};
   F.ws.onmessage=e=>{
     let m; try{m=JSON.parse(e.data)}catch(_){return}
-    for(const x of Array.isArray(m)?m:[m]){const r=wsNorm(x); if(!r) continue;
-      if(!F.first){if(r.type!=='trade') continue; const sh=exSec(r.ms)+TOFF, s=sh-Math.floor(sh/DAY)*DAY; if(s<OPEN||s>=CLOSE) continue; F.first=r; F.dnum=Math.floor(sh/DAY); clearTimeout(timer); done(true)}
+    for(const x of Array.isArray(m)?m:[m]){
+      if(F.qt&&!settled&&x&&typeof x==='object'){
+        const ty=x.type;
+        if(ty==='hello'){F.hello=x;
+          // the bridge streams another instrument: switch Potik to it rather than show its prices under the wrong name
+          if(x.root&&x.root!==DCFG.sym&&INSTR[x.root]&&!INSTR[x.root].crypto){try{sessionStorage.setItem('potik.qt.note',`Quantower streams ${x.symbol}, so Potik switched from ${DCFG.sym} to ${x.root}. For ${DCFG.sym}, add it as a symbol in the PotikBridge settings.`)}catch(e){} DCFG={...DCFG,sym:x.root}; saveDcfg(); settled=true; try{F.ws.close()}catch(e){} location.reload(); return}
+          arm(120000,'the bridge stopped sending the history'); say(`Quantower · ${x.symbol||DCFG.sym} · loading tick history…`); continue}
+        if(ty==='progress'){arm(120000,'the bridge stopped sending the history'); say(`Quantower · ${F.hello&&F.hello.symbol||DCFG.sym} · ${x.text||'loading…'}`); continue}
+        if(ty==='error'){F.status=String(x.msg||'error'); done(false); continue}
+        if(ty==='hist'){
+          const tk=INSTR[DCFG.sym].tick, n=(x.dt||[]).length, bt=+x.tick||tk, c={t:new Float64Array(n),p:new Int32Array(n),s:new Int32Array(n),d:new Int8Array(n)}; let t=+x.t0||0;
+          for(let k=0;k<n;k++){t+=+x.dt[k]; c.t[k]=t; c.p[k]=Math.round(x.p[k]*bt/tk); c.s[k]=Math.max(1,Math.round(+x.s[k]||1)); c.d[k]=Math.sign(+x.d[k]||0)}
+          F.chunks.push(c); F.histN+=n; arm(120000,'the bridge stopped sending the history');
+          say(`Quantower · ${F.hello&&F.hello.symbol||DCFG.sym} · ${fK_(F.histN)} prints received${x.day?' · '+x.day:''}`); continue;
+        }
+        if(ty==='hist_end'){
+          const H=wsCut(F.chunks); F.chunks=[];
+          if(H.n){F.H=H; F.first={price:H.P[0]*INSTR[DCFG.sym].tick}; F.dnum=H.dnum[0]; F.status='connected'; done(true)} else waitFirst();
+          continue;
+        }
+      }
+      const r=wsNorm(x); if(!r) continue;
+      if(!F.first){if(r.type!=='trade') continue; const sh=exSec(r.ms)+TOFF, s=sh-Math.floor(sh/DAY)*DAY; if(s<OPEN||s>=CLOSE) continue; F.first=r; F.dnum=Math.floor(sh/DAY); done(true)}
       F.q.push(r)}
   };
   return F;
 }
+function fK_(v){return v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'k':String(v)}
 
 /* ---------- Binance (crypto, public data, no key) ----------
    History: 1-minute candles for the last N days (open, high, low, close, volume and the buyers' volume of every minute are real;
@@ -4956,13 +5027,13 @@ function openDataDialog(){
       fs.innerHTML='';
       const row=(label,ctl)=>{const r=el_('label','frow'); r.append(el_('span',null,label),ctl); fs.appendChild(r); return ctl};
       const src=row('Market data',el_('select'));
-      [['sim','Simulator'],['bnc','Binance · crypto, real data (live)'],...sets.map(m=>['csv:'+m.id,`Imported: ${m.name}`]),['ws','WebSocket feed (live)']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; src.appendChild(o)});
+      [['sim','Simulator'],['bnc','Binance · crypto, real data (live)'],['qt','Quantower · your futures data (CQG / AMP), live'],...sets.map(m=>['csv:'+m.id,`Imported: ${m.name}`]),['ws','WebSocket feed (live)']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; src.appendChild(o)});
       src.value=draft.src==='csv'?'csv:'+draft.ds:draft.src;
-      src.addEventListener('change',()=>{const v=src.value; if(v.startsWith('csv:')){draft.src='csv'; draft.ds=v.slice(4); const m=sets.find(x=>x.id===draft.ds); if(m) draft.sym=m.sym} else{draft.src=v; if(v==='bnc'&&!INSTR[draft.sym].crypto) draft.sym='BTC'} render(); changed()});
+      src.addEventListener('change',()=>{const v=src.value; if(v.startsWith('csv:')){draft.src='csv'; draft.ds=v.slice(4); const m=sets.find(x=>x.id===draft.ds); if(m) draft.sym=m.sym} else{draft.src=v; if(v==='bnc'&&!INSTR[draft.sym].crypto) draft.sym='BTC'; if(v==='qt'&&INSTR[draft.sym].crypto) draft.sym='NQ'} render(); changed()});
       const ins=row('Instrument',el_('select'));
       for(const [k,x] of Object.entries(INSTR)){const o=el_('option',null,x.crypto?`${k} · ${x.name} · 24/7 · 1 contract = ${x.lot} ${x.unit}`:`${k} · ${x.name} · tick ${x.tick} = $${x.usd}`); o.value=k; ins.appendChild(o)}
       ins.value=draft.sym; ins.disabled=draft.src==='csv';
-      ins.addEventListener('change',()=>{draft.sym=ins.value; if(draft.src==='bnc'&&!INSTR[draft.sym].crypto) draft.src='sim'; render(); changed()});
+      ins.addEventListener('change',()=>{draft.sym=ins.value; if(draft.src==='bnc'&&!INSTR[draft.sym].crypto) draft.src='sim'; if(draft.src==='qt'&&INSTR[draft.sym].crypto) draft.src='bnc'; render(); changed()});
       const cr=!!INSTR[draft.sym].crypto;
       if(draft.src==='bnc'&&!cr){draft.sym='BTC'; render(); changed(); return}
       if(cr){
@@ -4977,6 +5048,12 @@ function openDataDialog(){
         const ses=row('Session',el_('select'));
         [['rth','RTH · 9:30–16:00 New York'],['eth','ETH · 18:00–17:00 (overnight included)']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; ses.appendChild(o)});
         ses.value=draft.ses; ses.addEventListener('change',()=>{draft.ses=ses.value; changed()});
+      }
+      if(draft.src==='qt'){
+        const dy=row('Days of tick history',el_('select')); for(const n of [1,2,3,5,10,15,20]){const o=el_('option',null,n+(n>1?' sessions':' session')); o.value=n; dy.appendChild(o)} dy.value=String(draft.qtDays||5); dy.addEventListener('change',()=>{draft.qtDays=+dy.value; changed()});
+        const pt=row('Bridge port',el_('input')); pt.type='number'; pt.min=1024; pt.max=65535; pt.value=draft.qtPort||8765; pt.addEventListener('input',()=>{draft.qtPort=Math.round(+pt.value)||8765; changed()});
+        fs.appendChild(el_('p','acnote','Quantower must be open on this computer, connected to AMP / CQG, with the PotikBridge strategy running (Strategies manager → PotikBridge → pick the same instrument → Run). Every print of the history comes with its real side, so footprint, delta and profiles are exact. More days take longer to load the first time. The browser may ask once to allow access to this computer: allow it.'));
+        if(FEED.qt) fs.appendChild(el_('p','acnote',`Now: ${FEED.status}${FEED.hello?' · '+FEED.hello.symbol:''} · ${FEED.H?fK_(FEED.H.n)+' prints of history · ':''}${FEED.n} live prints${FEED.book?' · book from CQG':''}.`));
       }
       if(draft.src==='ws'){
         const u=row('WebSocket address',el_('input')); u.type='url'; u.placeholder='wss://…'; u.value=draft.wsUrl; u.addEventListener('input',()=>{draft.wsUrl=u.value.trim(); changed()});
@@ -5565,9 +5642,11 @@ function openMenu(P,p,cx,cy,indId){
 }
 // switching the instrument rebuilds the market (the page reloads; windows, drawings per instrument, the account are kept)
 function openSymbolMenu(x,y){
-  const go=(sym,src)=>{DCFG={...DCFG,sym,src:src||(DCFG.src==='csv'||DCFG.src==='ws'||DCFG.src==='bnc'?'sim':DCFG.src)}; saveDcfg(); location.reload()};
+  const go=(sym,src)=>{DCFG={...DCFG,sym,src:src||(DCFG.src==='csv'||DCFG.src==='ws'||DCFG.src==='bnc'||DCFG.src==='qt'?'sim':DCFG.src)}; saveDcfg(); location.reload()};
   const cur=k=>DCFG.sym===k;
   showMenu([
+    ...Object.entries(INSTR).filter(([,v])=>!v.crypto).map(([k,v])=>({label:`${k} · ${v.name} · Quantower live`,on:cur(k)&&DCFG.src==='qt',act:()=>go(k,'qt')})),
+    {sep:1},
     ...Object.entries(INSTR).filter(([,v])=>!v.crypto).map(([k,v])=>({label:`${k} · ${v.name}`,on:cur(k)&&DCFG.src==='sim',act:()=>go(k,'sim')})),
     {sep:1},
     ...Object.entries(INSTR).filter(([,v])=>v.crypto).map(([k,v])=>({label:`${k} · ${v.name} · Binance live`,on:cur(k)&&DCFG.src==='bnc',act:()=>go(k,'bnc')})),
@@ -6277,10 +6356,10 @@ const SS_PIC={
   tpo:'<g class="a" opacity=".8"><rect x="20" y="8" width="16" height="6"/><rect x="20" y="16" width="32" height="6"/><rect x="20" y="24" width="50" height="6"/><rect x="20" y="40" width="44" height="6"/><rect x="20" y="48" width="26" height="6"/><rect x="20" y="56" width="12" height="6"/></g><rect class="c" x="20" y="32" width="66" height="6"/>',
 };
 const ssLbl=k=>INSTR[k].bsym||k;
-let ssM='new', ssSym=DCFG.sym in INSTR?DCFG.sym:'NQ', ssSrc=DCFG.src==='bnc'?'live':DCFG.src==='sim'?'sim':'cur', ssRp=false;
-const ssLiveOk=()=>!!INSTR[ssSym].crypto&&!IN_CLAUDE;
+let ssM='new', ssSym=DCFG.sym in INSTR?DCFG.sym:'NQ', ssSrc=DCFG.src==='bnc'||DCFG.src==='qt'?'live':DCFG.src==='sim'?'sim':'cur', ssRp=false;
+const ssLiveOk=()=>!IN_CLAUDE;
 function ssFeedLbl(){return ssRp?'REPLAY':ssSrc==='live'?'LIVE':ssSrc==='cur'?(DCFG.src==='csv'?'CSV':DCFG.src==='ws'?'WS':'SIM'):'SIM'}
-function ssShow(m){ssSym=DCFG.sym in INSTR?DCFG.sym:'NQ'; ssSrc=DCFG.src==='bnc'?'live':DCFG.src==='sim'?'sim':'cur'; ssRp=false; SS.hidden=false; ssRender(m||'new'); const b=SS.querySelector(`.ssm[data-m="${ssM}"]`); if(b) b.focus({preventScroll:true})}
+function ssShow(m){ssSym=DCFG.sym in INSTR?DCFG.sym:'NQ'; ssSrc=DCFG.src==='bnc'||DCFG.src==='qt'?'live':DCFG.src==='sim'?'sim':'cur'; ssRp=false; SS.hidden=false; ssRender(m||'new'); const b=SS.querySelector(`.ssm[data-m="${ssM}"]`); if(b) b.focus({preventScroll:true})}
 function ssHide(){SS.hidden=true; allDirty()}
 function ssBtn(cls,html,fn,parent){const b=el_('button',cls); b.type='button'; b.innerHTML=html; b.addEventListener('click',fn); if(parent) parent.appendChild(b); return b}
 function ssSyms(box){
@@ -6317,13 +6396,13 @@ function ssRender(m){
     const opt=(id,name,sub,dis)=>{const b=ssBtn('ssopt','<span><span></span><br><small></small></span>',()=>{if(id==='replay'){ssRp=true; if(ssSrc==='live') ssSrc='sim'} else {ssRp=false; ssSrc=id} ssRender('feed')},l); const s=b.querySelectorAll('span span, small'); s[0].textContent=name; s[1].textContent=sub; b.disabled=!!dis; b.setAttribute('aria-pressed',id==='replay'?ssRp:!ssRp&&ssSrc===id)};
     if(ssSrc==='cur') opt('cur',DCFG.src==='csv'?'Imported data (CSV)':'Your WebSocket feed','The data source set in Data…');
     opt('sim','Simulator','Simulated market, practice orders');
-    opt('live','Live',IN_CLAUDE?'Real Binance data works on the site, not inside Claude':INSTR[ssSym].crypto?`Real Binance trades and order book for ${ssLbl(ssSym)}`:'Live data is for BTC, ETH and SOL',!ssLiveOk());
+    opt('live','Live',IN_CLAUDE?'Live data works on the site, not inside Claude':INSTR[ssSym].crypto?`Real Binance trades and order book for ${ssLbl(ssSym)}`:`Real ${ssLbl(ssSym)} data from Quantower (CQG) on this computer`,!ssLiveOk());
     opt('replay','Replay','Play back a past session');
     SSP.appendChild(el_('p','ssnote','Then pick what to open under New.'));
   }
 }
 function ssGo(a){
-  a={...a,rp:ssRp}; let src=ssSrc==='live'?'bnc':ssSrc==='sim'?'sim':ssSym===DCFG.sym?DCFG.src:'sim'; if(a.rp&&src==='bnc') src='sim';
+  a={...a,rp:ssRp}; let src=ssSrc==='live'?(INSTR[ssSym].crypto?'bnc':'qt'):ssSrc==='sim'?'sim':ssSym===DCFG.sym?DCFG.src:'sim'; if(a.rp&&(src==='bnc'||src==='qt')) src='sim';
   if(ssSym!==DCFG.sym||src!==DCFG.src){
     try{sessionStorage.setItem(SS_KEY,JSON.stringify(a))}catch(e){}
     DCFG={...DCFG,sym:ssSym,src}; saveDcfg(); $('#busyMsg').textContent=`Loading ${ssLbl(ssSym)}…`; $('#busy').hidden=false; location.reload(); return;
