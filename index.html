@@ -1432,7 +1432,20 @@ const FP_TPL={
   'Colours: classic red/green':{buy:'#26a69a',sell:'#ef5350',imbBuy:'#2ee6c8',imb:'#ff5c5c',stackBuy:'#26a69a',stackSell:'#ef5350',poc:'#ffd166',nakedCol:'#ffd166'},
   'Colours: colour-blind blue/orange':{buy:'#4da3ff',sell:'#ff9f1a',imbBuy:'#9ccfff',imb:'#ffb347',stackBuy:'#4da3ff',stackSell:'#ff9f1a',poc:'#ffffff',nakedCol:'#ffffff'},
   'Colours: Потік magenta':{buy:'#f7dcf3',sell:'#e23cf0',imbBuy:'#f7dcf3',imb:'#e23cf0',stackBuy:'#f7dcf3',stackSell:'#e23cf0',poc:'#e23cf0',nakedCol:'#e23cf0'},
+  'Colours: blue / red 60%':{buy:'#1e90fc',sell:'#da3431',imbBuy:'#d6ebff',imb:'#ffd9d6',stackBuy:'#1e90fc',stackSell:'#da3431',text:'#ffffff',shade:'solid',shadeOp:60,histOn:false,poc:'#ffffff',nakedCol:'#ffffff'},
+  'Colours: my old ones (before 17.11)':{buy:'#f7dcf3',sell:'#e23cf0',imbBuy:'#f7dcf3',imb:'#e23cf0',stackBuy:'#f7dcf3',stackSell:'#e23cf0',text:'#e9e3ef',shade:'delta',shadeOp:60,histOn:true,poc:'#ffffff',nakedCol:'#e23cf0'},
 };
+// 17.11 (user: «як на скріні Bid-Ask Profile», 60%): blue / red prints, each cell filled solid by the sign of its delta at 60%.
+// Every window keeps the print colours it had before in ind.fp.old17; right-click → Footprint colours → My old colours puts them back.
+// The choice is remembered in localStorage potik.fp.palette (also for windows opened later).
+const FP_BR60={...FP_TPL['Colours: blue / red 60%']}, FP_BR60_BARS={up:'#1e90fc',down:'#da3431'};
+const FP_COLKEYS=['buy','sell','imbBuy','imb','stackBuy','stackSell','text','shade','shadeOp','histOn','poc','nakedCol'];
+let FP_PAL='br60'; try{FP_PAL=localStorage.getItem('potik.fp.palette')||'br60'}catch(e){} if(FP_PAL!=='old') FP_PAL='br60';
+function fpSetPalette(S,pal){const F=S.ind.fp;
+  if(pal==='old'){const o=F.old17; if(o){for(const k of FP_COLKEYS) if(k in o) F[k]=o[k]; if(o.up) S.props.up=o.up; if(o.down) S.props.down=o.down}}
+  else{if(F.pal!=='br60'){F.old17={}; for(const k of FP_COLKEYS) F.old17[k]=F[k]; F.old17.up=S.props.up; F.old17.down=S.props.down}
+    Object.assign(F,FP_BR60); Object.assign(S.props,FP_BR60_BARS)}
+  F.pal=pal}
 const FP_TPL_KEY='potik.fp.templates';
 
 /* ---------- indicator registry ----------
@@ -1462,7 +1475,7 @@ const IND=[
      ['col','Outside value area color','color'],['vaCol','Value area color','color'],['pocCol','POC color','color'],['pocLine','POC line across the session','bool']]},
   {id:'fp',name:'Footprint',group:'Order Flow',desc:'Volume at every price inside each bar: bid x ask, delta, volume, profile, ladder or trades, in one or two columns. Imbalances are found tick by tick, with stacked zones, unfinished auctions, absorption, exhaustion and naked POCs. Shown at any zoom (Show footprint: Always): numbers when they fit, coloured cells when zoomed far out. Or only when zoomed in, like before.',
    def:{on:true,view:'always',mode1:'bidask',mode2:'none',rows:'auto',minBar:70,lod:true,lodBar:16,candle:true,maxW:0,
-     shade:'delta',histOn:true,hist:'#c4b2ee',buy:'#f7dcf3',sell:'#e23cf0',text:'#e9e3ef',font:11.5,sep:'x',zeros:true,sizeFilter:0,
+     shade:'delta',shadeOp:60,histOn:true,hist:'#c4b2ee',buy:'#f7dcf3',sell:'#e23cf0',text:'#e9e3ef',font:11.5,sep:'x',zeros:true,sizeFilter:0,
      poc:'#ffffff',pocFill:true,pocOp:16,pocBox:false,v2:true,va:false,vaPct:70,vaCol:'#a66bff',
      imbType:'diag',ratio:300,ratio2:450,ratio3:600,minVol:10,deltaF:0,zero1:true,imbBuy:'#f7dcf3',imb:'#e23cf0',
      stack:false,stackN:3,stackGap:0,stackZone:false,stackBuy:'#f7dcf3',stackSell:'#e23cf0',
@@ -1474,7 +1487,7 @@ const IND=[
       ['rows','Row size','select',[['auto','Auto'],[1,'1 tick'],[2,'2 ticks'],...[4,8,16].map(k=>[k,`${k} ticks (${+(k*TICK).toFixed(DEC)} pt)`])]],
       ['minBar','Full footprint from bar width ≥ px','num',30,220,1],['lod','Level of detail: coloured cells when zoomed out','bool'],['lodBar','Cells from bar width ≥ px','num',6,100,1],
       ['candle','Candle strip (open/close, high/low)','bool'],['maxW','Max footprint width px (0 = whole bar)','num',0,600,1]]],
-    ['Display',[['shade','Cell background','select',[['none','None'],['delta','By delta'],['volume','By volume']]],['histOn','Volume histogram behind numbers','bool'],['hist','Histogram color','color'],
+    ['Display',[['shade','Cell background','select',[['none','None'],['delta','By delta'],['volume','By volume'],['solid','Solid, by delta sign']]],['shadeOp','Solid fill strength %','range',10,100,1],['histOn','Volume histogram behind numbers','bool'],['hist','Histogram color','color'],
       ['buy','Buy (ask) color','color'],['sell','Sell (bid) color','color'],['text','Number color','color'],['font','Max font size','num',7,14,.5],
       ['sep','Bid x Ask separator','select',[['x','x'],['×','×'],['|','|'],['·','·'],['none','none']]],['zeros','Show zeros','bool'],['sizeFilter','Hide numbers ≤','num',0,1000,1],
       ['poc','POC color','color'],['pocFill','POC: soft fill across the row','bool'],['pocOp','POC fill strength %','range',5,60,1],['pocBox','POC outline box','bool'],['va','Value area bracket','bool'],['vaPct','Value area %','num',40,95,1],['vaCol','Value area color','color']]],
@@ -2544,7 +2557,8 @@ function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
     const y=yT(r); if(y>pH||y+rh<0) continue;
     const b=r.b, a=r.a, v=a+b, d=a-b, yc=y+rh/2;
     if(mode==='cells'){ctx.fillStyle=hexA(d>=0?BU:SE,.1+.72*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
-    if(r.poc&&F.pocFill&&mode!=='cells'&&mode!=='profile'){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}
+    if(shade==='solid'){if(d){ctx.fillStyle=hexA(d>0?BU:SE,(+F.shadeOp||60)/100); ctx.fillRect(x,y+.5,w,h)} if(r.poc&&F.pocFill){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}}
+    else if(r.poc&&F.pocFill&&mode!=='cells'&&mode!=='profile'){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}
     else if(shade==='delta'){ctx.fillStyle=hexA(d>=0?BU:SE,.04+.28*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
     else if(shade==='volume'){ctx.fillStyle=hexA(F.hist,.04+.3*v/R.mx); ctx.fillRect(x,y+.5,w,h)}
     switch(mode){
@@ -5354,6 +5368,7 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"Footprint colours":"Кольори принтів","Blue / red (60%)":"Синьо-червоні (60%)","My old colours":"Мої старі кольори","Solid, by delta sign":"Суцільна, за знаком дельти","Solid fill strength %":"Сила суцільної заливки %",
 "Data":"Дані","Replay":"Повтор","Pause":"Пауза","Play":"Старт","+ Window":"+ Вікно","Chart":"Графік","Tape":"Стрічка","Acct":"Рахунок","Indicators":"Індикатори","+DOM":"+DOM",
 "One window":"Одне вікно","Two side by side":"Два поруч","Two stacked":"Два одне над одним","Three windows":"Три вікна","Four windows":"Чотири вікна","Layout":"Розкладка","Windows":"Вікна",
 "Maximize":"Розгорнути","Restore":"Відновити","Close window":"Закрити вікно","Bar type":"Тип барів","Window type":"Тип вікна","Price chart":"Ціновий графік","Market profile":"Ринковий профіль",
@@ -5862,6 +5877,7 @@ function openMenu(P,p,cx,cy,indId){
     {...st('auto','Auto Scale'),on:P.V.autoY,act:()=>{P.V.autoY=true; P.V.fit=true; P.dirty=true}},
     {...st('util','Volume profile'),on:!!P.S.ind.prof.on,sub:[['day','Each day (from 00:00)'],['right','On the right'],['left','On the left']].map(([v,t])=>({label:t,on:P.S.ind.prof.on&&(P.S.ind.prof.side||'right')===v,act:()=>{P.S.ind.prof.on=true; P.S.ind.prof.side=v; P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'Off',on:!P.S.ind.prof.on,act:()=>{P.S.ind.prof.on=false; P.dirty=true; saveLayout()}}])},
     {...st('util','Footprint POC color'),sub:[['#ffffff','Soft white'],['#e23cf0','Magenta'],['#ffd166','Yellow'],['#8fd3ff','Blue'],['#5fe0bd','Green']].map(([c,t])=>({label:t,on:P.S.ind.fp.poc===c,act:()=>{Object.assign(P.S.ind.fp,{poc:c,pocFill:true}); P.dirty=true; saveLayout()}})).concat([{sep:1},{label:'POC outline box',on:!!P.S.ind.fp.pocBox,act:()=>{P.S.ind.fp.pocBox=!P.S.ind.fp.pocBox; P.dirty=true; saveLayout()}},{label:'All footprint colors…',act:()=>openSettings(P,'fp')}])},
+    {...st('util','Footprint colours'),sub:[['br60','Blue / red (60%)'],['old','My old colours']].map(([v,t])=>({label:t,on:(P.S.ind.fp.pal||'old')===v,act:()=>{FP_PAL=v; try{localStorage.setItem('potik.fp.palette',v)}catch(e){} for(const Q of panes){fpSetPalette(Q.S,v); Q.dirty=true} saveLayout(); allDirty()}}))},
     {...st('util','Footprint level lines'),on:!!(P.S.ind.fp.naked||P.S.ind.fp.stackZone||P.S.ind.fp.unfin),act:()=>{const f=P.S.ind.fp, on=!(f.naked||f.stackZone||f.unfin); f.naked=on; f.stackZone=on; f.unfin=on; f.always=on; P.dirty=true; saveLayout()}},
     {sep:1},
     {...st('ind','Indicators'),kbd:'Ctrl I',act:()=>openIndicators(P)},
@@ -6202,6 +6218,7 @@ function makePane(cfg){
   const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{}),...(c.tpo&&!c.tpo.v2?{ext100:false,ext200:false,v2:true}:{}),...(c.tpo&&!c.tpo.v3?{vp:false,v3:true}:{}),...(c.tpo&&!c.tpo.v4?{look:'classic',v4:true}:{})},
     tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min,legCol:c.legV2?!!c.legCol:true};   // 29.10: indicator names start hidden behind the eye
   {const b=S.ind.big, ob=c.ind&&c.ind.big; if(ob&&ob.min!=null&&ob.minBuy==null){b.minBuy=b.minSell=ob.min} delete b.min; b.aggMs=BIGAGG.ms; b.aggTicks=BIGAGG.ticks; b.aggOpp=BIGAGG.opp}   // settings from older versions
+  if(S.ind.fp.pal!==FP_PAL) fpSetPalette(S,FP_PAL);   // 17.11: blue / red prints, the old colours stay in ind.fp.old17
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
     V:{barW:c.barW||defaultBarW(S),scroll:0,tickPx:3,center:null,autoY:true,fit:true,hover:null,g:null,lastN:0},
     dirty:true,drag:null,ptrs:new Map()};
