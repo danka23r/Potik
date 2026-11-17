@@ -200,6 +200,24 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid #251e2c;border-
 .dt .vs{width:1px;height:20px;background:#2a2232;margin:0 3px}
 .dt.fav{z-index:21;padding:3px 4px;transform:none}
 .dt.fav button{width:32px;height:30px}
+/* drawing toolbar (17.11, like TradingView): shown while one drawing is selected */
+.dt.dsb{z-index:22;padding:3px 4px;transform:none}
+.dt.dsb[hidden]{display:none}
+.dt.dsb button{width:auto;min-width:32px;padding:0 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:500 12px var(--f-ui,system-ui)}
+.dt.dsb button.row{flex-direction:row;gap:6px}
+.dt.dsb button svg{width:18px;height:18px}
+.dt.dsb .cb{display:block;width:18px;height:3px;border-radius:1px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.dsbpop{position:absolute;z-index:40;background:#16121b;border:1px solid #2a2232;border-radius:8px;padding:8px;box-shadow:0 8px 28px rgba(0,0,0,.65);color:#d9d3e0;font:12px var(--f-ui,system-ui)}
+.dsbpop[hidden]{display:none}
+.dsbpop .pal{display:grid;grid-template-columns:repeat(10,18px);gap:3px}
+.dsbpop .pal button{width:18px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.08);padding:0}
+.dsbpop .pal button.on{box-shadow:0 0 0 2px #2962ff}
+.dsbpop .opr{display:flex;align-items:center;gap:8px;margin-top:8px}
+.dsbpop .opr input[type=range]{flex:1}
+.dsbpop .cus{margin-top:8px;display:flex;align-items:center;gap:8px}
+.dsbpop .lst button{display:flex;align-items:center;gap:10px;width:100%;padding:6px 10px;border-radius:5px;color:#d9d3e0;text-align:left}
+.dsbpop .lst button:hover{background:#231c2b}
+.dsbpop .lst button.on{background:#2e2238;color:#fff}
 .mrow{flex:1;min-height:0;display:flex}
 .mrow>.ws{flex:1;min-width:0}
 /* docked drawing toolbar: a vertical bar on the right (or left) edge, like TradingView */
@@ -886,10 +904,10 @@ function bkStep(h){
   if(sim.t-BK.lastSnap>=1){BK.lastSnap=sim.t; HM.push()}
 }
 // heatmap history: one snapshot per second, 47 levels below the bid .. 48 above it
-const HM={L:96,n:0,cap:4096,t:new Float64Array(4096),bid:new Int32Array(4096),sz:new Uint16Array(4096*96),
+const HM={L:240,H:119,n:0,cap:4096,t:new Float64Array(4096),bid:new Int32Array(4096),sz:new Uint16Array(4096*240),   // 17.11: 240 levels (was 96) for a Bookmap-like heatmap
   push(){
     if(this.n===this.cap){const c=this.cap*2, t=new Float64Array(c), b=new Int32Array(c), s=new Uint16Array(c*this.L); t.set(this.t); b.set(this.bid); s.set(this.sz); this.t=t; this.bid=b; this.sz=s; this.cap=c}
-    const i=this.n++, o=i*this.L, lo=BK.bid-47; this.t[i]=sim.t; this.bid[i]=BK.bid;
+    const i=this.n++, o=i*this.L, lo=BK.bid-this.H; this.t[i]=sim.t; this.bid[i]=BK.bid;
     for(let k=0;k<this.L;k++) this.sz[o+k]=Math.min(65535,bkSize(lo+k));
   },
   lower(t){let a=0,b=this.n; while(a<b){const m=(a+b)>>1; if(this.t[m]<t)a=m+1; else b=m} return a}};
@@ -1488,9 +1506,9 @@ const IND=[
    def:{on:false,pos:'#c4b2ee',neg:'#e23cf0',rVol:true,rAvap:false,rDelta:true,rCvd:false,rDchg:false,rDmin:false,rDmax:false,rDpct:true,rTrades:false,rDur:false},
    fields:[...SROWS.map(([k,,lab])=>[k,lab,'bool']),['pos','Positive color','color'],['neg','Negative color','color']]},
   {id:'heat',name:'Liquidity Heatmap',group:'Order Flow',desc:'Resting limit orders from the simulated order book, drawn behind the bars: the brighter, the more size waits at that price. You can watch walls hold, get eaten or get pulled. The book is recorded once a second from today’s open.',
-   def:{on:false,palette:'potik',side:false,bidCol:'#e23cf0',askCol:'#8fb7ff',opacity:85,contrast:1,minSize:0,maxSize:0,extend:true},
-   fields:[['palette','Palette','select',[['potik','Потік: violet → magenta → white'],['classic','Classic: blue → yellow → red'],['mono','Monochrome']]],['side','Colour bids and asks separately','bool'],['bidCol','Bid colour (when separate)','color'],['askCol','Ask colour (when separate)','color'],
-     ['opacity','Opacity %','range',10,100,1],['contrast','Contrast (higher shows smaller orders)','range',.4,3,.1],['minSize','Hide sizes below','num',0,500,1],['maxSize','Full brightness at size (0 = auto)','num',0,5000,10],['extend','Show the live book right of the last bar','bool']]},
+   def:{on:false,palette:'bookmap',bgFill:true,side:false,bidCol:'#e23cf0',askCol:'#8fb7ff',opacity:85,contrast:1,minSize:0,maxSize:0,extend:true},
+   fields:[['palette','Palette','select',[['bookmap','Bookmap: navy → blue → grey → orange'],['potik','Потік: violet → magenta → white'],['classic','Classic: blue → yellow → red'],['mono','Monochrome']]],['side','Colour bids and asks separately','bool'],['bidCol','Bid colour (when separate)','color'],['askCol','Ask colour (when separate)','color'],
+     ['opacity','Opacity %','range',10,100,1],['contrast','Contrast (higher shows smaller orders)','range',.4,3,.1],['minSize','Hide sizes below','num',0,500,1],['maxSize','Full brightness at size (0 = auto)','num',0,5000,10],['extend','Show the live book right of the last bar','bool'],['bgFill','Dark background where the book was recorded','bool']]},
   {id:'dpow',name:'DOM Power',group:'Order Flow',desc:'Average resting size on the ask (up) and the bid (down) across the first N levels during each bar, with bid minus ask as a line. Recorded from today’s open.',
    def:{on:false,levels:10,bidCol:'#e23cf0',askCol:'#c4b2ee',lineCol:'#ffffff',height:12},
    fields:[['levels','Levels per side','select',[5,10,20,40]],['bidCol','Bid color','color'],['askCol','Ask color','color'],['lineCol','Bid − ask line color','color'],['height','Panel height %','range',8,30,1]]},
@@ -1938,21 +1956,12 @@ function drawChart(P,ctx,w,h){
   if(V.center==null) V.center=D.last;
   if(V.autoY) V.userY=false;   // userY: the user moved or zoomed the price scale by hand, so nothing pulls the view back
   if(V.autoY&&isFinite(lo)){
-    const span=Math.max(hi-lo,12), padT=span*.07+1, vT=V.center+pH/2/V.tickPx, vB=V.center-pH/2/V.tickPx;
-    if(hi+padT>vT||lo-padT<vB||(vT-vB)>(span+2*padT)*1.9) V.fit=true;
-    if(V.fit){
-      const tt=pH/(span+padT*3), tc=(lo+hi)/2;
-      V.tickPx+=(tt-V.tickPx)*.3; V.center+=(tc-V.center)*.3; P.dirty=true;
-      if(Math.abs(tt-V.tickPx)<.004&&Math.abs(tc-V.center)<.05) V.fit=false;
-    }
-    V.yoff=0; V.base=V.center;
-  }else if(isFinite(lo)){
-    /* manual scale (29.10): the user's vertical move is an offset (yoff) from the middle of the visible bars (base), so
-       dragging up / down is free, and panning through history keeps the bars in view at the same offset and zoom */
-    const tgt=(lo+hi)/2; if(V.base==null) V.base=V.center-(V.yoff||0);
-    if(Math.abs(tgt-V.base)>.02){V.base+=(tgt-V.base)*.35; P.dirty=true} else V.base=tgt;
-    V.center=V.base+(V.yoff||0);
+    /* auto scale like TradingView (17.11): every frame the visible bars fill the height exactly (10% margin on top, 8% below),
+       at once, with no easing — zooming or panning sideways never leaves the bars off screen */
+    const span=Math.max(hi-lo,2), tt=clamp(pH*.82/span,.05,60), tc=hi+span*.10/.82-pH/2/tt;
+    V.tickPx=tt; V.center=tc; V.fit=false; V.yoff=0; V.base=V.center;
   }
+  // manual scale (17.11, like TradingView): the price scale stays exactly where the user put it
   const tp=V.tickPx, ctr=V.center, yOf=t=>pH/2-(t-ctr)*tp;
   const secPB=barSecs(S.bt,B);
   const segs=[]; {let a=i0; for(let i=i0+1;i<=i1+1;i++) if(i>i1||dayOf(B[i].t0)!==dayOf(B[i-1].t0)){segs.push([a,i-1]); a=i}}
@@ -1984,6 +1993,8 @@ function drawChart(P,ctx,w,h){
     ctx.fillStyle=hexA(I.rng.color,ro); ctx.fillRect(x0,yT,x1-x0,yB-yT);
     if(I.rng.hilo){ctx.fillStyle=hexA(I.rng.extColor,.45); ctx.fillRect(x0,Math.round(yOf(r.hi))-.5,x1-x0,1); ctx.fillRect(x0,Math.round(yOf(r.lo))-.5,x1-x0,1)}
   }
+
+  if(!G.hideDraw) drawDrawings(ctx,V.g,P,'under');   // zones behind the bars (17.11)
 
   // session start / end bar index for any bar (bars of one session are contiguous)
   const sessOf=i=>{const d=dayOf(B[i].t0); let a=i,b=i; while(a>0&&dayOf(B[a-1].t0)===d)a--; while(b<last&&dayOf(B[b+1].t0)===d)b++; return [a,b]};
@@ -2384,7 +2395,6 @@ function drawChart(P,ctx,w,h){
     }
   }
   if(showX&&hv.y<pH) tag(ctx,plotW,AX,hv.y,0,pH,'#3a2c47','#fff',fP(Math.round(pAt(hv.y))));
-  if(V.autoY){ctx.font=`600 9px ${UI}`; ctx.fillStyle=C.mag; ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('AUTO',chartW-6,pH-4)}
 
   // time axis
   ctx.fillStyle=pr.bg; ctx.fillRect(0,timeTop+1,chartW,TA-1);
@@ -2402,6 +2412,9 @@ function drawChart(P,ctx,w,h){
     ctx.fillStyle='#fff'; ctx.font=`500 10.5px ${MONO}`; ctx.fillText(dateLbl(B[hi_].t0)+' '+clock(B[hi_].t0,btEvent(S.bt)||btSpec(S.bt).k==='s'),x,timeTop+11);
   }
   ctx.fillStyle=C.line; ctx.fillRect(plotW,0,1,timeTop); ctx.fillRect(0,timeTop,chartW,1);
+  // TradingView's "A" button at the foot of the price scale: lit while auto scale is on, click toggles it (17.11)
+  {const bx=plotW+AX-20, by=timeTop+3; V.g.abtn=[bx,by,bx+16,by+16]; ctx.fillStyle=V.autoY?'#2a2140':'#14101a'; ctx.beginPath(); ctx.roundRect(bx,by,16,16,3); ctx.fill();
+    ctx.font=`600 10px ${UI}`; ctx.fillStyle=V.autoY?'#d9c8ff':C.muted; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('A',bx+8,by+8.5)}
 
   // legend (click an indicator name to open its settings)
   if(pr.legend){
@@ -2711,7 +2724,7 @@ function drawDom(P,ctx,x0,W,h,full){
   // re-centre when price walks more than recRows away (unless the user scrolled the ladder)
   if(V.domC==null) V.domC=D.last;
   if(!V.domHold&&cfg.recenter==='auto'&&Math.abs(D.last-V.domC)>=Math.max(1,Math.min(cfg.recRows,mid-1))) V.domC=D.last;
-  V.dg={x0,W,top,rh,nR,mid,cols,hd:HD};
+  V.dg={x0,W,top,rh,nR,mid,cols,hd:HD,full:!!full};
   const pxOf=r=>V.domC+mid-r, bid=BK.bid, ask=bid+1, day=D.day, va=domVA(day), prev=D.days.length>1?D.days[D.days.length-2].close:null;
   let mxB=1,mxAt=1; const vmx={v:1,d:1}, full_orders=cols.some(c=>c.id==='orders');
   for(let r=0;r<nR;r++){const px=pxOf(r); mxB=Math.max(mxB,bkSize(px)); const x=AT.get(px); if(x) mxAt=Math.max(mxAt,x[0],x[1]); const q=day.prof.get(px); if(q){vmx.v=Math.max(vmx.v,q[0],q[1]); vmx.d=Math.max(vmx.d,Math.abs(q[1]-q[0]))}}
@@ -2720,6 +2733,7 @@ function drawDom(P,ctx,x0,W,h,full){
   ctx.font=`600 10.5px ${UI}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   for(const c of cols){const held=c.id==='price'&&V.domHold; ctx.fillStyle=held?C.mag:C.text; ctx.fillText(held?'Price ⟲':DOMC[c.id][1],x0+c.x+c.w/2,HD/2+1)}
   ctx.fillStyle=C.line; ctx.fillRect(x0,HD,W,1);
+  if(!full){ctx.fillStyle=cfg.solid?'#0a080d':'#030205'; ctx.fillRect(x0+W-18,1,17,HD-2); ctx.strokeStyle=C.muted; ctx.lineWidth=1.3; ctx.beginPath(); const cx=x0+W-9, cy=HD/2; ctx.moveTo(cx-3.5,cy-3.5); ctx.lineTo(cx+3.5,cy+3.5); ctx.moveTo(cx+3.5,cy-3.5); ctx.lineTo(cx-3.5,cy+3.5); ctx.stroke()}   // × closes the DOM beside the chart (17.11)
   ctx.save(); ctx.beginPath(); ctx.rect(x0,top,W,nR*rh); ctx.clip();
   const F10=`10.5px ${MONO}`, F10b=`700 10.5px ${MONO}`; ctx.font=F10;
   const hotT=LT&&sim.t-LT.t<1.2;
@@ -2878,7 +2892,9 @@ function drawTape(P,ctx,w,h){
 /* ---------- liquidity heatmap: book snapshots rendered per pixel into an offscreen image ---------- */
 const HEAT_STOPS={potik:[[0,'#2a0f45',0],[.15,'#4b1a7a',.45],[.4,'#8e2bc4',.75],[.7,'#e23cf0',.92],[.9,'#ffc4f7',1],[1,'#ffffff',1]],
   classic:[[0,'#081d58',0],[.15,'#225ea8',.5],[.4,'#41b6c4',.78],[.65,'#c7e9b4',.9],[.85,'#fecc5c',.96],[1,'#f03b20',1]],
-  mono:[[0,'#ffffff',0],[1,'#ffffff',1]]};
+  mono:[[0,'#ffffff',0],[1,'#ffffff',1]],
+  // 17.11: like Bookmap / the user's photo — dark navy, steel blue, grey, orange for the big walls
+  bookmap:[[0,'#0b2236',.0],[.04,'#0e2c45',.9],[.18,'#1d4f73',1],[.38,'#3f7ea6',1],[.55,'#9aa7b0',1],[.72,'#c0763a',1],[.88,'#ef8a2c',1],[1,'#ffe2b0',1]]};
 const heatLUTs={}, HEAT={cv:null};
 function heatLUT(key,stops){
   if(heatLUTs[key]) return heatLUTs[key];
@@ -2920,15 +2936,17 @@ function drawHeat(ctx,Q,g,plotW,pH){
     for(let x=0;x<W;x+=6){const k=colS[x]; if(k<0) continue; const o=k*HM.L; for(let j=0;j<HM.L;j++){const v=HM.sz[o+j]; if(v){s+=v; c++; if(v>m)m=v}}}
     mx=Math.max(20,Math.min(m,c?s/c*7:m));
   }
-  const pal=HEAT_STOPS[Q.palette]||HEAT_STOPS.potik, side=Q.side;
+  const pal=HEAT_STOPS[Q.palette]||HEAT_STOPS.bookmap, side=Q.side;
   const L0=heatLUTc(heatLUT('p:'+Q.palette,pal),Q.contrast,'p:'+Q.palette);
   const Lb=side?heatLUTc(heatLUT('b:'+Q.bidCol,[[0,Q.bidCol,0],[.6,Q.bidCol,.8],[1,'#ffffff',1]]),Q.contrast,'b:'+Q.bidCol):null;
   const La=side?heatLUTc(heatLUT('a:'+Q.askCol,[[0,Q.askCol,0],[.6,Q.askCol,.8],[1,'#ffffff',1]]),Q.contrast,'a:'+Q.askCol):null;
   const min=+Q.minSize||0, sc=255/mx; let prev=-2;
+  const bgC=Q.bgFill!==false&&!side?(()=>{const c=parseInt(pal[0][1].slice(1),16); return (255<<24|(c&255)<<16|(c>>8&255)<<8|c>>16)>>>0})():0;
   for(let x=0;x<W;x++){
     const k=colS[x]; if(k<0){prev=-2; continue}
     if(k===prev){for(let y=0,o=x;y<H;y++,o+=W) px[o]=px[o-1]; continue}
-    prev=k; const o=k*HM.L, bid=HM.bid[k], lo=bid-47;
+    prev=k; const o=k*HM.L, bid=HM.bid[k], lo=bid-HM.H;
+    if(bgC) for(let y=0,q=x;y<H;y++,q+=W) px[q]=bgC;
     for(let y=0,q=x;y<H;y++,q+=W){
       const p=rowP[y], j=p-lo; if(j<0||j>=HM.L) continue;
       const v=HM.sz[o+j]; if(!v||v<min) continue;
@@ -2944,7 +2962,7 @@ function dpowBar(c,t1,N){
   if(!HM.n) return null;
   const s0=HM.lower(c.t0), s1=Math.min(HM.n,HM.lower(t1)); if(s1<=s0) return null;
   const key=N+'|'+s0+'|'+s1; if(c._pw&&c._pw.k===key) return c._pw.v;
-  let a=0,b=0; for(let s=s0;s<s1;s++){const o=s*HM.L; for(let j=0;j<N;j++){a+=HM.sz[o+48+j]; b+=HM.sz[o+47-j]}}
+  let a=0,b=0; for(let s=s0;s<s1;s++){const o=s*HM.L; for(let j=0;j<N;j++){a+=HM.sz[o+HM.H+1+j]; b+=HM.sz[o+HM.H-j]}}
   const v={a:a/(s1-s0),b:b/(s1-s0)}; c._pw={k:key,v}; return v;
 }
 const SOT_NAME={trades:'trades',volume:'volume',ask:'ask volume',bid:'bid volume',delta:'delta'};
@@ -2963,14 +2981,14 @@ function sotCalc(B,i0,i1,last,Q,secPB){
 /* ---------- TPO (market profile) ----------
    Periods of P minutes come from the per-minute session ranges. Profiles cover a session, week or month; the user can
    split a profile at any period and merge neighbours (stored as times, so they survive a change of letter period). */
-const TPO_DEF=()=>({onlyLetters:false,period:30,tf:'day',style:'letters',gradient:true,letterCol:'#c4b2ee',curCol:'#f7dcf3',rowTotals:false,ocMarks:true,mid:false,hilo:false,stats:true,
+const TPO_DEF=()=>({look:'classic',v4:true,onlyLetters:false,period:30,tf:'day',style:'letters',gradient:true,letterCol:'#c4b2ee',curCol:'#f7dcf3',rowTotals:false,ocMarks:true,mid:false,hilo:false,stats:true,
   vaOn:true,vaBy:'time',vaPct:70,vaFill:true,vaLines:false,vaCol:'#7b23b4',pocOn:true,pocCol:'#e23cf0',pocLine:'profile',nakedVA:false,
   ibOn:true,ibMin:60,ibCol:'#e23cf0',ext50:false,ext100:false,ext150:false,ext200:false,v2:true,orOn:true,orMin:5,orCol:'#ffd166',
   singles:true,singleCol:'#ffd166',tails:true,poor:true,
   vp:false,v3:true,vpSide:'right',vpW:56,vpSplit:false,vpCol:'#c4b2ee',
   s1on:false,s1a:'09:30',s1b:'10:30',s1c:'#8fd3ff',s2on:false,s2a:'10:30',s2b:'14:00',s2c:'#c4b2ee',s3on:false,s3a:'14:00',s3b:'16:00',s3c:'#ffd166'});
 const TPO_TABS=[
-  ['General',[['onlyLetters','Letters only (no blocks when zoomed out, no volume beside)','bool'],['period','Letter period (min)','select',[5,15,30,60]],['tf','One profile per','select',[['day','Session'],['week','Week'],['month','Month']]],
+  ['General',[['look','Look','select',[['classic','Classic · grey letters, orange IB and value area lines'],['potik','Потік · coloured value area and blocks']]],['onlyLetters','Letters only (no blocks when zoomed out, no volume beside)','bool'],['period','Letter period (min)','select',[5,15,30,60]],['tf','One profile per','select',[['day','Session'],['week','Week'],['month','Month']]],
     ['style','Cells','select',[['letters','Letters, packed'],['blocks','Blocks, packed'],['aligned','Letters, one column per period']]],['gradient','Fade earlier periods','bool'],
     ['letterCol','Letter color','color'],['curCol','Current period color','color'],['rowTotals','TPO count per row','bool'],['ocMarks','Open / close markers','bool'],
     ['mid','Midpoint line','bool'],['hilo','High / low lines','bool'],['stats','Statistics under each profile','bool']]],
@@ -3038,7 +3056,10 @@ function drawTPO(P,ctx,w,h){
   /* TPO window (reworked 29.10): a real price scale like the chart. Drag pans both ways, the wheel widens / narrows the columns,
      Ctrl + wheel or dragging the price axis zooms the prices, double-click fits everything again. Rows group ticks
      automatically so letters stay readable at any zoom. */
-  const V=P.V, S=P.S, cfg=S.tpo, pr=S.props, AX=66, TA=22, stH=cfg.stats?44:0, plotW=w-AX, pH=h-TA-stH;
+  /* 17.11 classic look (default, from the user's reference): plain grey monospace letters, an orange bar for the initial balance,
+     orange VAH / VAL and a light POC line running right from the end of their row, the open marked orange, the close with '#' */
+  const S=P.S, CL=S.tpo.look!=='potik', cfg=CL?{...S.tpo,vaFill:false,gradient:false,poor:false,tails:false,orOn:false,singles:false,ocMarks:false,vaLines:false,nakedVA:false,pocLine:'off',hilo:false,mid:false,letterCol:'#c8c8c8',curCol:'#ffffff',ibCol:'#f0801e'}:S.tpo;
+  const V=P.V, pr=S.props, AX=66, TA=22, stH=cfg.stats?44:0, plotW=w-AX, pH=h-TA-stH;
   ctx.fillStyle=pr.bg; ctx.fillRect(0,0,w,h); V.g=null; V.tl=[]; V.tg={plotW,pH,AX};
   const profs=tpoProfiles(cfg,S.tpoCuts); if(!profs.length) return;
   // horizontal zoom (29.10): V.tcol scales everything sideways, like the bar width on the chart; zoomed out, a profile is a thin silhouette
@@ -3049,7 +3070,7 @@ function drawTPO(P,ctx,w,h){
   V.tscroll=clamp(V.tscroll||0,-plotW*.9,Math.max(0,total-40));   // free panning both ways
   const vis=[]; let xr=plotW-12+V.tscroll;
   for(let i=profs.length-1;i>=0&&xr>0;i--){const bw_=blockW(profs[i]); if(xr-bw_<plotW) vis.push([profs[i],xr-bw_+gap*.5,i]); xr-=bw_}
-  let lo=Infinity,hi=-Infinity; for(const [pf] of vis){if(pf.lo<lo)lo=pf.lo; if(pf.hi>hi)hi=pf.hi}
+  let lo=Infinity,hi=-Infinity; for(const [pf] of (CL&&vis.length?[vis[0]]:vis)){if(pf.lo<lo)lo=pf.lo; if(pf.hi>hi)hi=pf.hi}   // classic: fit the newest visible profile, so rows stay fine
   if(!isFinite(lo)) return;
   // vertical scale: price (ticks) → y. Auto fits the visible profiles until the user moves or zooms it.
   if(V.tauto!==false||V.tpt==null){V.tauto=true; V.tpt=clamp((pH-36)/(hi-lo+3),.002,60); V.tpc=(lo+hi)/2}
@@ -3076,11 +3097,11 @@ function drawTPO(P,ctx,w,h){
     const rr=(x,y,ww,hh,rad)=>{ctx.beginPath(); ctx.roundRect(x,y,ww,hh,Math.min(rad,hh/2,ww/2)); ctx.fill()};
     if(cfg.vaOn&&cfg.vaFill){ctx.fillStyle=hexA(cfg.vaCol,.2); rr(x0-4,rY(T.vup),lw+8,(T.vup-T.vdn+1)*rowH,4)}
     if(cfg.singles) for(const [a,b] of T.singles){ctx.fillStyle=hexA(cfg.singleCol,.55); ctx.fillRect(x0-6,rY(b),1.5,(b-a+1)*rowH)}
-    if(cfg.pocOn){ctx.fillStyle=hexA(cfg.pocCol,.28); rr(x0-4,rY(T.poc),lw+8,rowH,3)}
+    if(cfg.pocOn&&!CL){ctx.fillStyle=hexA(cfg.pocCol,.28); rr(x0-4,rY(T.poc),lw+8,rowH,3)}
     // hovered row
     if(hov&&hov.x>=bx-4&&hov.x<=bx+blockW(pf)-gap+4){const r=Math.floor((yRow(0)-hov.y)/rowH)+1, i=r-T.bot; if(i>=0&&i<T.n){ctx.fillStyle='rgba(255,255,255,.07)'; ctx.fillRect(x0-4,rY(i),lw+8,rowH)}}
     // letters / blocks: colour runs through the session (earlier → later), dimmer outside the value area
-    ctx.font=`600 ${fs}px ${MONO}`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`${CL?400:600} ${fs}px ${MONO}`; ctx.textAlign='center'; ctx.textBaseline='middle';
     const col=new Array(T.n).fill(0);
     if(thin&&cfg.style!=='aligned'){
       for(let i=0;i<T.n;i++){const y=rY(i); if(y>pH||y+rowH<0) continue; const isPoc=cfg.pocOn&&i===T.poc;
@@ -3093,11 +3114,21 @@ function drawTPO(P,ctx,w,h){
         const i=r-T.bot, x=x0+(cfg.style==='aligned'?pi:col[i])*cw, y=yRow(r); col[i]++;
         if(y>pH||y+rowH<0||x>plotW||x+cw<0) continue;
         const isPoc=cfg.pocOn&&i===T.poc;
-        ctx.fillStyle=cur?cfg.curCol:isPoc?'#ffffff':hexA(pc,inVA(i)||!cfg.vaOn?.95:.42);
+        ctx.fillStyle=CL?(cur?'#ffffff':'#c8c8c8'):cur?cfg.curCol:isPoc?'#ffffff':hexA(pc,inVA(i)||!cfg.vaOn?.95:.42);
         if(txt) ctx.fillText(TPO_LETTER(p.k),x+cw/2,y+rowH/2+.5);
         else{const gp=rowH>4?1:0, gw=cw>4?1:0; rr(x+gw/2,y+gp/2,Math.max(1,cw-gw),Math.max(1,rowH-gp),Math.min(2,rowH/3))}
       }
     });
+    if(CL&&!thin&&cfg.style!=='aligned'){
+      const rowEnd=i=>x0+T.cnt[i]*cw, xLim=xEnd+gap*.35;
+      const ln=(i,colr)=>{if(i<0||i>=T.n) return; const y=Math.round(rY(i)+rowH/2)+.5, xa=rowEnd(i)+(txt?3:2); if(xa>=xLim) return; ctx.strokeStyle=colr; ctx.lineWidth=Math.max(1,Math.min(2,rowH/8)); ctx.beginPath(); ctx.moveTo(xa,y); ctx.lineTo(xLim,y); ctx.stroke()};
+      if(cfg.vaOn){ln(T.vup,'#f0801e'); ln(T.vdn,'#f0801e')}
+      if(cfg.pocOn) ln(T.poc,'#c8c8c8');
+      if(!tiny&&txt){
+        if(T.open!=null){const i=Math.floor(T.open/rt)-T.bot; if(i>=0&&i<T.n){const y=rY(i); ctx.fillStyle=pr.bg; ctx.fillRect(x0,y,cw,rowH); ctx.fillStyle='#f0801e'; ctx.font=`700 ${fs}px ${MONO}`; ctx.fillText(TPO_LETTER(ps[0].k),x0+cw/2,y+rowH/2+.5); ctx.font=`400 ${fs}px ${MONO}`}}
+        const cp=T.live?D.last:T.close; if(cp!=null){const i=Math.floor(cp/rt)-T.bot; if(i>=0&&i<T.n){ctx.fillStyle='#f0801e'; ctx.font=`700 ${fs}px ${MONO}`; ctx.fillText('#',rowEnd(i)+cw/2,rY(i)+rowH/2+.5); ctx.font=`400 ${fs}px ${MONO}`}}
+      }
+    }
     if(cfg.rowTotals&&rowH>=8){ctx.font=`500 ${Math.min(10,fs)}px ${MONO}`; ctx.textAlign='right'; ctx.fillStyle=C.muted; T.cnt.forEach((c,i)=>ctx.fillText(c,x0-9,rY(i)+rowH/2+.5))}
     // initial balance, extensions, opening range
     if(cfg.ibOn&&T.ib&&!tiny){
@@ -3260,15 +3291,15 @@ function openTpoSettings(P){
    A drawing can be limited to one window (win = window id), hidden, locked, renamed (object tree). */
 const FIB_DEF='0,0.236,0.382,0.5,0.618,0.786,1,1.272,1.618';
 const DSTY={
-  trend:{color:'#d9c8ff',width:1.6,dash:'solid',extend:false,lock:false},
-  ray:{color:'#d9c8ff',width:1.4,dash:'solid',lock:false},
-  xline:{color:'#d9c8ff',width:1.2,dash:'solid',lock:false},
+  trend:{color:'#d9c8ff',width:1,dash:'solid',extend:false,lock:false},
+  ray:{color:'#d9c8ff',width:1,dash:'solid',lock:false},
+  xline:{color:'#d9c8ff',width:1,dash:'solid',lock:false},
   hline:{color:'#b9a6e6',width:1,dash:'solid',label:true,lock:false},
   hray:{color:'#b9a6e6',width:1,dash:'solid',label:true,lock:false},
   vline:{color:'#b9a6e6',width:1,dash:'dashed',label:true,lock:false},
-  arrow:{color:'#ffd166',width:2,dash:'solid',lock:false},
-  channel:{color:'#8fd3ff',width:1.2,dash:'solid',fill:true,fillOp:8,mid:true,extend:false,lock:false},
-  rect:{border:'#c4b2ee',fill:'#c4b2ee',fillOp:13,width:1,lock:false},
+  arrow:{color:'#ffd166',width:1,dash:'solid',lock:false},
+  channel:{color:'#8fd3ff',width:1,dash:'solid',fill:true,fillOp:8,mid:true,extend:false,lock:false},
+  rect:{border:'#c4b2ee',fill:'#c4b2ee',fillOp:20,width:1,behind:true,lock:false},
   ellipse:{border:'#c4b2ee',fill:'#c4b2ee',fillOp:10,width:1,lock:false},
   brush:{color:'#ffd166',width:2,lock:false},
   text:{text:'Note',color:'#ffffff',size:13,bold:false,bg:true,bgCol:'#1a1520',border:'#5a2f68',lock:false},
@@ -3276,18 +3307,18 @@ const DSTY={
   fib:{color:'#c4b2ee',levels:FIB_DEF,width:1,labels:true,fill:true,fillOp:6,extend:false,lock:false},
   fibext:{color:'#7ee0d4',levels:'0,0.618,1,1.272,1.618,2,2.618',width:1,labels:true,extend:false,lock:false},
   measure:{up:'#7ee0d4',dn:'#ff8a9a',op:14,lock:false},
-  long:{look:'clean',tgt:'#5670a8',stp:'#3c3a40',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
-  short:{look:'clean',tgt:'#9a4462',stp:'#3c3a40',op:80,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  long:{look:'clean',tgt:'#5670a8',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
+  short:{look:'clean',tgt:'#9a4462',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
   vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:'#c4b2ee',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
-  avwap:{color:'#ffd166',width:1.6,dash:'solid',band:false,mult:1,label:true,lock:false},
-  elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1.4,lock:false},
+  avwap:{color:'#ffd166',width:1,dash:'solid',band:false,mult:1,label:true,lock:false},
+  elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1,lock:false},
 };
 const LNF=[['color','Color','color'],['width','Width','num',.5,6,.5],['dash','Style','select',['solid','dashed','dotted']]];
 const DFIELDS={
   trend:[...LNF,['extend','Extend right','bool']],ray:LNF,xline:LNF,arrow:LNF,
   hline:[...LNF,['label','Price label','bool']],hray:[...LNF,['label','Price label','bool']],vline:[...LNF,['label','Time label','bool']],
   channel:[...LNF,['fill','Fill','bool'],['fillOp','Fill opacity %','range',0,60,1],['mid','Middle line','bool'],['extend','Extend right','bool']],
-  rect:[['border','Border color','color'],['width','Border width','num',.5,6,.5],['fill','Fill color','color'],['fillOp','Fill opacity %','range',0,80,1]],
+  rect:[['border','Border color','color'],['width','Border width','num',.5,6,.5],['fill','Fill color','color'],['fillOp','Fill opacity %','range',0,100,1],['behind','Behind the bars (footprint stays readable)','bool']],
   ellipse:[['border','Border color','color'],['width','Border width','num',.5,6,.5],['fill','Fill color','color'],['fillOp','Fill opacity %','range',0,80,1]],
   brush:[['color','Color','color'],['width','Width','num',.5,10,.5]],
   text:[['text','Text','textarea'],['color','Text color','color'],['size','Size','num',8,40,1],['bold','Bold','bool'],['bg','Box (callout)','bool'],['bgCol','Box color','color'],['border','Border color','color']],
@@ -3295,7 +3326,7 @@ const DFIELDS={
   fib:[['levels','Levels (comma separated)','text'],['color','Color','color'],['width','Width','num',.5,4,.5],['labels','Labels','bool'],['fill','Fill between levels','bool'],['fillOp','Fill opacity %','range',0,30,1],['extend','Extend right','bool']],
   fibext:[['levels','Levels (comma separated)','text'],['color','Color','color'],['width','Width','num',.5,4,.5],['labels','Labels','bool'],['extend','Extend right','bool']],
   measure:[['up','Up color','color'],['dn','Down color','color'],['op','Opacity %','range',5,60,1]],
-  long:[['look','Look','select',[['clean','Clean · only R:R'],['full','Detailed · prices, $, info box']]],['tgt','Target color','color'],['stp','Stop color','color'],['op','Zone opacity %','range',5,100,1],['qty','Contracts','num',1,100000,1],['risk','Size by risk to the stop, $ (0 = use contracts)','num',0,1000000,10],['ppt','Contract','select',Object.entries(INSTR).filter(([k,x])=>x.grp===INS.grp).map(([k,x])=>[x.usd/x.tick,`${k} ($${x.usd/x.tick} / pt)`])],['labels','Labels and info box','bool'],['prices','Price tags on the right edge','bool'],['progress','Live P&L band from the fill','bool'],['mae','Best / worst price reached (MFE / MAE)','bool']],
+  long:[['look','Look','select',[['clean','TradingView · labels when selected'],['full','Detailed · prices, $, info box']]],['behind','Zones behind the bars (footprint stays readable)','bool'],['tgt','Target color','color'],['stp','Stop color','color'],['op','Zone opacity %','range',5,100,1],['qty','Contracts','num',1,100000,1],['risk','Size by risk to the stop, $ (0 = use contracts)','num',0,1000000,10],['ppt','Contract','select',Object.entries(INSTR).filter(([k,x])=>x.grp===INS.grp).map(([k,x])=>[x.usd/x.tick,`${k} ($${x.usd/x.tick} / pt)`])],['labels','Labels and info box','bool'],['prices','Price tags on the right edge','bool'],['progress','Live P&L band from the fill','bool'],['mae','Best / worst price reached (MFE / MAE)','bool']],
   vprof:[['mode','Time range','select',[['fixed','Fixed (start → end)'],['live','Developing (start → live price)']]],['vmode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta']]],
     ['vaPct','Value area %','num',40,95,1],['vaLines','VAH / VAL lines','bool'],['ext','Extend POC / VAH / VAL to the right','bool'],['color','Color','color'],['poc','POC color','color'],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['widthPct','Width % of range','range',20,100,1],['bg','Range background','bool']],
   avwap:[...LNF,['band','±σ band','bool'],['mult','Band σ','num',.5,4,.5],['label','Label','bool']],
@@ -3308,7 +3339,7 @@ const TNAME={trend:'Trend Line',ray:'Ray',xline:'Extended Line',hline:'Horizonta
   long:'Long Position',short:'Short Position',vprof:'Volume Profile (range)',avwap:'Anchored VWAP',elliott:'Elliott Wave'};
 // toolbar tools → drawing type (+ style), grouped in the floating toolbar
 const TOOLS={ell5:['elliott',{wave:'impulse'}],ell3:['elliott',{wave:'abc'}],
-  rectB:['rect',{border:'#4a5f9e',fill:'#566fb8',fillOp:80,width:1}],rectR:['rect',{border:'#80373f',fill:'#9a434b',fillOp:80,width:1}]};   // the blue / red zones of the favourites bar
+  rectB:['rect',{border:'#566fb8',fill:'#566fb8',fillOp:70,width:1,behind:true}],rectR:['rect',{border:'#9a434b',fill:'#9a434b',fillOp:70,width:1,behind:true}]};   // the blue / red zones of the favourites bar
 const typeOf=t=>TOOLS[t]?TOOLS[t][0]:t;
 const ONE=new Set(['hline','hray','vline','text','plabel','avwap']);
 const NPTS=d=>d.type==='channel'||d.type==='fibext'?3:d.type==='elliott'?(d.st.wave==='abc'?4:6):2;
@@ -3329,6 +3360,15 @@ try{const k=LS+'.pos2'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1')
 try{const k=LS+'.pos3'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0; const OLD={'#3b4f76':1,'#703045':1,'#29282b':1};
   for(const d of DR){if((d.type==='long'||d.type==='short')){const z=DSTY[d.type]; if(OLD[d.st.tgt]){d.st.tgt=z.tgt; ch=1} if(OLD[d.st.stp]){d.st.stp=z.stp; ch=1}}
     else if(d.type==='rect'){if(d.st.fill==='#3a4c84'){Object.assign(d.st,{fill:'#566fb8',border:'#4a5f9e'}); ch=1} else if(d.st.fill==='#6c2b30'){Object.assign(d.st,{fill:'#9a434b',border:'#80373f'}); ch=1}}}
+  if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
+// 17.11 (user: "like TradingView"): 1 px lines, rectangles and positions drawn behind the bars so the footprint shows through
+try{const k=LS+'.tv1'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;
+  for(const d of DR){const st=d.st; if(!st) continue;
+    if('width' in st&&st.width>1&&st.width<=2&&d.type!=='rect'&&d.type!=='ellipse'){st.width=1; ch=1}
+    if(d.type==='rect'||d.type==='long'||d.type==='short'){st.behind=true; ch=1}
+    if(d.type==='rect'&&(st.border==='#80373f'||st.border==='#4a5f9e')){st.border=st.fill; ch=1}}
+  for(const t in DDEF){const x=DDEF[t]; if(x&&x.width>1&&x.width<=2&&t!=='rect'&&t!=='ellipse') x.width=1}
+  try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){}
   if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 let MAGNET=false; try{MAGNET=localStorage.getItem('potik.magnet')==='1'}catch(e){}
 const ser=x=>JSON.stringify(x,(k,v)=>k[0]==='_'?undefined:v);
@@ -3373,7 +3413,7 @@ function pill(ctx,x,y,txt,bg,fg){
   ctx.fillStyle=bg; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x-w/2,y-9,w,18,4):ctx.rect(x-w/2,y-9,w,18); ctx.fill();
   ctx.fillStyle=fg; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(txt,x,y+.5);
 }
-function handle(ctx,x,y){ctx.beginPath(); ctx.arc(x,y,4.5,0,6.2832); ctx.fillStyle='#000'; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='#efe9f5'; ctx.stroke()}
+function handle(ctx,x,y){ctx.beginPath(); ctx.arc(x,y,4.5,0,6.2832); ctx.fillStyle='#131722'; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle='#2962ff'; ctx.stroke()}
 // volume between two times, from the 250-trade bars
 function vpData(t0,t1,pct){
   const a=Math.min(t0,t1), b=Math.max(t0,t1), tk=D.tk.length&&a>=D.tk[0].t0?D.tk:D.m1;
@@ -3409,7 +3449,8 @@ function handlesOf(d,g){
   if(d.type==='vline') return [['a',X(d.a),g.pH/2]];
   if(d.type==='avwap'){const v=d._hy; return [['a',X(d.a),v!=null?v:Y(d.a)]]}
   if(ONE.has(d.type)) return [['a',X(d.a),Y(d.a)]];
-  if(d.type==='rect'||d.type==='ellipse'||d.type==='measure'){const xa=X(d.a),xb=X(d.b),ya=Y(d.a),yb=Y(d.b); return [['a',xa,ya],['b',xb,yb],['ab',xa,yb],['ba',xb,ya]]}
+  if(d.type==='rect'||d.type==='ellipse'){const xa=X(d.a),xb=X(d.b),ya=Y(d.a),yb=Y(d.b), xm=(xa+xb)/2, ym=(ya+yb)/2; return [['a',xa,ya],['b',xb,yb],['ab',xa,yb],['ba',xb,ya],['xa',xa,ym],['xb',xb,ym],['ya',xm,ya],['yb',xm,yb]]}   // corners + sides (TradingView)
+  if(d.type==='measure'){const xa=X(d.a),xb=X(d.b),ya=Y(d.a),yb=Y(d.b); return [['a',xa,ya],['b',xb,yb],['ab',xa,yb],['ba',xb,ya]]}
   if(d.type==='vprof'){const y=d._hi!=null?g.yOf(d._hi)-g.tp/2:Y(d.a); return d.st.mode==='live'?[['a',X(d.a),y]]:[['a',X(d.a),y],['b',X(d.b),y]]}
   if(d.type==='long'||d.type==='short'){const x0=g.xAt(d.t0),x1=g.xAt(d.t1),ye=g.yOf(d.entry),yt=g.yOf(d.target),ys=g.yOf(d.stop);
     return [['move',x0,ye],['top',x0,Math.min(yt,ys)],['bot',x0,Math.max(yt,ys)],['w',x1,ye]]}
@@ -3440,15 +3481,16 @@ function shapeOf(d,g,P){
   }
   return {segs,boxes};
 }
-function drawDrawings(ctx,g,P){
-  const B=P?bars(P.S.bt):null;
+function drawDrawings(ctx,g,P,ph){
+  const B=P?bars(P.S.bt):null, under=ph==='under';
   for(const d of DR){
     if(!visibleIn(d,P)) continue;
     const sel=isSel(d), st=d.st, X=q=>g.xAt(q.t), Y=q=>g.yOf(q.p);
-    const stroke=(col,w,dash)=>{ctx.strokeStyle=col; ctx.lineWidth=(w||1)+(sel?.5:0); ctx.setLineDash(DASH[dash]||[])};
+    if(under){drawUnder(ctx,g,d,st); continue}
+    const stroke=(col,w,dash)=>{ctx.strokeStyle=col; ctx.lineWidth=w||1; ctx.setLineDash(DASH[dash]||[])};   // 17.11: no thicker line when selected (TradingView)
     const seg=(q)=>{ctx.beginPath(); ctx.moveTo(q[0],q[1]); ctx.lineTo(q[2],q[3]); ctx.stroke()};
     switch(d.type){
-    case 'hline':{const y=Math.round(g.yOf(d.p))+.5; stroke(sel?'#fff':st.color,st.width,st.dash); seg([0,y,g.plotW,y]); break}
+    case 'hline':{const y=Math.round(g.yOf(d.p))+.5; stroke(st.color,st.width,st.dash); seg([0,y,g.plotW,y]); break}
     case 'hray':{const y=Math.round(Y(d.a))+.5; stroke(st.color,st.width,st.dash); seg([X(d.a),y,g.plotW,y]); break}
     case 'vline':{const x=Math.round(X(d.a))+.5; stroke(st.color,st.width,st.dash); seg([x,0,x,g.pH]);
       if(st.label){ctx.setLineDash([]); pill(ctx,x,g.pH-12,`${dateLbl(d.a.t)} ${clock(d.a.t)}`,hexA(st.color,.85),'#0b0710')} break}
@@ -3462,10 +3504,10 @@ function drawDrawings(ctx,g,P){
       stroke(st.color,st.width,st.dash); seg(q1); seg(q2);
       if(st.mid){stroke(hexA(st.color,.6),1,'dashed'); seg(linePts(X(a),(Y(a)+Y(a2))/2,X(b),(Y(b)+Y(b2))/2,m))} break}
     case 'rect':{const x=X(d.a),x2=X(d.b),y=Y(d.a),y2=Y(d.b);
-      ctx.fillStyle=hexA(st.fill,st.fillOp/100); ctx.fillRect(Math.min(x,x2),Math.min(y,y2),Math.abs(x2-x),Math.abs(y2-y));
-      ctx.setLineDash([]); ctx.strokeStyle=sel?'#fff':st.border; ctx.lineWidth=st.width; ctx.strokeRect(Math.min(x,x2)+.5,Math.min(y,y2)+.5,Math.abs(x2-x),Math.abs(y2-y)); break}
+      if(st.behind===false){ctx.fillStyle=hexA(st.fill,st.fillOp/100); ctx.fillRect(Math.min(x,x2),Math.min(y,y2),Math.abs(x2-x),Math.abs(y2-y))}
+      ctx.setLineDash([]); ctx.strokeStyle=st.border; ctx.lineWidth=st.width; ctx.strokeRect(Math.round(Math.min(x,x2))+.5,Math.round(Math.min(y,y2))+.5,Math.round(Math.abs(x2-x)),Math.round(Math.abs(y2-y))); break}
     case 'ellipse':{const x=X(d.a),x2=X(d.b),y=Y(d.a),y2=Y(d.b); ctx.beginPath(); ctx.ellipse((x+x2)/2,(y+y2)/2,Math.max(1,Math.abs(x2-x)/2),Math.max(1,Math.abs(y2-y)/2),0,0,6.2832);
-      ctx.fillStyle=hexA(st.fill,st.fillOp/100); ctx.fill(); ctx.setLineDash([]); ctx.strokeStyle=sel?'#fff':st.border; ctx.lineWidth=st.width; ctx.stroke(); break}
+      ctx.fillStyle=hexA(st.fill,st.fillOp/100); ctx.fill(); ctx.setLineDash([]); ctx.strokeStyle=st.border; ctx.lineWidth=st.width; ctx.stroke(); break}
     case 'brush':{stroke(st.color,st.width,'solid'); ctx.lineJoin=ctx.lineCap='round'; polyline(ctx,d.pts.map(q=>[X(q),Y(q)])); ctx.lineJoin='miter'; ctx.lineCap='butt'; break}
     case 'text':{const lines=String(st.text||'').split('\n'), fs=+st.size||13; ctx.font=`${st.bold?700:500} ${fs}px ${UI}`; ctx.textAlign='left'; ctx.textBaseline='top';
       const w=Math.max(...lines.map(l=>ctx.measureText(l).width),8)+(st.bg?14:0), h=lines.length*fs*1.3+(st.bg?10:0), x=X(d.a), y=Y(d.a);
@@ -3528,13 +3570,22 @@ function drawDrawings(ctx,g,P){
       const ye=g.yOf(d.entry), yt=g.yOf(d.target), ys=g.yOf(d.stop);
       const tpT=Math.abs(d.target-d.entry), slT=Math.abs(d.stop-d.entry), tpP=tpT*TICK, slP=slT*TICK, rr=slT?tpT/slT:0;
       if(st.look!=='full'){
-        // clean: two soft zones (lighter at the top), a thin grey entry line and the R:R — nothing else
-        const zc=(ya,yb,col,sh)=>{const top=Math.min(ya,yb), h=Math.abs(yb-ya); if(h<.5) return; const a=Math.min(1,op), n=parseInt(col.slice(1),16), dk=`#${[n>>16&255,n>>8&255,n&255].map(v=>Math.round(v*sh).toString(16).padStart(2,'0')).join('')}`;
-          const gr=ctx.createLinearGradient(0,top,0,top+h); gr.addColorStop(0,hexA(col,a)); gr.addColorStop(1,hexA(dk,a)); ctx.fillStyle=gr; ctx.fillRect(Math.round(L0),Math.round(top),Math.round(W),Math.round(h))};
-        zc(ye,yt,st.tgt,.8); zc(ye,ys,st.stp,.9);
-        ctx.fillStyle=sel?'#c9ccd6':'#787b86'; ctx.fillRect(Math.round(L0),Math.round(ye),Math.round(W),1);
-        if(st.labels!==false){const txt=`RR ${rr.toFixed(2)}`; ctx.font=`500 11px ${MONO}`; const tw=ctx.measureText(txt).width;
-          if(W>=tw+8){const up=yt<ye; ctx.fillStyle='rgba(240,237,245,.92)'; ctx.textAlign='left'; ctx.textBaseline=up?'bottom':'top'; ctx.fillText(txt,L0+6,ye+(up?-3:4))}}   // at the entry, on the target side
+        // TradingView look (17.11): flat zones (drawn behind the bars unless 'behind' is off), a thin grey entry line,
+        // a dashed line along the trade from the fill to now / the exit; the three labels only while the position is selected
+        if(st.behind===false) posZones(ctx,g,d,st);
+        ctx.fillStyle='#787b86'; ctx.fillRect(Math.round(L0),Math.round(ye),Math.round(W),1);
+        const ps=posStatus(d), xIn=ps.tIn!=null?clamp(g.xAt(ps.tIn),L0,R0):null;
+        if(xIn!=null){const pxNow=ps.s==='target'?d.target:ps.s==='stop'?d.stop:D.last, xE=ps.tOut!=null?clamp(g.xAt(ps.tOut),L0,R0):clamp(g.xAt(sim.t),L0,R0);
+          ctx.strokeStyle='rgba(209,212,220,.75)'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(xIn,ye); ctx.lineTo(xE,g.yOf(pxNow)); ctx.stroke(); ctx.setLineDash([])}
+        if(sel&&st.labels!==false){
+          const qty=posQty(d), usd=st.ppt*qty, money=v=>(v<0?'−':'')+fK(Math.round(Math.abs(v)*100)/100), cx=L0+W/2, up=yt<ye;
+          const pnlT=ps.s==='target'?tpT:ps.s==='stop'?-slT:ps.s==='open'?(D.last-d.entry)*(L_?1:-1):0;
+          ctx.font=`500 11px ${UI}`;
+          pill(ctx,cx,yt+(up?-12:12),`Target: ${fP(d.target)} (${(tpP/(d.entry*TICK)*100).toFixed(3)}%) ${tpT}, Amount: ${money(tpP*usd)}`,'#089981','#fff');
+          pill(ctx,cx,ys+(up?12:-12),`Stop: ${fP(d.stop)} (${(slP/(d.entry*TICK)*100).toFixed(3)}%) ${slT}, Amount: ${money(slP*usd)}`,'#f23645','#fff');
+          const st2=ps.s==='wait'?'Waiting':ps.s==='expired'?'Not filled':`${ps.s==='open'?'Open':'Closed'} P&L: ${money(pnlT*TICK*usd)}`;
+          pill(ctx,cx,ye+(up?12:-12),`${st2}, Qty: ${qty}  Risk/Reward Ratio: ${rr.toFixed(2)}`,pnlT<0?'#f23645':pnlT>0?'#089981':'#2a2e39','#fff');
+        }
         break;
       }
       const qty=posQty(d), usd=st.ppt*qty, ps=posStatus(d), pct=v=>(v/(d.entry*TICK)*100).toFixed(2)+'%', money=v=>(v<0?'−$':'$')+fK(Math.round(Math.abs(v)));
@@ -3577,6 +3628,24 @@ function drawDrawings(ctx,g,P){
     else if(sel){const hs=handlesOf(d,g); if(hs.length) lockIcon(ctx,hs[0][1],hs[0][2])}
   }
 }
+/* zones that sit behind the bars (17.11): rectangle fills and Long / Short zones, drawn before the bars so the footprint
+   numbers and candles stay on top. TradingView style: flat colour, the part of the trade already run a bit stronger. */
+function drawUnder(ctx,g,d,st){
+  if(st.behind===false) return;
+  if(d.type==='rect'){const x=g.xAt(d.a.t),x2=g.xAt(d.b.t),y=g.yOf(d.a.p),y2=g.yOf(d.b.p); ctx.fillStyle=hexA(st.fill,st.fillOp/100); ctx.fillRect(Math.round(Math.min(x,x2)),Math.round(Math.min(y,y2)),Math.round(Math.abs(x2-x)),Math.round(Math.abs(y2-y))); return}
+  if((d.type==='long'||d.type==='short')&&st.look!=='full') posZones(ctx,g,d,st);
+}
+function posZones(ctx,g,d,st){
+  const L_=d.type==='long', x0=g.xAt(d.t0), x1=g.xAt(d.t1), L0=Math.round(Math.min(x0,x1)), W=Math.round(Math.max(2,Math.abs(x1-x0))), op=Math.min(1,st.op/100);
+  const ye=g.yOf(d.entry), yt=g.yOf(d.target), ys=g.yOf(d.stop);
+  const box=(ya,yb,col,a)=>{const top=Math.round(Math.min(ya,yb)), h=Math.round(Math.abs(yb-ya)); if(h<1) return; ctx.fillStyle=hexA(col,a); ctx.fillRect(L0,top,W,h)};
+  box(ye,yt,st.tgt,op*.62); box(ye,ys,st.stp,op*.62);
+  if(st.look==='full') return;
+  const ps=posStatus(d); if(ps.tIn==null) return;
+  const xIn=clamp(g.xAt(ps.tIn),L0,L0+W), xE=ps.tOut!=null?clamp(g.xAt(ps.tOut),L0,L0+W):clamp(g.xAt(sim.t),L0,L0+W);
+  const pxNow=ps.s==='target'?d.target:ps.s==='stop'?d.stop:D.last, yN=g.yOf(pxNow), good=(pxNow-d.entry)*(L_?1:-1)>=0;
+  if(xE>xIn){ctx.fillStyle=hexA(good?st.tgt:st.stp,op*.45); ctx.fillRect(Math.round(xIn),Math.round(Math.min(ye,yN)),Math.round(xE-xIn),Math.round(Math.abs(yN-ye)))}
+}
 function lockIcon(ctx,x,y){ctx.fillStyle='#000'; ctx.fillRect(x-7,y-7,14,14); ctx.strokeStyle='#efe9f5'; ctx.lineWidth=1.3; ctx.strokeRect(x-4.5,y-1,9,6.5); ctx.beginPath(); ctx.arc(x,y-1,3,Math.PI,0); ctx.stroke()}
 function segDist(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy; let t=l?((px-x1)*dx+(py-y1)*dy)/l:0; t=clamp(t,0,1); return Math.hypot(px-(x1+t*dx),py-(y1+t*dy))}
 function hitTest(P,p){
@@ -3612,6 +3681,8 @@ function applyEdit(P,e,p){
     if(e.h==='a') d.a=d.type==='vprof'?{t:pt.t,p:o.a.p}:pt; else if(e.h==='b') d.b=d.type==='vprof'?{t:pt.t,p:o.b.p}:pt;
     else if(e.h==='ab'){d.a={t:pt.t,p:o.a.p}; d.b={t:o.b.t,p:pt.p}}
     else if(e.h==='ba'){d.b={t:pt.t,p:o.b.p}; d.a={t:o.a.t,p:pt.p}}
+    else if(e.h==='xa') d.a={t:pt.t,p:o.a.p}; else if(e.h==='xb') d.b={t:pt.t,p:o.b.p};
+    else if(e.h==='ya') d.a={t:o.a.t,p:pt.p}; else if(e.h==='yb') d.b={t:o.b.t,p:pt.p};
     else if(e.h==='top'){const k=d.type==='long'?'target':'stop'; d[k]=Math.max(o.entry+1,pt.p)}
     else if(e.h==='bot'){const k=d.type==='long'?'stop':'target'; d[k]=Math.min(o.entry-1,pt.p)}
     else if(e.h==='w') d.t1=Math.max(o.t0+1,pt.t);
@@ -3809,6 +3880,89 @@ fav.addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) re
   fg.addEventListener('pointerdown',e=>{fg.setPointerCapture(e.pointerId); fd={x:e.clientX,y:e.clientY,l:parseFloat(fav.style.left)||0,t:parseFloat(fav.style.top)||0}});
   fg.addEventListener('pointermove',e=>{if(fd) placeFav(fd.l+e.clientX-fd.x,fd.t+e.clientY-fd.y)});
   fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav',JSON.stringify(favPos))}catch(e){}});}
+
+/* drawing toolbar (17.11, like TradingView's): while one drawing is selected a small bar floats over the charts with its
+   line colour, fill colour, text colour, line width, line style, settings, lock, delete and more. It moves by its grip and
+   remembers where it was put. Colours come from a TradingView-like palette, with opacity for fills and zones. */
+const DPAL=['#ffffff','#d1d4dc','#b2b5be','#9598a1','#787b86','#5d606b','#434651','#2a2e39','#131722','#000000',
+  '#f23645','#ff9800','#ffeb3b','#4caf50','#089981','#00bcd4','#2962ff','#673ab7','#9c27b0','#e91e63',
+  '#fccbcd','#ffe0b2','#fff9c4','#c8e6c9','#ace5dc','#b2ebf2','#bbd9fb','#d1c4e9','#e1bee7','#f8bbd0',
+  '#f7525f','#ffa726','#ffee58','#66bb6a','#22ab94','#26c6da','#5b9cf6','#7e57c2','#ab47bc','#ec407a',
+  '#b22833','#e65100','#f57f17','#1b5e20','#056656','#006064','#0c3299','#311b92','#4a148c','#880e4f',
+  '#c4b2ee','#d9c8ff','#e23cf0','#f7dcf3','#566fb8','#9a434b','#5670a8','#9a4462','#3c3a40','#8fd3ff'];
+const DSBI={
+  pen:'<path d="M5 19l1-4L16 5l3 3L9 18z"/><path d="M14 7l3 3"/>',
+  fill:'<path d="M6 11l6-6 7 7-6 6z"/><path d="M3 21h0"/><path d="M19 15s2 2.4 2 3.5a2 2 0 0 1-4 0c0-1.1 2-3.5 2-3.5z" fill="currentColor"/>',
+  text:'<path d="M6 6h12M12 6v13"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+  lock:'<rect x="6" y="11" width="12" height="9" rx="1.5"/><path d="M9 11V8a3 3 0 0 1 6 0v3"/>',
+  unlock:'<rect x="6" y="11" width="12" height="9" rx="1.5"/><path d="M9 11V8a3 3 0 0 1 5.8-1"/>',
+  trash:'<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>',
+  more:'<circle cx="6" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18" cy="12" r="1.3" fill="currentColor"/>'};
+const dsb=document.createElement('div'); dsb.className='dt dsb'; dsb.id='dsb'; dsb.hidden=true; dsb.setAttribute('role','toolbar'); dsb.setAttribute('aria-label','Drawing toolbar');
+const dsbPop=document.createElement('div'); dsbPop.className='dsbpop'; dsbPop.hidden=true;
+ws.appendChild(dsb); ws.appendChild(dsbPop);
+let dsbPos=null, dsbKey='', dsbSnap=false; try{dsbPos=JSON.parse(localStorage.getItem('potik.dsb')||'null')}catch(e){}
+const dsbSel=()=>selId!=null&&!SEL.size?DR.find(d=>d.id===selId)||null:null;
+// which style fields the toolbar edits for each drawing type
+function dsbMap(d){const t=d.type, st=d.st;
+  return {line:t==='rect'||t==='ellipse'?'border':['long','short','measure','text','plabel','vprof'].includes(t)?null:'color',
+    fill:t==='rect'||t==='ellipse'?['fill','fillOp']:t==='channel'||t==='fib'?['color','fillOp']:null, text:t==='text'?'color':null,
+    zones:t==='long'||t==='short', width:'width' in st?'width':null, dash:'dash' in st?'dash':null}}
+function dsbSet(d,k,v){if(!dsbSnap){snapshot(); dsbSnap=true} d.st[k]=v; save(); allDirty(); dsbKey=''}
+function placeDsb(x,y){const r=ws.getBoundingClientRect(), w=dsb.offsetWidth, h=dsb.offsetHeight; dsb.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; dsb.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
+function dsbHome(){if(dsbPos) return placeDsb(dsbPos.x,dsbPos.y); const r=ws.getBoundingClientRect(); placeDsb(r.width/2-dsb.offsetWidth/2,(fav.offsetTop||40)+(fav.offsetHeight||36)+6)}
+function dsbClose(){dsbPop.hidden=true; dsbPop.innerHTML=''; dsbPop._for=null}
+function dsbOpen(btn,id,build){
+  if(!dsbPop.hidden&&dsbPop._for===id){dsbClose(); return}
+  dsbPop.innerHTML=''; dsbPop._for=id; build(dsbPop); dsbPop.hidden=false;
+  const r=ws.getBoundingClientRect(), b=btn.getBoundingClientRect();
+  dsbPop.style.left=clamp(b.left-r.left,4,Math.max(4,r.width-dsbPop.offsetWidth-4))+'px'; dsbPop.style.top=clamp(b.bottom-r.top+6,4,Math.max(4,r.height-dsbPop.offsetHeight-4))+'px';
+}
+function dsbPalette(host,d,key,opKey){
+  const cur=String(d.st[key]||'').toLowerCase(), pal=el_('div','pal');
+  for(const c of DPAL){const b=el_('button'); b.type='button'; b.style.background=c; b.title=c; if(c===cur) b.classList.add('on'); b.addEventListener('click',()=>{dsbSet(d,key,c); pal.querySelectorAll('.on').forEach(x=>x.classList.remove('on')); b.classList.add('on')}); pal.appendChild(b)}
+  host.appendChild(pal);
+  const cu=el_('label','cus'); const ci=el_('input'); ci.type='color'; ci.value=/^#[0-9a-f]{6}$/i.test(cur)?cur:'#ffffff'; ci.addEventListener('input',()=>dsbSet(d,key,ci.value)); cu.append(ci,el_('span',null,'Custom colour')); host.appendChild(cu);
+  if(opKey){const row=el_('div','opr'), rg=el_('input'), out=el_('output',null,(d.st[opKey]??100)+'%'); rg.type='range'; rg.min=0; rg.max=100; rg.step=1; rg.value=d.st[opKey]??100;
+    rg.addEventListener('input',()=>{dsbSet(d,opKey,+rg.value); out.textContent=rg.value+'%'}); row.append(el_('span',null,'Opacity'),rg,out); host.appendChild(row)}
+}
+function dsbList(host,items){const l=el_('div','lst'); for(const it of items){const b=el_('button',it.on?'on':null); b.type='button'; b.innerHTML=it.html; b.addEventListener('click',()=>{it.act(); dsbClose()}); l.appendChild(b)} host.appendChild(l)}
+function dsbRender(d){
+  const m=dsbMap(d), st=d.st, ic=(k,extra)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${DSBI[k]}</svg>${extra||''}`;
+  dsb.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span>`;
+  const btn=(id,html,title,fn,cls)=>{const b=el_('button',cls||null); b.type='button'; b.innerHTML=html; b.title=title; b.setAttribute('aria-label',title); b.addEventListener('click',()=>fn(b)); dsb.appendChild(b); return b};
+  const bar=c=>`<i class="cb" style="background:${c}"></i>`;
+  if(m.line) btn('line',ic('pen',bar(st[m.line])),'Line colour',b=>dsbOpen(b,'line',h=>dsbPalette(h,d,m.line)));
+  if(m.fill) btn('fill',ic('fill',bar(hexA(st[m.fill[0]],Math.max(.25,(st[m.fill[1]]??100)/100)))),'Background colour',b=>dsbOpen(b,'fill',h=>dsbPalette(h,d,m.fill[0],m.fill[1])));
+  if(m.text) btn('text',ic('text',bar(st[m.text])),'Text colour',b=>dsbOpen(b,'text',h=>dsbPalette(h,d,m.text)));
+  if(m.zones){btn('tgt',ic('fill',bar(st.tgt)),'Target zone colour',b=>dsbOpen(b,'tgt',h=>dsbPalette(h,d,'tgt','op')));
+    btn('stp',ic('fill',bar(st.stp)),'Stop zone colour',b=>dsbOpen(b,'stp',h=>dsbPalette(h,d,'stp','op')))}
+  if(m.width) btn('width',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${clamp(+st.width||1,1,4)}"><path d="M4 12h16"/></svg><span>${+st.width||1}px</span>`,'Line width',b=>dsbOpen(b,'width',h=>dsbList(h,[1,2,3,4].map(w=>({on:+st.width===w,html:`<svg viewBox="0 0 40 10" width="40" height="10"><path d="M2 5h36" stroke="currentColor" stroke-width="${w}"/></svg>${w}px`,act:()=>dsbSet(d,'width',w)})))),'row');
+  if(m.dash) btn('dash',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18" stroke-dasharray="${(DASH[st.dash]||[]).join(' ')}"/></svg>`,'Line style',b=>dsbOpen(b,'dash',h=>dsbList(h,[['solid','Line'],['dashed','Dashed line'],['dotted','Dotted line']].map(([k,t])=>({on:st.dash===k,html:`<svg viewBox="0 0 40 10" width="40" height="10"><path d="M2 5h36" stroke="currentColor" stroke-width="1.6" stroke-dasharray="${(DASH[k]||[]).join(' ')}"/></svg>${t}`,act:()=>dsbSet(d,'dash',k)})))));
+  dsb.appendChild(el_('span','vs'));
+  btn('set',ic('gear'),'Settings',()=>{dsbClose(); openDrawingSettings(d)});
+  btn('lock',ic(st.lock?'lock':'unlock'),st.lock?'Unlock':'Lock',()=>dsbSet(d,'lock',!st.lock),st.lock?'warn':null);
+  btn('del',ic('trash'),'Remove',()=>{dsbClose(); selId=d.id; deleteSelected()});
+  btn('more',ic('more'),'More',b=>dsbOpen(b,'more',h=>dsbList(h,[
+    {html:'Clone',act:()=>{const P=panes.find(Q=>Q===active)||panes[0]; cloneDrawing(d,P)}},
+    {html:'Save style as default',act:()=>{DDEF[d.type]={...d.st}; try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){} toast('Saved as the default for '+(TNAME[d.type]||d.type),'info')}},
+    {html:'Settings…',act:()=>openDrawingSettings(d)}])));
+  const gp=dsb.querySelector('.grip'); let gd=null;
+  gp.addEventListener('pointerdown',e=>{gp.setPointerCapture(e.pointerId); gd={x:e.clientX,y:e.clientY,l:parseFloat(dsb.style.left)||0,t:parseFloat(dsb.style.top)||0}; dsbClose()});
+  gp.addEventListener('pointermove',e=>{if(gd) placeDsb(gd.l+e.clientX-gd.x,gd.t+e.clientY-gd.y)});
+  gp.addEventListener('pointerup',()=>{if(!gd) return; gd=null; dsbPos={x:parseFloat(dsb.style.left),y:parseFloat(dsb.style.top)}; try{localStorage.setItem('potik.dsb',JSON.stringify(dsbPos))}catch(e){}});
+}
+function dsbUpdate(){
+  const d=G.hideDraw?null:dsbSel(), k=d?d.id+'|'+JSON.stringify(d.st):'';
+  if(k===dsbKey) return; const was=dsbKey.split('|')[0]; dsbKey=k;
+  if(!d){dsb.hidden=true; dsbClose(); dsbSnap=false; return}
+  if(was!==String(d.id)){dsbSnap=false; dsbClose()}
+  const open=dsbPop.hidden?null:dsbPop._for; dsbRender(d); const show=dsb.hidden; dsb.hidden=false; if(show) dsbHome();
+  if(open==='width'||open==='dash') dsbClose();
+}
+document.addEventListener('pointerdown',e=>{if(!dsbPop.hidden&&!dsbPop.contains(e.target)&&!dsb.contains(e.target)) dsbClose()},true);
+try{new ResizeObserver(()=>{if(!dsb.hidden) dsbHome()}).observe(ws)}catch(e){}
 
 /* ---------- settings forms ---------- */
 function el_(tag,cls,txt){const e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e}
@@ -4812,7 +4966,10 @@ function makeBncFeed(L,ins){
     // one socket for trades and one for the book (futures), or one combined socket (spot)
     connect(){
       const s=ins.bsym.toLowerCase();
-      const urls=L.ep.wsT?[[L.ep.wsT+`${s}@aggTrade`,true],[L.ep.wsB+`${s}@depth20@100ms`,false]]:[[L.ep.ws+`${s}@aggTrade/${s}@depth20@100ms`,true]];
+      // futures (17.11): the 20-level book plus the full-depth diff stream; once a REST snapshot of 1000 levels is in, the full
+      // book (±hundreds of ticks) feeds the DOM and the heatmap like Bookmap; until then, or if it fails, the 20 levels do
+      const urls=L.ep.wsT?[[L.ep.wsT+`${s}@aggTrade`,true],[L.ep.wsB+`${s}@depth20@100ms/${s}@depth@100ms`,false]]:[[L.ep.ws+`${s}@aggTrade/${s}@depth20@100ms`,true]];
+      if(L.ep.wsT) this.ob={b:new Map(),a:new Map(),u:0,ok:false,buf:[],busy:false,next:0,fails:0,dirty:false};
       this.socks=[]; this.tr=[]; urls.forEach(([u,trades],k)=>this.open1(u,k,trades));
     },
     open1(url,k,trades){
@@ -4820,13 +4977,36 @@ function makeBncFeed(L,ins){
       this.socks[k]=ws;
       ws.onopen=()=>{const back=(this.tr[k]||0)>0; this.tr[k]=0; this.status='connected';
         if(back&&trades&&this.lastA) bncGet(L.ep,`/aggTrades?symbol=${ins.bsym}&fromId=${this.lastA+1}&limit=1000`).then(a=>{if(Array.isArray(a)) this.q.unshift(...a)}).catch(()=>{})};   // fill the gap after a reconnect
-      ws.onmessage=e=>{let m; try{m=JSON.parse(e.data)}catch(_){return} const d=m&&m.data||m; if(d) this.q.push(d)};
+      ws.onmessage=e=>{let m; try{m=JSON.parse(e.data)}catch(_){return} const d=m&&m.data||m; if(!d) return; if(m.stream&&/@depth@/.test(m.stream)){if(this.ob) this.obDiff(d); return} this.q.push(d)};
       ws.onerror=()=>{this.status='connection error'};
       ws.onclose=()=>{if(this.closing) return; this.status='reconnecting'; this.tr[k]=(this.tr[k]||0)+1; setTimeout(()=>this.open1(url,k,trades),Math.min(30000,1000*2**Math.min(5,this.tr[k])))};
     },
+    // full order book (futures, 17.11): REST snapshot + @depth diffs (U / u / pu chain); a gap asks for a new snapshot
+    obSnap(){const O=this.ob; if(!O||O.busy||performance.now()<O.next) return; O.busy=true; O.next=performance.now()+2000;
+      bncGet(L.ep,`/depth?symbol=${ins.bsym}&limit=1000`).then(r=>{O.busy=false; if(!r||!r.lastUpdateId){throw new Error('no snapshot')}
+        O.b.clear(); O.a.clear(); for(const [p,z] of r.bids) O.b.set(+p,+z); for(const [p,z] of r.asks) O.a.set(+p,+z); O.u=r.lastUpdateId; O.ok=false;
+        const buf=O.buf; O.buf=[]; for(const d of buf) this.obDiff(d); O.fails=0})
+      .catch(e=>{O.busy=false; O.fails++; O.next=performance.now()+Math.min(120000,5000*2**Math.min(4,O.fails)); console.warn('full book snapshot',e)})},
+    obDiff(d){const O=this.ob; if(!O||d.U==null) return;
+      if(!O.u){O.buf.push(d); if(O.buf.length>600) O.buf.shift(); this.obSnap(); return}
+      if(d.u<O.u) return;
+      if(!O.ok){if(d.U>O.u+1&&!(d.U<=O.u&&d.u>=O.u)){O.u=0; O.buf=[d]; this.obSnap(); return} O.ok=true}
+      else if(d.pu!==O.u){O.u=0; O.ok=false; O.buf=[d]; this.obSnap(); return}   // a gap: start again from a new snapshot
+      for(const [p,z] of d.b){const v=+z; if(v) O.b.set(+p,v); else O.b.delete(+p)}
+      for(const [p,z] of d.a){const v=+z; if(v) O.a.set(+p,v); else O.a.delete(+p)}
+      O.u=d.u; O.dirty=true},
+    obApply(){const O=this.ob; if(!O||!O.ok||!O.dirty||!O.b.size||!O.a.size) return false; O.dirty=false;
+      let bb=-Infinity, ba=Infinity; for(const p of O.b.keys()) if(p>bb) bb=p; for(const p of O.a.keys()) if(p<ba) ba=p;
+      for(const p of [...O.b.keys()]) if(p<bb*.9) O.b.delete(p); for(const p of [...O.a.keys()]) if(p>ba*1.1) O.a.delete(p);   // keep the maps small
+      const b=Math.round(bb/TICK); if(Math.abs(b-(BK.base+BKN/2))>BKN/4){BK.base=b-BKN/2; BK.bs.fill(0); BK.ws.fill(0); BK.chg.fill(0)}
+      BK.bid=b; BK.walls.length=0; BK.bs.fill(0); BK.ws.fill(0);
+      for(const [p,z] of O.b){const j=bkI(Math.round(p/TICK)); if(j>=0&&j<BKN) BK.bs[j]+=Math.round(z/lot)}
+      for(const [p,z] of O.a){const j=bkI(Math.round(p/TICK)); if(j>=0&&j<BKN) BK.bs[j]+=Math.round(z/lot)}
+      this.ask=Math.round(ba/TICK); this.bid=b; this.book=true; return true},
     // apply queued messages; the clock follows real time between trades
     drain(){
-      const q=this.q; this.q=[]; let k=0;
+      const q=this.q; this.q=[]; let k=0; const full=!!(this.ob&&this.ob.ok);
+      if(this.obApply()) k++;
       const toT=ms=>{let i=CAL.length-1; while(ms>=dayMs(i+1)){CAL.push(new Date(dayMs(i+1))); BRK.dayBal=ACC.balance; i=CAL.length-1; sim.t=Math.max(sim.t,i*DAY); openSession(i)} return i*DAY+Math.max(0,(ms-dayMs(i))/1000)};
       for(const r of q){
         if(r.a!=null&&r.p!=null){   // aggregated trade: a id, p price, q quantity, T time, m = the buyer was the maker (so the seller hit the bid)
@@ -4835,6 +5015,7 @@ function makeBncFeed(L,ins){
           const sd=r.m?-1:1, z=lots(+r.q,sd>0?1:0); if(z<1) continue;
           const px=Math.round(+r.p/TICK); this.lastPx=px; RAWPX=+r.p; addTrade(sim.t,sd,z,px); this.n++; k++;
         }else if(r.b||r.bids){
+          if(full) continue;   // the full book is in charge
           const bids=r.b||r.bids, asks=r.a||r.asks; if(!bids.length) continue; this.book=true;
           const b=Math.round(+bids[0][0]/TICK);
           if(Math.abs(b-(BK.base+BKN/2))>BKN/4){BK.base=b-BKN/2; BK.bs.fill(0); BK.ws.fill(0); BK.chg.fill(0)}
@@ -5734,6 +5915,7 @@ function domHit(P,p){
   return {hdr:false,col:c.id,px:P.V.domC+g.mid-r,x:g.x0+c.x,y:g.top+r*g.rh,w:c.w,h:g.rh};
 }
 function domClick(P,p){
+  const g=P.V.dg; if(g&&!g.full&&p.y<g.hd&&p.x>=g.x0+g.W-20&&P.S.view==='chart'){P.S.dom=false; const b=P.el.querySelector('.dom'); if(b) b.setAttribute('aria-pressed',false); P.dirty=true; saveLayout(); toast('DOM hidden · right click on the chart → “DOM beside the chart” brings it back','info'); return}
   const h=domHit(P,p); if(!h) return;
   if(h.hdr){if(h.col==='price') domRecentre(P); else if(h.col==='abid'||h.col==='aask'){AT.clear(); allDirty()} return}
   if(h.col==='notes') setTimeout(()=>editNote(P,h),30);   // after the click, so focus stays in the field
@@ -6017,7 +6199,7 @@ function defaultBarW(S){const k=(btSpec(S.bt)||{}).k, F=S.ind&&S.ind.fp; if(F&&F
 function makePane(cfg){
   const el=$('#winTpl').content.firstElementChild.cloneNode(true);
   const c=JSON.parse(JSON.stringify(cfg));
-  const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{}),...(c.tpo&&!c.tpo.v2?{ext100:false,ext200:false,v2:true}:{}),...(c.tpo&&!c.tpo.v3?{vp:false,v3:true}:{})},
+  const S={bt:c.bt||'1m',view:c.view||'chart',dom:!!c.dom,tpoRow:c.tpoRow||'auto',tpo:{...TPO_DEF(),...(c.tpo||{}),...(c.tpo&&!c.tpo.v2?{ext100:false,ext200:false,v2:true}:{}),...(c.tpo&&!c.tpo.v3?{vp:false,v3:true}:{}),...(c.tpo&&!c.tpo.v4?{look:'classic',v4:true}:{})},
     tpoCuts:{splits:[...((c.tpoCuts||{}).splits||[])],merges:[...((c.tpoCuts||{}).merges||[])]},ind:freshInd(c.ind),props:{...DEF_PROPS,...(c.props||{})},studies:(c.studies||[]).filter(x=>x&&STUDY_BY[x.id]).map(x=>newStudy(x.id,x)),link:c.link||0,uid:c.uid||Math.random().toString(36).slice(2,8),float:c.float||null,min:!!c.min,legCol:c.legV2?!!c.legCol:true};   // 29.10: indicator names start hidden behind the eye
   {const b=S.ind.big, ob=c.ind&&c.ind.big; if(ob&&ob.min!=null&&ob.minBuy==null){b.minBuy=b.minSell=ob.min} delete b.min; b.aggMs=BIGAGG.ms; b.aggTicks=BIGAGG.ticks; b.aggOpp=BIGAGG.opp}   // settings from older versions
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
@@ -6139,11 +6321,10 @@ function wireCanvas(P){
     cv.style.cursor=z==='split'?'row-resize':z==='price'?'ns-resize':z==='time'?'ew-resize':z==='plot'||z==='lower'?(P.mode==='pointer'?'default':'crosshair'):'default';
   };
   const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,yoff:V.yoff||0,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
-  const manualY=()=>{if(V.autoY||V.base==null){V.base=V.center-(V.autoY?0:(V.yoff||0)); if(V.autoY) V.yoff=0} V.autoY=false; V.userY=true};
-  const zoomX=(f,x)=>{const g=V.g; if(!g)return; const nb=clamp(V.barW*f,0.5,220);
-    if(V.scroll>=-.5){V.barW=nb; return}
-    const a=(g.R-x)/V.barW, b=(g.R-x)/nb; V.barW=nb; V.scroll+=b-a};
-  const zoomY=(f,y)=>{const g=V.g; if(!g)return; manualY(); const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt; V.yoff=V.center-V.base};
+  // 17.11, like TradingView: auto scale is on until the user drags / zooms the price scale; the wheel zooms time around the right edge
+  const manualY=()=>{V.autoY=false; V.userY=true; V.yoff=0; V.base=V.center};
+  const zoomX=f=>{V.barW=clamp(V.barW*f,0.5,220)};
+  const zoomY=(f,y)=>{const g=V.g; if(!g)return; manualY(); const t=V.center+(g.pH/2-y)/V.tickPx, nt=clamp(V.tickPx*f,.05,60); V.tickPx=nt; V.center=t-(g.pH/2-y)/nt};
 
   cv.addEventListener('contextmenu',e=>{
     e.preventDefault(); const p=pos(e); setActive(P);
@@ -6174,7 +6355,8 @@ function wireCanvas(P){
     if(P.S.view==='dom'||zone(p)==='dom'){domClick(P,p); P.drag={z:'none',moved:true}; return}
     if(P.S.view==='tpo'){const ax=V.tg&&p.x>V.tg.plotW, tm=V.tg&&!ax&&p.y>V.tg.pH; if(tm){P.drag={z:'tpotime',x:p.x,c0:V.tcol||10,s0:V.tscroll||0,moved:false}; cv.style.cursor='ew-resize'; return} P.drag={z:ax?'tpoax':'tpo',x:p.x,y:p.y,s0:V.tscroll||0,c0:V.tpc,t0:V.tpt,moved:false,type:e.pointerType}; cv.style.cursor=ax?'ns-resize':'grabbing'; return}
     if(ptrs.size===1){
-      const z=zone(p);
+      const z=zone(p), ab=V.g&&V.g.abtn;
+      if(ab&&p.x>=ab[0]-2&&p.x<=ab[2]+2&&p.y>=ab[1]-2&&p.y<=ab[3]+2){V.autoY=!V.autoY; if(!V.autoY){V.userY=true; V.base=V.center} P.drag={z:'none',moved:true}; P.dirty=true; return}
       if(z==='split'){const sp=splitAt(p); P.drag={z:'split',obj:sp.obj,h0:+sp.obj.height||14,y:p.y,x:p.x,H:cv.getBoundingClientRect().height,moved:false}; return}
       if(z==='plot'||z==='lower'){const l=legendAt(p); if(l){P.drag={z:'none',moved:true}; legendAct(P,l,legBtn(l,p)); return}}
       if(z==='plot'&&tool==='cursor'&&!pending){
@@ -6224,12 +6406,12 @@ function wireCanvas(P){
       allDirty(); return;
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
-    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(Math.abs(dy)>2||!V.autoY){const was=V.autoY; manualY(); if(was) drag.yoff=0; V.yoff=drag.yoff+dy/V.tickPx; V.center=V.base+V.yoff}}
+    else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(!V.autoY) V.center=drag.center+dy/V.tickPx}   // auto scale on: the drag only moves in time (TradingView)
     else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
     else if(drag.z==='price'){manualY(); V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
-      const [a,b]=[...ptrs.values()], nb=clamp(drag.barW*Math.max(30,Math.abs(a.x-b.x))/drag.dx,0.5,220); zoomX(nb/V.barW,drag.cx);
+      const [a,b]=[...ptrs.values()], nb=clamp(drag.barW*Math.max(30,Math.abs(a.x-b.x))/drag.dx,0.5,220); zoomX(nb/V.barW);
       if(drag.dy>40){const nt=clamp(drag.tickPx*Math.abs(a.y-b.y)/drag.dy,.05,60); zoomY(nt/V.tickPx,drag.cy)}
     }
     P.dirty=true;
@@ -6264,7 +6446,7 @@ function wireCanvas(P){
     if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
-    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.userY=false; V.yoff=0}
+    if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.autoY=true; V.userY=false; V.yoff=0}
     P.dirty=true;
   });
   cv.addEventListener('wheel',e=>{
@@ -6282,9 +6464,9 @@ function wireCanvas(P){
     const p=pos(e), z=zone(p), m=e.deltaMode===1?16:e.deltaMode===2?400:1, dY=e.deltaY*m, dX=e.deltaX*m;
     if(z==='price'||e.ctrlKey||e.metaKey) zoomY(Math.exp(-dY*.0016),z==='price'&&V.g?V.g.pH/2:p.y);
     else if(e.shiftKey) V.scroll+=dY/V.barW;
-    else if(e.altKey){manualY(); V.yoff=(V.yoff||0)+dY/Math.max(.05,V.tickPx)*.5; V.center=V.base+V.yoff}   // Alt + wheel moves the chart up and down
+    else if(e.altKey){manualY(); V.center+=dY/Math.max(.05,V.tickPx)*.5}   // Alt + wheel moves the chart up and down
     else if(Math.abs(dX)>Math.abs(dY)) V.scroll+=dX/V.barW;
-    else zoomX(Math.exp(-dY*.0016),p.x);
+    else zoomX(Math.exp(-dY*.0016));
     P.dirty=true;
   },{passive:false});
 }
@@ -6295,6 +6477,12 @@ if(MYIND){const err=runMyIndicators(MYIND,true); if(err) setTimeout(()=>toast('M
 let saved=null; try{saved=JSON.parse(localStorage.getItem(LAYKEY)||'null')}catch(e){}
 if(!saved){try{saved=JSON.parse(localStorage.getItem('potik.layout.v2')||'null'); if(saved&&saved.panes) saved.panes.forEach(c=>{if(c.ind){if(c.ind.prof)c.ind.prof.shadow=false; if(c.ind.rng){c.ind.rng.full=true; c.ind.rng.opacity=40}}})}catch(e){saved=null}}
 try{if(saved&&saved.panes&&!localStorage.getItem('potik.fplines.off')){saved.panes.forEach(c=>{const f=c&&c.ind&&c.ind.fp; if(f){f.naked=false; f.stackZone=false; f.unfin=false; f.always=false}}); localStorage.setItem('potik.fplines.off','1')}}catch(e){}
+// 17.11 (user: "the footprint opens with a DOM that cannot be removed"): the Footprint workspace now opens without it
+try{if(!localStorage.getItem('potik.fpdom.v1')){localStorage.setItem('potik.fpdom.v1','1'); const fix=o=>{if(o&&Array.isArray(o.panes)) o.panes.forEach(c=>{if(c&&c.dom&&c.view!=='dom'&&c.ind&&c.ind.fp&&c.ind.fp.on) c.dom=false})};
+  if(WSP.list.Footprint) fix(WSP.list.Footprint); if(WSP.cur==='Footprint'&&saved) fix(saved); saveWsp()}}catch(e){}
+// 17.11 (user: "the heatmap is just candles"): the Heatmap workspace becomes Bookmap-like — 5 s bars, a price line, navy → orange book
+try{if(!localStorage.getItem('potik.heatws.v1')){localStorage.setItem('potik.heatws.v1','1'); const fix=o=>{if(o&&Array.isArray(o.panes)) o.panes.forEach(c=>{if(c&&c.view==='chart'&&c.ind&&c.ind.heat&&c.ind.heat.on&&!(c.ind.fp&&c.ind.fp.on)){c.bt='5s'; c.barW=6; c.props={...(c.props||{}),style:'line'}; Object.assign(c.ind.heat,{palette:'bookmap',bgFill:true,opacity:100,extend:true}); if(c.ind.vwap) c.ind.vwap.on=false}})};
+  if(WSP.list.Heatmap) fix(WSP.list.Heatmap); if(WSP.cur==='Heatmap'&&saved) fix(saved); saveWsp()}}catch(e){}
 if(saved&&Array.isArray(saved.panes)&&saved.panes.length&&COUNT[saved.layout]){
   FRAC=saved.fr||{}; layout=saved.layout; saved.panes.slice(0,MAXW).forEach(c=>addPane(c));
   fixPanes(); if(docked().length!==COUNT[layout]) layout=layoutFor(docked().length);
@@ -6354,6 +6542,7 @@ let lastTs=performance.now(), acc=0, lastClk=0, dataDirty=false, lastData=0, las
 function frame(ts){
   UIDK=null;
   requestAnimationFrame(frame);
+  dsbUpdate();
   const dt_=Math.min(.25,(ts-lastTs)/1000); lastTs=ts;
   if(KEYS.size&&active&&(active.S.view==='chart'||active.S.view==='tpo')){
     const V=active.V, f=KEYS.fast?3:1;
@@ -6362,7 +6551,7 @@ function frame(ts){
     else{
       if(KEYS.has('ArrowLeft')) V.scroll-=700*dt_*f/V.barW;
       if(KEYS.has('ArrowRight')) V.scroll+=700*dt_*f/V.barW;
-      if(KEYS.has('ArrowUp')||KEYS.has('ArrowDown')){const k=Math.exp((KEYS.has('ArrowUp')?1:-1)*1.6*dt_*f), g=V.g; const nb=clamp(V.barW*k,.5,220); if(V.scroll<-.5&&g){const x=g.plotW/2, a=(g.R-x)/V.barW, b=(g.R-x)/nb; V.scroll+=b-a} V.barW=nb}
+      if(KEYS.has('ArrowUp')||KEYS.has('ArrowDown')){const k=Math.exp((KEYS.has('ArrowUp')?1:-1)*1.6*dt_*f); V.barW=clamp(V.barW*k,.5,220)}
     }
     active.dirty=true;
   }
@@ -6396,8 +6585,8 @@ const SS_KEY='potik.start.pending', SS=$('#ss'), SSP=$('#sspan');
 const ssC=c=>({bt:'1m',view:'chart',dom:false,tpoRow:'auto',ind:{},...c});
 const SS_WS={
   chart:{name:'Chart',lay:()=>({layout:'l1',fr:{},panes:[ssC({bt:'5m',ind:{...on('vwap','prof'),...off('fp','big','rng','rsi','heat','cvd','stats','ema')}})]})},
-  heat:{name:'Heatmap',lay:()=>({layout:'l1',fr:{},panes:[ssC({dom:true,ind:{...on('heat','vwap','big'),...off('fp','rng','rsi','prof','cvd','stats','ema')}})]})},
-  fp:{name:'Footprint',lay:()=>({layout:'l1',fr:{},panes:[ssC({bt:'250T',dom:true,barW:84,ind:{...on('fp','vwap','prof','big','stats'),...off('rng','rsi','heat','cvd','ema')}})]})},
+  heat:{name:'Heatmap',lay:()=>({layout:'l1',fr:{},panes:[ssC({bt:'5s',barW:6,dom:true,props:{style:'line'},ind:{...on('heat','big'),heat:{on:true,palette:'bookmap',bgFill:true,opacity:100,extend:true},...off('fp','rng','rsi','prof','cvd','stats','ema','vwap')}})]})},
+  fp:{name:'Footprint',lay:()=>({layout:'l1',fr:{},panes:[ssC({bt:'250T',dom:false,barW:84,ind:{...on('fp','vwap','prof','big','stats'),...off('rng','rsi','heat','cvd','ema')}})]})},
   dom:{name:'DOM',lay:()=>({layout:'l1',fr:{},panes:[ssC({view:'dom'})]})},
   tpo:{name:'TPO',lay:()=>({layout:'l1',fr:{},panes:[ssC({bt:'5m',view:'tpo'})]})},
   trade:{name:'Trading',lay:()=>({layout:'l2v',fr:{l2v:{c:[.72,.28],r:[1]}},panes:[ssC({bt:'250T',dom:true,barW:84,ind:{...on('fp','vwap','prof','big'),...off('rng','rsi','heat','cvd','stats','ema')}}),ssC({view:'acct'})]})},
