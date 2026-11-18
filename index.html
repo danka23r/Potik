@@ -2609,7 +2609,7 @@ function fpGlow(ctx,F,R,r,x,y,w,rh,mid){
 // 18.11 POC of each bar in the glow look (user: «щоб POC принта було видно»): F.pocStyle
 function fpPocMark(ctx,F,x,y,w,rh){
   const st=F.pocStyle||'spot', c=F.poc||'#ffffff';
-  if(st==='box'){ctx.strokeStyle=hexA(c,.9); ctx.lineWidth=1; ctx.strokeRect(Math.round(x)+1.5,Math.round(y)+.5,Math.round(w)-3,Math.round(rh)-1); return}
+  if(st==='box'){ctx.strokeStyle=hexA(c,.6); ctx.lineWidth=.6; ctx.strokeRect(Math.round(x)+1.5,Math.round(y)+.5,Math.round(w)-3,Math.round(rh)-1); ctx.lineWidth=1; return}   // 18.11: thinner («досить виділяється»)
   if(st==='glow'){const g=ctx.createLinearGradient(x,0,x+w,0); g.addColorStop(0,hexA(c,0)); g.addColorStop(.2,hexA(c,.4)); g.addColorStop(.8,hexA(c,.4)); g.addColorStop(1,hexA(c,0)); ctx.fillStyle=g; ctx.fillRect(x,y,w,rh); return}
   if(st==='mark'){ctx.fillStyle=c; ctx.fillRect(Math.round(x)+1,y+1,3,rh-2); ctx.fillRect(Math.round(x+w)-4,y+1,3,rh-2); return}
   if(st==='spot'&&F.pocFill){ctx.fillStyle=hexA(c,(+F.pocOp||16)/100*.6); ctx.fillRect(x+w*.22,y,w*.56,rh)}
