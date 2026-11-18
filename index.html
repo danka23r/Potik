@@ -235,7 +235,7 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid var(--q251e2c,#
 .dt.dock .tgw .tgc{position:absolute;right:-3px;bottom:1px;width:10px!important;height:12px!important;border-radius:3px}
 .dt.dock .sp{flex:1}
 .dt.off{display:none!important}
-#tbeye{display:inline-grid;place-items:center;padding:0 8px}#tbeye[hidden]{display:none}#tbeye svg{width:17px;height:17px}
+.hbtn.hic{display:inline-flex;align-items:center;justify-content:center;width:30px;height:23px;padding:0;line-height:0}.hbtn.hic svg{width:17px;height:17px;display:block}#tbeye[hidden],#clrb[hidden],#rpb[hidden]{display:none}
 .tfly.fx{position:fixed;top:auto;left:auto}
 
 
@@ -432,12 +432,12 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
     <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
     <div class="right">
       <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)" hidden>⌘ K</button>
-      <button type="button" class="hbtn ic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <button type="button" class="hbtn" id="clrb" title="Colours: the theme and every colour in one place">Colours</button>
-      <button type="button" class="hbtn" id="setb" title="Settings: every tool in one place">Settings</button>
+      <button type="button" class="hbtn hic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button type="button" class="hbtn" id="clrb" hidden title="Colours: the theme and every colour in one place">Colours</button>
+      <button type="button" class="hbtn hic" id="setb" title="Settings: every tool in one place" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.8L4.5 9l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="2.7"/></svg></button>
       <button type="button" class="hbtn" id="appb" title="Appearance & language" hidden>Aa</button>
       <button type="button" class="hbtn" id="datab" title="Instrument, session, data source, tick import" hidden>Data</button>
-      <button type="button" class="hbtn" id="rpb" title="Replay a session: rewind, step, blind training">Replay</button>
+      <button type="button" class="hbtn" id="rpb" hidden title="Replay a session: rewind, step, blind training">Replay</button>
       <span class="sim" id="srcb">SIM</span>
       <span class="clk" id="clk">--:--:-- ET</span>
       <button class="pp" id="pp" type="button">Pause</button>
@@ -700,7 +700,9 @@ function contractOf(d){
 const SYM=DS&&DS.meta.label?DS.meta.label:contractOf(CAL[CAL.length-1]);
 
 /* ---------- global replay settings ---------- */
-const G={speed:1,playing:true,globalX:(()=>{try{return localStorage.getItem('potik.gcross')!=='0'}catch(e){return true}})(),cross:null,hideDraw:(()=>{try{return localStorage.getItem('potik.hidedraw')==='1'}catch(e){return false}})()};
+// 18.11 crosshair: 'all' (on every chart), 'one' (only where the mouse is), 'off' (no crosshair anywhere, plain arrow) — potik.xmode
+let XMODE=(()=>{try{const v=localStorage.getItem('potik.xmode'); if(['all','one','off'].includes(v)) return v; return localStorage.getItem('potik.gcross')==='0'?'one':'all'}catch(e){return 'all'}})();
+const G={speed:1,playing:true,globalX:XMODE==='all',cross:null,hideDraw:(()=>{try{return localStorage.getItem('potik.hidedraw')==='1'}catch(e){return false}})()};
 const setHideDraw=v=>{G.hideDraw=v; try{localStorage.setItem('potik.hidedraw',v?'1':'0')}catch(e){} const b=document.getElementById('hidb'); if(b) b.setAttribute('aria-pressed',v); for(const P of panes) P.dirty=true};
 // replay: the session being replayed, its checkpoints (rewind), blind training, pause on big trades, the live point to return to
 const RP={on:false,day:-1,start:0,blind:false,big:0,cps:[],cpMax:-1e9,id:'',j0:0,hit:null,ended:false,seeking:false,live:null,poff:0,reported:false};
@@ -986,9 +988,11 @@ const saveNotes=()=>{try{localStorage.setItem('potik.notes'+PKEY,JSON.stringify(
    the volume traded there exceeds the size that was ahead of them, or at once when price trades through.
    Stop orders become market orders when price reaches them. An ATM strategy wraps each entry in an OCO bracket
    (stop + up to 3 targets) with optional breakeven and trailing stop. Account, journal, ATMs and alerts persist. */
-const ACC_DEF=()=>({start:50000,balance:50000,contract:'NQ',commission:2.25,slip:1,qty:1,atm:1,clickTrade:true,dblClick:false,tradeBar:true,sound:true});
+const ACC_DEF=()=>({start:50000,balance:50000,contract:'NQ',commission:2.25,slip:1,qty:1,atm:1,clickTrade:true,dblClick:false,tradeBar:false,sound:true});
 let ACC=ACC_DEF(); try{ACC={...ACC,...(JSON.parse(localStorage.getItem('potik.acct.v1')||'null')||{})}}catch(e){}
 const saveAcc=()=>{try{localStorage.setItem('potik.acct.v1',JSON.stringify(ACC))}catch(e){}};
+// 18.11 (user: «прибери поки що цей термінал, в майбутньому зробимо кращий»): the order-entry bar under the DOM is off; back: Account → Settings → Order-entry bar
+try{if(!localStorage.getItem('potik.tbar18')){localStorage.setItem('potik.tbar18','1'); ACC.tradeBar=false; saveAcc()}}catch(e){}
 const ATM_DEF=()=>[
   {name:'No bracket',stop:0,t1:0,q1:0,t2:0,q2:0,t3:0,q3:0,be:0,beOff:0,trail:0},
   {name:'Scalp · SL 12 / TP 8',stop:12,t1:8,q1:0,t2:0,q2:0,t3:0,q3:0,be:0,beOff:0,trail:0},
@@ -3888,6 +3892,7 @@ const TICON={
   eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
   del:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7M10.2 10.5v5.5M13.8 10.5v5.5" stroke-linecap="round"/>',
   dock:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M15 4.5v15M17.3 8h1M17.3 11h1M17.3 14h1"/>',
+  cross:'<path d="M12 3v7M12 14v7M3 12h7M14 12h7"/>',
   eyeoff:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/>',
 };
 const TOOL_NAME=t=>({rectB:'Blue zone (rectangle)',rectR:'Red zone (rectangle)',cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
@@ -3916,6 +3921,8 @@ function buildToolbar(){
   const mk=(id,ic,title)=>{const b=el_('button'); b.type='button'; b.id=id; b.title=title; b.innerHTML=svgI(ic); return add(b)};
   const mag=mk('magb','magnet','Magnet: snap to open / high / low / close'); mag.setAttribute('aria-pressed',MAGNET);
   mag.addEventListener('click',()=>{MAGNET=!MAGNET; mag.setAttribute('aria-pressed',MAGNET); try{localStorage.setItem('potik.magnet',MAGNET?'1':'0')}catch(e){}});
+  const xh=mk('xhb','cross','Crosshair: on every chart, only this chart or off'); xh.setAttribute('aria-pressed',XMODE!=='off');
+  xh.addEventListener('click',()=>{const r=xh.getBoundingClientRect(); xModeMenu(TB_MODE==='left'?r.right+6:r.left-230,r.top)});
   mk('otb','tree','Object tree: all drawings').addEventListener('click',openObjectTree);
   const hid=mk('hidb','eye','Hide / show all drawings'); hid.setAttribute('aria-pressed',G.hideDraw); hid.addEventListener('click',()=>setHideDraw(!G.hideDraw));
   const del=mk('del','del','Delete selected drawing'); let arm=0;
@@ -4243,7 +4250,7 @@ function openSettings(P0,focus){
     }
     const PAGES={chart:chartPage,add:addPage,acct:acctPage,
       tpl:()=>openTemplates(P),dom:()=>openDomSettings(),tape:()=>openTapeSettings(),tpo:()=>openTpoSettings(P),draw:()=>openObjectTree(),
-      app:()=>openAppSettings(),hk:()=>openHotkeys(),data:()=>openDataDialog(),diag:()=>openDiagnostics(),backup:()=>openBackups()};
+      clr:()=>openColors(),app:()=>openAppSettings(),hk:()=>openHotkeys(),data:()=>openDataDialog(),diag:()=>openDiagnostics(),backup:()=>openBackups()};
     function show(id){
       cur=id; page.innerHTML=''; page.scrollTop=0;
       navList.querySelectorAll('.irow').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
@@ -4268,7 +4275,7 @@ function openSettings(P0,focus){
       grp('Windows',[match('DOM',DOM_FIELDS.map(r=>r[1]))&&item('dom','DOM',null,'#e23cf0'),match('Time & Sales',TS_FIELDS.map(r=>r[1]))&&item('tape','Time & Sales',null,'#f7dcf3'),hasChart&&match('TPO')&&item('tpo','TPO window',null,'#8f6bff')]);
       grp('Trading',[match('Trading',ACC_FIELDS.map(r=>r[1]))&&item('acct','Trading',null,'#7ee0d4')]);
       grp('Drawings',[match('Drawings')&&item('draw','Drawings (object tree)',null,'#ffd166')]);
-      grp('Application',[match('Appearance & language')&&item('app','Appearance & language',null,'#8fb7ff'),match('Hotkeys')&&item('hk','Hotkeys',null,'#8fb7ff'),match('Data')&&item('data','Data & instrument',null,'#8fb7ff'),match('Backups',['backup','restore'])&&item('backup','Backups',null,'#7ee0d4'),match('Diagnostics')&&item('diag','Diagnostics',null,'#6e6479')]);
+      grp('Application',[match('Colours',['colour','color','theme','кольори'])&&item('clr','Colours',null,'#8fb7ff'),match('Appearance & language')&&item('app','Appearance & language',null,'#8fb7ff'),match('Hotkeys')&&item('hk','Hotkeys',null,'#8fb7ff'),match('Data')&&item('data','Data & instrument',null,'#8fb7ff'),match('Backups',['backup','restore'])&&item('backup','Backups',null,'#7ee0d4'),match('Diagnostics')&&item('diag','Diagnostics',null,'#6e6479')]);
       navList.querySelectorAll('.irow').forEach(r=>r.classList.toggle('sel',r.dataset.id===cur));
     }
     srch.addEventListener('input',()=>{renderNav(); const first=navList.querySelector('.irow'); if(srch.value.trim()&&first&&!navList.querySelector('.irow.sel')) show(first.dataset.id)});
@@ -5481,6 +5488,7 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"Crosshair":"Перехрестя","Crosshair on every chart":"Перехрестя на всіх графіках","Crosshair only on this chart":"Перехрестя лише на цьому графіку","No crosshair":"Без перехрестя","Crosshair: on every chart, only this chart or off":"Перехрестя: на всіх графіках, лише на цьому або вимкнене","Settings":"Налаштування",
 "Blue zone (rectangle)":"Синя зона (прямокутник)","Red zone (rectangle)":"Червона зона (прямокутник)",
 "Show the drawing toolbar":"Показати панель малювання","Hide this toolbar (the eye at the top right brings it back)":"Сховати цю панель (око вгорі праворуч поверне її)","Add or remove tools":"Додати або прибрати інструменти","Favourite tools":"Улюблені інструменти","Add to favourites":"Додати в улюблені","Remove from favourites":"Прибрати з улюблених",
 "Glow: POC of each bar":"Світіння: POC кожного бару","White box":"Біла рамка","White glow":"Біле світіння","Marks at the sides":"Мітки по краях","Yellow numbers":"Жовті цифри","Faint spot":"Слабка пляма",
@@ -6013,7 +6021,7 @@ function openMenu(P,p,cx,cy,indId){
     {sep:1},
     {...st('pointer','Pointer'),kbd:'Alt P',on:P.mode==='pointer',act:()=>setMode(P,'pointer')},
     {...st('cross','Crosshair'),kbd:'Alt C',on:P.mode==='cross',act:()=>setMode(P,'cross')},
-    {...st('gcross','Global Crosshair'),kbd:'Alt G',on:G.globalX,act:toggleGlobal},
+    {...st('gcross','Crosshair'),kbd:'Alt G',sub:XMODES.map(([v,t])=>({label:t,on:XMODE===v,act:()=>setXMode(v)}))},
     {...st('hand','Hand'),kbd:'Alt H',on:P.mode==='hand',act:()=>setMode(P,'hand')},
     {...st('zoom','Zoom Out'),kbd:'Alt R',act:()=>resetView(P)},
     {sep:1},
@@ -6108,7 +6116,11 @@ document.addEventListener('pointerdown',e=>{if(!cmenu.hidden&&!cmenu.contains(e.
 window.addEventListener('blur',closeMenu);
 
 function setMode(P,m){P.mode=m; P.dirty=true; saveLayout()}
-function toggleGlobal(){G.globalX=!G.globalX; G.cross=null; try{localStorage.setItem('potik.gcross',G.globalX?'1':'0')}catch(e){} allDirty()}
+function toggleGlobal(){setXMode(XMODE==='all'?'one':'all')}
+const XMODES=[['all','Crosshair on every chart'],['one','Crosshair only on this chart'],['off','No crosshair']];
+function setXMode(m){XMODE=m; try{localStorage.setItem('potik.xmode',m)}catch(e){} G.globalX=m==='all'; G.cross=null;
+  for(const P of panes){P.mode=m==='off'?'pointer':'cross'; P.ovDirty=true} const b=document.getElementById('xhb'); if(b) b.setAttribute('aria-pressed',m!=='off'); saveLayout(); allDirty()}
+function xModeMenu(x,y){showMenu(XMODES.map(([v,t])=>({label:t,on:XMODE===v,act:()=>setXMode(v)})),x,y)}
 function resetView(P){const V=P.V; V.scroll=0; V.autoY=true; V.fit=true; V.barW=defaultBarW(P.S); P.dirty=true}
 
 const KEYS=new Set();
@@ -6377,7 +6389,7 @@ function makePane(cfg){
   if(S.ind.fp.pal!==FP_PAL) fpSetPalette(S,FP_PAL);   // 17.11: blue / red prints, the old colours stay in ind.fp.old17
   if(!S.ind.fp.glow18){const F=S.ind.fp; if(F.pal!=='old'&&F.shade==='solid') Object.assign(F,{shade:'glow',glowStyle:'full',sep:'x'}); F.glow18=true}   // 18.11: prints glow by volume (variant 1); back: right-click → Footprint colours → Background: solid
   if(THEME_G&&!S.props.clr18) clrPane(S);   // 18.11: Graphite colours once per window; after that the window keeps what you set
-  const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:c.mode||'cross',
+  const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:XMODE==='off'?'pointer':(c.mode||'cross'),
     V:{barW:c.barW||defaultBarW(S),scroll:0,tickPx:3,center:null,autoY:true,fit:true,hover:null,g:null,lastN:0},
     dirty:true,drag:null,ptrs:new Map()};
   const q=s=>el.querySelector(s);
