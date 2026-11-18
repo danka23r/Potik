@@ -36,7 +36,7 @@ button{background:none;border:0;cursor:pointer}
 .lay button:hover{color:var(--text);background:var(--q140f19,#140f19)}
 .lay button[aria-pressed="true"]{color:#fff;background:var(--q1c1424,#1c1424)}
 .lay svg{width:18px;height:14px}
-.addw{padding:3px 9px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+.addw{display:inline-flex;align-items:center;justify-content:center;width:30px;height:23px;padding:0;font-size:17px;font-weight:300;line-height:1;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
 .addw:hover{color:var(--text)}
 .addw:disabled{opacity:.35;cursor:default}
 .wtabs{display:none;gap:2px}
@@ -426,7 +426,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
   <header class="tb">
     <button type="button" class="brand bb" id="brandb" title="Start screen">ПОТІК</button>
     <span class="sep"></span>
-    <button type="button" class="addw" id="addw">+ Window</button>
+    <button type="button" class="addw" id="addw" title="New window" aria-label="New window">+</button>
     <select id="wsSel" class="hsel" aria-label="Workspace" title="Workspace" hidden></select>
     <div class="wtabs" id="wtabs" role="group" aria-label="Windows"></div>
     <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
@@ -3412,7 +3412,7 @@ const DSTY={
   measure:{up:'#7ee0d4',dn:'#ff8a9a',op:14,lock:false},
   long:{look:'clean',tgt:'#5670a8',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
   short:{look:'clean',tgt:'#9a4462',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
-  vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:'#c4b2ee',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
+  vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:CLR.prof||'#8a8a8a',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
   avwap:{color:'#ffd166',width:1,dash:'solid',band:false,mult:1,label:true,lock:false},
   elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1,lock:false},
 };
@@ -3430,7 +3430,7 @@ const DFIELDS={
   fibext:[['levels','Levels (comma separated)','text'],['color','Color','color'],['width','Width','num',.5,4,.5],['labels','Labels','bool'],['extend','Extend right','bool']],
   measure:[['up','Up color','color'],['dn','Down color','color'],['op','Opacity %','range',5,60,1]],
   long:[['look','Look','select',[['clean','TradingView · labels when selected'],['full','Detailed · prices, $, info box']]],['behind','Zones behind the bars (footprint stays readable)','bool'],['tgt','Target color','color'],['stp','Stop color','color'],['op','Zone opacity %','range',5,100,1],['qty','Contracts','num',1,100000,1],['risk','Size by risk to the stop, $ (0 = use contracts)','num',0,1000000,10],['ppt','Contract','select',Object.entries(INSTR).filter(([k,x])=>x.grp===INS.grp).map(([k,x])=>[x.usd/x.tick,`${k} ($${x.usd/x.tick} / pt)`])],['labels','Labels and info box','bool'],['prices','Price tags on the right edge','bool'],['progress','Live P&L band from the fill','bool'],['mae','Best / worst price reached (MFE / MAE)','bool']],
-  vprof:[['mode','Time range','select',[['fixed','Fixed (start → end)'],['live','Developing (start → live price)']]],['vmode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta']]],
+  vprof:[['mode','Time range','select',[['fixed','Fixed (start → end)'],['live','From the start until I stop it (grows with the chart)']]],['vmode','Rows','select',[['volume','Volume'],['split','Bid / ask split'],['delta','Delta']]],
     ['vaPct','Value area %','num',40,95,1],['vaLines','VAH / VAL lines','bool'],['ext','Extend POC / VAH / VAL to the right','bool'],['color','Color','color'],['poc','POC color','color'],['vaOp','Value area opacity %','range',5,100,1],['outOp','Outside value area %','range',5,100,1],['widthPct','Width % of range','range',20,100,1],['bg','Range background','bool']],
   avwap:[...LNF,['band','±σ band','bool'],['mult','Band σ','num',.5,4,.5],['label','Label','bool']],
   elliott:[['wave','Wave','select',[['impulse','Impulse 1-2-3-4-5'],['abc','Correction A-B-C']]],['degree','Labels','select',[['minor','1 2 3 / A B C'],['inter','(1) (2) (3) / (A) (B) (C)'],['minute','i ii iii / a b c']]],['color','Color','color'],['width','Width','num',.5,4,.5]],
@@ -3463,6 +3463,11 @@ try{const k=LS+'.pos2'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1')
 try{const k=LS+'.pos3'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0; const OLD={'#3b4f76':1,'#703045':1,'#29282b':1};
   for(const d of DR){if((d.type==='long'||d.type==='short')){const z=DSTY[d.type]; if(OLD[d.st.tgt]){d.st.tgt=z.tgt; ch=1} if(OLD[d.st.stp]){d.st.stp=z.stp; ch=1}}
     else if(d.type==='rect'){if(d.st.fill==='#3a4c84'){Object.assign(d.st,{fill:'#566fb8',border:'#4a5f9e'}); ch=1} else if(d.st.fill==='#6c2b30'){Object.assign(d.st,{fill:'#9a434b',border:'#80373f'}); ch=1}}}
+  if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
+// 18.11 (user: «натягуючийся ВП досі фіолетовий»): range profiles grey like the chart's volume profile
+try{const k=LS+'.vp18'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;
+  for(const d of DR) if(d.type==='vprof'&&d.st&&String(d.st.color).toLowerCase()==='#c4b2ee'){d.st.color=CLR.prof||'#8a8a8a'; ch=1}
+  if(DDEF.vprof&&String(DDEF.vprof.color).toLowerCase()==='#c4b2ee'){DDEF.vprof.color=CLR.prof||'#8a8a8a'; try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){}}
   if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 // 17.11 (user: "like TradingView"): 1 px lines, rectangles and positions drawn behind the bars so the footprint shows through
 try{const k=LS+'.tv1'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;
@@ -3647,10 +3652,10 @@ function drawDrawings0(ctx,g,P,ph){
       pts.forEach(([x,y],k)=>{const prev=d.pts[k-1], next=d.pts[k+1], q=d.pts[k], high=(!prev||q.p>=prev.p)&&(!next||q.p>=next.p), yl=y+(high?-13:13), t=lab[k]||'';
         ctx.fillStyle='#0b0710'; ctx.beginPath(); ctx.arc(x,yl,9,0,6.2832); ctx.fill(); ctx.strokeStyle=st.color; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle=st.color; ctx.fillText(t,x,yl+.5)}); break}
     case 'vprof':{
-      const tEnd=st.mode==='live'?Math.max(sim.t,d.a.t+1):d.b.t;
+      const tEnd=st.mode==='live'?Math.max(sim.t,d.a.t+1):Math.min(d.b.t,Math.max(sim.t,d.a.t+1));
       const v=vpData(d.a.t,tEnd,+st.vaPct||70); if(!v){d._hi=d._lo=null; break}
       d._hi=v.hi; d._lo=v.lo;
-      const xa=g.xAt(d.a.t), xb=st.mode==='live'?Math.max(g.xAt(tEnd),xa+40):g.xAt(tEnd);
+      const xa=g.xAt(d.a.t), xb=st.mode==='live'?Math.max(g.xAt(tEnd),xa+40):Math.min(g.xAt(tEnd),g.xAt(sim.t));
       const x0=Math.min(xa,xb), x1=Math.max(xa,xb), W=x1-x0, tp=g.tp;
       const yT=g.yOf(v.hi)-tp/2, yB=g.yOf(v.lo)+tp/2;
       if(st.bg){ctx.fillStyle=hexA(st.color,.06); ctx.fillRect(x0,yT,W,yB-yT); ctx.strokeStyle=hexA(st.color,sel?.8:.3); ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.strokeRect(x0+.5,yT+.5,W,yB-yT); ctx.setLineDash([])}
@@ -3777,12 +3782,19 @@ function ptAt(P,p,snap){
   if(snap&&MAGNET&&g.barAt){const i=g.barAt(p.x), c=g.B[i]; if(c){let best=null,bd=16; for(const v of [c.o,c.h,c.l,c.c]){const dd=Math.abs(g.yOf(v)-p.y); if(dd<bd){bd=dd; best=v}} if(best!=null){pt.p=best; pt.t=c.t0}}}
   return pt;
 }
+/* 18.11 (user: «натягувати до останньої свічки, і щоб натягнутий ВП йшов за графіком; будь-який діапазон; від такого-то місця, поки не вимкну — як у Deepcharts»):
+   after a range profile is drawn or moved, an end at or past the last candle makes it developing (st.mode 'live', grows with the chart);
+   otherwise it stays a fixed range. The menu switches between the two (vpLive). */
+function vpNorm(d,P){const g=P&&P.V.g; if(!g||!g.B||!g.B[g.last]) return; if(d.b&&d.b.t<d.a.t){const x=d.a; d.a=d.b; d.b=x}
+  const lt=g.B[g.last].t0; if(d.st.mode!=='live'&&d.b&&d.b.t>=lt){d.st.mode='live'; d.b={...d.b,t:sim.t}}}
+function vpLive(d,on){snapshot(); if(on) d.st.mode='live'; else{d.st.mode='fixed'; d.b={t:sim.t,p:(d.b||d.a).p}} save(); allDirty()}
 function setPt(d,k,pt){if(d.pts){d.pts[k]=pt} else if(k===0) d.a=pt; else d.b=pt}
 function applyEdit(P,e,p){
   const list=e.list||[{d:e.d,o:e.o}], pt=ptAt(P,p,e.h!=='body'&&e.h!=='move');
   for(const {d,o} of list){
     if(d.st&&d.st.lock) continue;
     const dt=pt.t-e.p0.t, dp=d.type==='vprof'?0:pt.p-e.p0.p;
+    if(d.type==='vprof') d._vpE=1;
     if(e.h==='body'||e.h==='move'){Object.assign(d,JSON.parse(JSON.stringify(o))); shiftDrawing(d,dt,d.type==='vline'?0:dp); continue}
     if(e.h[0]==='p'&&d.pts){d.pts[+e.h.slice(1)]=pt; continue}
     if(e.h==='a') d.a=d.type==='vprof'?{t:pt.t,p:o.a.p}:pt; else if(e.h==='b') d.b=d.type==='vprof'?{t:pt.t,p:o.b.p}:pt;
@@ -4079,6 +4091,7 @@ function dsbRender(d){
   btn('lock',ic(st.lock?'lock':'unlock'),st.lock?'Unlock':'Lock',()=>dsbSet(d,'lock',!st.lock),st.lock?'warn':null);
   btn('del',ic('trash'),'Remove',()=>{dsbClose(); selId=d.id; deleteSelected()});
   btn('more',ic('more'),'More',b=>dsbOpen(b,'more',h=>dsbList(h,[
+    ...(d.type==='vprof'?[{html:d.st.mode==='live'?'Stop the profile here':'Keep it developing to the live price',act:()=>vpLive(d,d.st.mode!=='live')}]:[]),
     {html:'Clone',act:()=>{const P=panes.find(Q=>Q===active)||panes[0]; cloneDrawing(d,P)}},
     {html:'Save style as default',act:()=>{DDEF[d.type]={...d.st}; try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){} toast('Saved as the default for '+(TNAME[d.type]||d.type),'info')}},
     {html:'Settings…',act:()=>openDrawingSettings(d)}])));
@@ -5488,6 +5501,8 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"New window":"Нове вікно",
+"Stop the profile here":"Зупинити профіль тут","Keep it developing to the live price":"Продовжувати до живої ціни","From the start until I stop it (grows with the chart)":"Від початку, поки не зупиню (росте з графіком)","Fixed (start → end)":"Фіксований (від початку до кінця)","Time range":"Діапазон часу",
 "Crosshair":"Перехрестя","Crosshair on every chart":"Перехрестя на всіх графіках","Crosshair only on this chart":"Перехрестя лише на цьому графіку","No crosshair":"Без перехрестя","Crosshair: on every chart, only this chart or off":"Перехрестя: на всіх графіках, лише на цьому або вимкнене","Settings":"Налаштування",
 "Blue zone (rectangle)":"Синя зона (прямокутник)","Red zone (rectangle)":"Червона зона (прямокутник)",
 "Show the drawing toolbar":"Показати панель малювання","Hide this toolbar (the eye at the top right brings it back)":"Сховати цю панель (око вгорі праворуч поверне її)","Add or remove tools":"Додати або прибрати інструменти","Favourite tools":"Улюблені інструменти","Add to favourites":"Додати в улюблені","Remove from favourites":"Прибрати з улюблених",
@@ -6000,6 +6015,7 @@ function openMenu(P,p,cx,cy,indId){
   if(hit){
     const d=hit.d;
     items.push({icon:'gear',label:`${TNAME[d.type]} settings…`,act:()=>openDrawingSettings(d)},
+      ...(d.type==='vprof'?[d.st.mode==='live'?{icon:'auto',label:'Stop the profile here',act:()=>vpLive(d,false)}:{icon:'auto',label:'Keep it developing to the live price',act:()=>vpLive(d,true)}]:[]),
       {icon:'copy',label:'Clone',act:()=>cloneDrawing(d,P)},
       {icon:'copy',label:'Copy',kbd:'Ctrl C',act:()=>{selId=d.id; copySel()}},
       ...(d.type==='long'||d.type==='short'?[{icon:'trade',label:'Place as bracket order',act:()=>placeFromDrawing(d)}]:[]),
@@ -6605,7 +6621,8 @@ function wireCanvas(P){
   });
   const end=e=>{
     const p=pos(e), drag=P.drag; ptrs.delete(e.pointerId);
-    if(drag&&drag.z==='create'){ if(drag.moved&&pending) advancePending(P,p) }
+    setTimeout(()=>{let ch=0; for(const d of DR) if(d._vpE){delete d._vpE; const m=d.st.mode; vpNorm(d,P); if(d.st.mode!==m) ch=1} if(ch){save(); allDirty()}},0);
+    if(drag&&drag.z==='create'){ const pd=pending&&pending.d; if(drag.moved&&pending) advancePending(P,p); if(pd&&pd.type==='vprof') pd._vpE=1 }
     else if(drag&&drag.z==='brush'){if(drag.d.pts.length<2) DR=DR.filter(x=>x!==drag.d); setTool('cursor'); save()}
     else if(drag&&drag.z==='box'&&!drag.moved){V.box=null; const d=drag.hit; if(d){if(isSel(d)){SEL.delete(d.id); if(selId===d.id){selId=SEL.size?[...SEL][0]:null; if(selId!=null) SEL.delete(selId)}} else{if(selId!=null) SEL.add(selId); selId=d.id}}}
     else if(drag&&drag.z==='box'){const g=V.g, [x0,y0,x1,y1]=V.box||[0,0,0,0], inR=(x,y)=>x>=Math.min(x0,x1)&&x<=Math.max(x0,x1)&&y>=Math.min(y0,y1)&&y<=Math.max(y0,y1); V.box=null;
