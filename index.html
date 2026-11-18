@@ -420,6 +420,86 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 @media (max-width:699px){.ssm{min-width:64px;padding:8px 10px;font-size:12px}.sslogo{font-size:20px}.ss{align-items:flex-start}}
 /* 29.10: a quieter window header */
 .wh .vw,.wh .indb,.wh .tgl.dom,.wc .lnk,.wc .propb,.wc .wsep:first-of-type{display:none!important}
+/* 18.11: Settings window, variant A — five sections, black / grey whatever the chart colours */
+.fhint{display:block;margin-top:2px;color:var(--muted);font-size:11px;line-height:1.35;font-weight:400}
+.dbox.setx{--sx-bg:var(--bg,#000);--sx-p:color-mix(in srgb,var(--text,#e6e6e6) 3%,var(--bg,#000));--sx-p2:color-mix(in srgb,var(--text,#e6e6e6) 6%,var(--bg,#000));
+  --sx-sel:color-mix(in srgb,var(--text,#e6e6e6) 11%,var(--bg,#000));--sx-ln:color-mix(in srgb,var(--text,#e6e6e6) 14%,var(--bg,#000));--sx-ln2:color-mix(in srgb,var(--text,#e6e6e6) 8%,var(--bg,#000));
+  width:min(1080px,100%);height:min(720px,92vh);max-height:none;background:var(--sx-p);border-color:var(--sx-ln)}
+.setx .dhd{gap:14px;padding:9px 10px 9px 20px;border-bottom-color:var(--sx-ln2)}
+.setx .dhd h2{flex:none;font-size:14px}
+.sxwin{flex:1;min-width:0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sxsrch{display:flex;align-items:center;gap:8px;width:290px;height:32px;padding:0 10px;border:1px solid var(--sx-ln);border-radius:8px;background:var(--sx-bg);color:var(--muted)}
+.sxsrch:focus-within{border-color:color-mix(in srgb,var(--text) 35%,var(--bg))}
+.sxsrch svg{width:15px;height:15px;flex:none}
+.sxsrch input{flex:1;min-width:0;border:0;background:none;color:var(--text);font-size:12.5px;outline:none}
+.dbd.sx{flex:1;display:grid;grid-template-columns:212px minmax(0,1fr);padding:0;min-height:0;overflow:hidden}
+.sxnav{display:flex;flex-direction:column;gap:2px;padding:14px 10px;background:var(--sx-bg);border-right:1px solid var(--sx-ln2);overflow:auto}
+.sxnb{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;border-radius:7px;color:var(--muted);font-size:13px;text-align:left}
+.sxnb svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sxnb:hover{color:var(--text);background:var(--sx-p2)}
+.sxnb.on{color:var(--text);background:var(--sx-sel)}
+.sxpg{overflow:auto;padding:22px 28px 28px;min-width:0;min-height:0}
+.sxh{margin:0;font-size:18px;font-weight:600;color:var(--text)}
+.sxsub{margin:4px 0 6px;color:var(--muted);font-size:12.5px;line-height:1.5;max-width:64ch}
+.sxsec{margin:20px 0 2px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.setx .fields{gap:0}
+.setx .frow{min-height:44px;padding:6px 0;border-bottom-color:var(--sx-ln2)}
+.setx .flab{color:var(--text);font-size:13px}
+.setx .fhint{font-size:11.5px;margin-top:3px}
+.setx .frow select,.setx .frow input[type=number],.setx .frow input[type=time],.setx .frow input[type=text],.setx .frow textarea{background:var(--sx-bg);border-color:var(--sx-ln);border-radius:7px;padding:5px 8px}
+.setx .frow input[type=color]{border-color:var(--sx-ln);border-radius:6px}
+.setx .sw{background:var(--sx-ln)}
+.setx .sw::after{background:var(--muted)}
+.setx .sw[aria-checked="true"]{background:var(--text)}
+.setx .sw[aria-checked="true"]::after{background:var(--bg)}
+.setx .rng input{accent-color:var(--text)}
+.setx .btn2{border-color:var(--sx-ln);border-radius:7px;color:var(--text)}
+.setx .btn2:hover{background:var(--sx-sel)}
+.setx .ftabs button[aria-pressed="true"]{background:var(--sx-sel);box-shadow:none}
+.setx .idesc,.setx .acnote{color:var(--muted)}
+.setx .shead h3{font-size:16px;font-weight:600}
+.setx .dcrow{border-color:var(--sx-ln2)}
+.sxseg{display:inline-flex;padding:2px;border:1px solid var(--sx-ln);border-radius:7px;background:var(--sx-bg)}
+.sxseg button{padding:5px 11px;border-radius:5px;color:var(--muted);font-size:12px}
+.sxseg button:hover{color:var(--text)}
+.sxseg button[aria-pressed="true"]{background:var(--sx-sel);color:var(--text)}
+.sxlink{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 0;border-bottom:1px solid var(--sx-ln2);color:var(--text);font-size:13px;text-align:left}
+.sxlink small{display:block;margin-top:3px;color:var(--muted);font-size:11.5px}
+.sxlink::after{content:"›";color:var(--muted);font-size:16px}
+.sxlink:hover::after{color:var(--text)}
+.sxback{display:inline-flex;align-items:center;gap:6px;margin:0 0 16px;padding:5px 11px 5px 7px;border:1px solid var(--sx-ln);border-radius:7px;color:var(--muted);font-size:12px}
+.sxback svg{width:14px;height:14px}
+.sxback:hover{color:var(--text);background:var(--sx-p2)}
+.sxind{display:grid;grid-template-columns:262px minmax(0,1fr);gap:24px;min-height:100%}
+.sxlist{display:flex;flex-direction:column;min-width:0}
+.sxlist .sxsec{margin:16px 0 4px 10px}
+.sxlist>.sxsub{margin-bottom:0}
+.sxir{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:7px}
+.sxir:hover{background:var(--sx-p2)}
+.sxir.sel{background:var(--sx-sel)}
+.sxin{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;padding:2px 0}
+.sxin b{font-weight:400;font-size:13px;color:var(--text)}
+.sxin small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sxir.hid b{color:var(--dim);text-decoration:line-through}
+.sxmore{align-self:flex-start;margin:6px 0 0 10px;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.sxmore:hover{color:var(--text)}
+.sxdet{border-left:1px solid var(--sx-ln2);padding-left:24px;min-width:0}
+.sxdh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sxdh h4{flex:1;min-width:120px;margin:0;font-size:16px;font-weight:600;color:var(--text)}
+.sxdh .sxh{flex:1}
+.sxctl{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 6px}
+.setx .schk{color:var(--text)}
+.sxadv{margin:12px 0 4px;padding:10px 12px;border-radius:8px;background:var(--sx-p2);color:var(--muted);font-size:12px;line-height:1.5}
+.sxemb{margin-top:6px}
+.sxd-dom>.shead,.sxd-cols>.shead,.sxd-tape>.shead{display:none}
+.sxd-dom .embd>.idesc,.sxd-dom .dcols,.sxd-dom .embd>.dsub{display:none}
+.sxd-cols .embd>.dsub,.sxd-cols .embd>.fields,.sxd-cols .embd>.dact{display:none}
+.sxres{display:flex;flex-direction:column;margin-top:10px}
+.sxres button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;border-radius:7px;text-align:left}
+.sxres button:hover{background:var(--sx-p2)}
+.sxres b{font-weight:500;font-size:13px;color:var(--text)}
+.sxres small{font-size:11.5px;color:var(--muted)}
+@media (max-width:760px){.dbd.sx{grid-template-columns:1fr;grid-template-rows:auto 1fr}.sxnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--sx-ln2);padding:8px}.sxnb{width:auto;white-space:nowrap}.sxind{grid-template-columns:1fr}.sxdet{border-left:0;padding-left:0}.sxsrch{width:150px}.sxwin{display:none}.sxpg{padding:16px}}
 </style>
 
 <div class="app">
@@ -4116,7 +4196,7 @@ function el_(tag,cls,txt){const e=document.createElement(tag); if(cls)e.classNam
 function buildFields(host,fields,obj,onChange){
   host.innerHTML='';
   for(const [k,lab,type,a,b,step] of fields){
-    const row=el_('label','frow'); row.appendChild(el_('span','flab',lab));
+    const row=el_('label','frow'), fl=el_('span','flab',lab); if(FHINT&&FHINT[lab]) fl.appendChild(el_('small','fhint',FHINT[lab])); row.appendChild(fl);
     let inp;
     if(type==='color'){inp=el_('input'); inp.type='color'; inp.value=obj[k]; inp.addEventListener('input',()=>{obj[k]=inp.value; userCol(inp.value); onChange()})}
     else if(type==='bool'){inp=el_('button','sw'); inp.type='button'; inp.setAttribute('role','switch'); inp.setAttribute('aria-checked',!!obj[k]);
@@ -4137,14 +4217,14 @@ function buildFields(host,fields,obj,onChange){
 const dlg=$('#dlg'), dlgBox=dlg.querySelector('.dbox');
 function openDialog(title,build){
   if(EMBED&&!dlg.hidden&&EMBED.host.isConnected){const h=EMBED.host; h.innerHTML=''; h.scrollTop=0; const hd=el_('div','shead'); hd.appendChild(el_('h3',null,title)); h.appendChild(hd); const body=el_('div','embd'); h.appendChild(body); build(body); return}
-  EMBED=null; dlgBox.classList.remove('wide');
+  EMBED=null; dlgBox.classList.remove('wide','setx');
   dlgBox.innerHTML=''; const hd=el_('div','dhd'); hd.appendChild(el_('h2',null,title));
   const x=el_('button','ic dx'); x.type='button'; x.title='Close dialog'; x.innerHTML='<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 2.5l8 8M10.5 2.5l-8 8"/></svg>';
   x.addEventListener('click',()=>closeDialog(true)); hd.appendChild(x); dlgBox.appendChild(hd);
   const body=el_('div','dbd'); dlgBox.appendChild(body); build(body); dlg.hidden=false;
 }
 // inside the Settings window a page that 'closes itself' just goes back to the current section
-function closeDialog(force){if(EMBED&&!force&&!dlg.hidden&&EMBED.host.isConnected){const r=EMBED.refresh; setTimeout(r,0); return} EMBED=null; dlg.hidden=true; dlgBox.innerHTML=''; dlgBox.classList.remove('wide')}
+function closeDialog(force){if(EMBED&&!force&&!dlg.hidden&&EMBED.host.isConnected){const r=EMBED.refresh; setTimeout(r,0); return} EMBED=null; dlg.hidden=true; dlgBox.innerHTML=''; dlgBox.classList.remove('wide','setx')}
 dlg.addEventListener('pointerdown',e=>{if(e.target===dlg) closeDialog(true)});
 
 /* one Settings window (Deepcharts style): a section for every tool on the left, its own page on the right.
@@ -4194,105 +4274,261 @@ function indAt(P,p){
 function openIndicators(P,focus){openSettings(P,focus||'fp')}
 function openProps(P){openSettings(P,P.S.view==='dom'?'dom':P.S.view==='tape'?'tape':P.S.view==='tpo'?'tpo':P.S.view==='acct'?'acct':'chart')}
 const SET_ORDER=['fp','big','vwap','prof','tpoov','heat','dpow','sot','cvd','stats','rsi','rng','ema'];
+/* Settings window (18.11, variant A from the canvas «Potik — налаштування, варіанти»): five sections with icons on the left,
+   indicators as a list + the chosen one beside it, every indicator split into Main / Colours / Advanced, a hint under the
+   common fields, search across every setting. Black / grey look (class .setx), whatever theme the charts use. */
+const SET_SECS=[['chart','Chart','<path d="M7 4v16M17 4v16M5 8h4v8H5zM15 6h4v7h-4z"/>'],['ind','Indicators','<path d="M3 12h4l3-7 4 14 3-7h4"/>'],
+  ['dom','DOM & tape','<path d="M4 6h16M4 12h16M4 18h16M10 3v18"/>'],['acct','Trading','<path d="M7 20V5M3 9l4-4 4 4M17 4v15M13 15l4 4 4-4"/>'],
+  ['app','Program','<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4"/>']];
+const SET_SUB={tpl:['chart','Chart templates'],draw:['chart','Drawings on the chart'],tpo:['chart','TPO window'],
+  clr:['app','Colours'],hk:['app','Hotkeys'],data:['app','Data & instrument'],backup:['app','Backups'],diag:['app','Diagnostics'],myind:['app','My Indicators code']};
+const SET_IGRP=[['Order Flow',['fp','big','heat','cvd']],['Volume',['vwap','prof']],['Price & trend',['rng','rsi','ema']]];
+const SET_RARE=['tpoov','stats','dpow','sot'];
+const IND_SHORT={fp:'Buys and sells at every price in the bar',big:'Bubbles where big trades went through',heat:'Where big limit orders are waiting',cvd:'Buys minus sells, added up',
+  vwap:'Average price by volume since the open',prof:'Where the most volume traded',tpoov:'Time spent at every price',rng:'Boxes around blocks of time',rsi:'Colours the bars by RSI',
+  ema:'Two moving averages',stats:'Volume and delta rows under the chart',dpow:'Resting size on each side of the book',sot:'How fast the trades come in'};
+// which fields are Main and which are Colours; the rest of a listed indicator goes to Advanced (others: colours apart, the rest Main)
+const IND_SPLIT={
+  fp:{main:['view','mode1','mode2','rows','shade','pocFill','dShow','totVol'],col:['buy','sell','text','poc','hist','shadeOp','pocOp']},
+  big:{main:['minBuy','minSell','labels'],col:['buy','sell','opacity','scale']},
+  vwap:{main:['width','glow','b1','b2'],col:['color','band','bandOp']},
+  prof:{main:['side','period','widthPct','vaEdges'],col:['color','poc','vaOp','outOp']},
+  heat:{main:['palette','extend'],col:['opacity']},
+  tpoov:{main:['period','letters','pocLine'],col:['col','vaCol','pocCol','opacity']},
+  rng:{main:['minutes','hilo','labels','bg'],col:['color','opacity']},
+  sot:{main:['stat','interval','height'],col:['col','hiCol','lineCol']}};
+// a short plain-words line under a field (any dialog), keyed by the field label
+var FHINT={'Show footprint':'Zoomed out, coloured cells take the place of the numbers','Column 1':'What every cell shows','Column 2':'Something else beside it, if you want',
+  'Row size':'How many ticks go into one row','Cell background':'The brighter the cell, the more volume or delta','POC: soft fill across the row':'The price with the most volume in each bar',
+  'Delta under bar':'Buys minus sells for the whole bar','Volume above bar':'Total volume of the bar','Buys: show from size (contracts)':'Smaller trades get no bubble',
+  'Sells: show from size (contracts)':'Smaller trades get no bubble','Band ±1σ':'Thin lines one standard deviation away from VWAP','Soft glow':'A faint halo around the line',
+  'Where':'Each day: its own profile for every day on the chart','Daily profile: thin lines on the value area edges (VAH / VAL)':'Where 70% of the day’s volume traded',
+  'Palette':'Colours from few orders to many','Show the live book right of the last bar':'The current book beside the newest bar','Range length (min)':'One box for every block of this many minutes',
+  'Show legend':'OHLC line and indicator names at the top','Bar style':'Candles, bars, line…','Trade by clicking Bid / Ask in the DOM':'A click on Bid / Ask places a limit order',
+  'Order-entry bar under the DOM':'Buy / Sell / Flatten buttons under the DOM','Commission per contract per side $':'Taken off P&L on every fill',
+  'Market and stop slippage (ticks)':'How much worse market and stop orders fill','Classic ladder look (filled Bids / Asks, volume bars)':'Filled Bid / Ask columns and volume bars',
+  'Show prints ≥ size':'Smaller prints are not listed','Combine prints at one price and side within ms (0 = off)':'Prints that come close together become one row'};
+let SET_LAST='ind'; try{SET_LAST=localStorage.getItem('potik.set.sec')||'ind'}catch(e){}
+function setIcon(p){return `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`}
+function indSplit(x){
+  const src=x.tabs?x.tabs.filter(t=>Array.isArray(t[1])):[['',x.fields||[]]], sp=IND_SPLIT[x.id];
+  const main=[],col=[],adv=[];
+  for(const [g,fs] of src) for(const r of fs){const k=r[0];
+    if(sp){if(sp.main.includes(k)) main.push(r); else if(sp.col.includes(k)) col.push(r); else adv.push([g,r])}
+    else (r[2]==='color'?col:main).push(r)}
+  if(sp){main.sort((a,b)=>sp.main.indexOf(a[0])-sp.main.indexOf(b[0])); col.sort((a,b)=>sp.col.indexOf(a[0])-sp.col.indexOf(b[0]))}
+  const tpl=x.tabs&&x.tabs.find(t=>typeof t[1]==='function');
+  return {main,col,adv,tpl:tpl&&tpl[1]};
+}
 function openSettings(P0,focus){
   const P=P0&&P0.S.view==='chart'?P0:(active&&active.S.view==='chart'?active:panes.find(Q=>Q.S.view==='chart'))||P0;
-  const hasChart=P&&P.S.view==='chart', idx=panes.indexOf(P)+1;
-  openDialog(hasChart?`Settings · Window ${idx} (${btLabel(P.S.bt)})`:'Settings',body=>{
-    dlgBox.classList.add('wide'); body.classList.add('ind','set');
-    const nav=el_('div','ilist snav'), page=el_('div','iset spage'); body.append(nav,page);
-    const srch=el_('input','ssrch'); srch.type='search'; srch.placeholder='Search settings'; srch.setAttribute('aria-label','Search settings'); nav.appendChild(srch);
-    const navList=el_('div'); nav.appendChild(navList);
-    let cur=focus||(hasChart?'chart':'dom'); const tabOf={};
+  const hasChart=!!(P&&P.S.view==='chart'), idx=panes.indexOf(P)+1;
+  const st={sec:SET_LAST,sub:null,sel:'fp',tab:{},dom:'dom',more:false,q:''};
+  if(!SET_SECS.some(s=>s[0]===st.sec)) st.sec='ind';
+  if(focus){
+    if(IND_BY[focus]||focus.startsWith('st:')||focus==='add'){st.sec='ind'; st.sel=focus}
+    else if(focus==='dom'||focus==='tape'){st.sec='dom'; st.dom=focus}
+    else if(focus==='app'){st.sec='app'}
+    else if(SET_SUB[focus]){st.sec=SET_SUB[focus][0]; st.sub=focus}
+    else if(SET_SECS.some(s=>s[0]===focus)) st.sec=focus;
+  }
+  if(st.sel!=='add'&&!st.sel.startsWith('st:')&&!IND_BY[st.sel]) st.sel='fp';
+  openDialog('Settings',body=>{
+    dlgBox.classList.add('setx'); body.classList.add('sx');
+    const hd=dlgBox.querySelector('.dhd'), xb=hd.querySelector('.dx');
+    if(hasChart) hd.insertBefore(el_('span','sxwin',`Window ${idx} · ${btLabel(P.S.bt)}`),xb); else hd.insertBefore(el_('span','sxwin'),xb);
+    const sl=el_('label','sxsrch'); sl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>';
+    const srch=el_('input'); srch.type='search'; srch.placeholder='Search: colour, DOM, sound…'; srch.setAttribute('aria-label','Search settings'); sl.appendChild(srch); hd.insertBefore(sl,xb);
+    const nav=el_('nav','sxnav'), pg=el_('div','sxpg'); nav.setAttribute('aria-label','Settings sections'); body.append(nav,pg);
     const changed=()=>{if(P){P.dirty=true; saveLayout()}};
-    EMBED={host:page,refresh:()=>show(cur)};
+    EMBED={host:pg,refresh:()=>render()};
     const sw=(on,label,fn)=>{const b=el_('button','sw'); b.type='button'; b.setAttribute('role','switch'); b.setAttribute('aria-label',label); b.setAttribute('aria-checked',!!on); b.addEventListener('click',e=>{e.stopPropagation(); fn(b)}); return b};
-    const head=(title,desc,extra)=>{const h=el_('div','shead'); const t=el_('h3',null,title); h.appendChild(t); if(extra) h.appendChild(extra); page.appendChild(h); if(desc) page.appendChild(el_('p','idesc',desc)); return t};
     const btn=(host,txt,fn,cls)=>{const b=el_('button','btn2'+(cls?' '+cls:''),txt); b.type='button'; b.addEventListener('click',fn); host.appendChild(b); return b};
-    function indPage(id){
-      const x=IND_BY[id], obj=P.S.ind[id];
-      const ctl=el_('div','sctl');
-      const vis=el_('label','schk'); const s1=sw(obj.on,'On the chart',b=>{obj.on=!obj.on; if(!obj.on) obj.hide=false; b.setAttribute('aria-checked',obj.on); s2.setAttribute('aria-checked',obj.on&&!obj.hide); changed(); renderNav()}); vis.append(s1,el_('span',null,'On the chart'));
-      const hid=el_('label','schk'); const s2=sw(obj.on&&!obj.hide,'Visible',b=>{if(!obj.on){obj.on=true; obj.hide=false} else obj.hide=!obj.hide; b.setAttribute('aria-checked',obj.on&&!obj.hide); s1.setAttribute('aria-checked',obj.on); changed(); renderNav()}); hid.append(s2,el_('span',null,'Visible'));
-      ctl.append(vis,hid); head(x.name,x.desc,ctl);
-      const f=el_('div','fields');
-      if(x.tabs){
-        const tbs=el_('div','ftabs'); tbs.setAttribute('role','tablist'); page.append(tbs,f);
-        const render=()=>{
-          const ti=tabOf[id]||0; tbs.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===ti));
-          const t=x.tabs[ti][1]; if(typeof t==='function') t(f,obj,note=>{changed(); show(id); if(note){const m=page.querySelector('.tplmsg'); if(m) m.textContent=note}}); else buildFields(f,t,obj,()=>{changed(); onIndChange(id,obj)});
-        };
-        x.tabs.forEach(([nm],i)=>{const b=el_('button',null,nm); b.type='button'; b.addEventListener('click',()=>{tabOf[id]=i; render()}); tbs.appendChild(b)});
-        render();
-      }else{page.appendChild(f); buildFields(f,x.fields,obj,()=>{changed(); onIndChange(id,obj)})}
-      const act=el_('div','dact');
-      btn(act,'Reset to defaults',()=>{const on=obj.on, hide=obj.hide; Object.assign(obj,x.def,{on,hide}); show(id); changed()});
-      btn(act,'Copy to all chart windows',()=>{for(const Q of panes) if(Q!==P&&Q.S.view==='chart'){Q.S.ind[id]=JSON.parse(JSON.stringify(obj)); Q.dirty=true} saveLayout(); toast(`${x.name} copied to every chart window`,'info')});
-      page.appendChild(act);
-    }
-    function studyPage(id){
-      const Q=(P.S.studies||[]).find(x=>'st:'+x.uid===id), x=Q&&STUDY_BY[Q.id]; if(!x){show('add'); return}
-      const ctl=el_('div','sctl'), vis=el_('label','schk'); vis.append(sw(Q.on,'Visible',b=>{Q.on=!Q.on; b.setAttribute('aria-checked',Q.on); changed(); renderNav()}),el_('span',null,'Visible')); ctl.appendChild(vis);
-      const h3=head(x.label(Q),`${x.name} · ${x.place==='panel'?'in its own panel (drag the line above it to resize)':'on the price chart'}`,ctl);
-      const f=el_('div','fields'); page.appendChild(f);
-      buildFields(f,[...x.fields.filter(r=>!LEVF.some(l=>l[0]===r[0])),...(x.place==='panel'||x.fields.some(r=>r[0]==='alertOn')?LEVF:[['alertOn','Alert when price crosses the line','bool']])],Q,()=>{if(Q.alertOn&&x.place==='price') Q.alertMode='price'; Q._ap=null; changed(); h3.textContent=x.label(Q); renderNav()});
-      const act=el_('div','dact');
-      btn(act,'Duplicate',()=>{const c=newStudy(Q.id,JSON.parse(ser(Q))); c.uid=Math.random().toString(36).slice(2,9); P.S.studies.push(c); changed(); renderNav(); show('st:'+c.uid)});
-      btn(act,'Reset',()=>{Object.assign(Q,x.def); changed(); show(id)});
-      btn(act,'Remove',()=>{P.S.studies=P.S.studies.filter(z=>z!==Q); changed(); renderNav(); show('add')},'danger');
-      page.appendChild(act);
-    }
-    function addPage(){
-      head('Add a study','Classic studies: each can be added more than once, on the price chart or in its own panel.');
-      for(const g of ST_GROUPS){const items=ST.filter(x=>x.group===g); page.appendChild(el_('h4','acsub',g));
-        if(!items.length){page.appendChild(el_('p','iempty','Write your own with “My Indicators code…” above.')); continue}
-        const grid=el_('div','sgrid'); page.appendChild(grid);
-        for(const x of items) btn(grid,'＋ '+x.name,()=>{const Q=newStudy(x.id); (P.S.studies||(P.S.studies=[])).push(Q); changed(); renderNav(); show('st:'+Q.uid)},'sm');
-      }
-      const act=el_('div','dact'); btn(act,'My Indicators code…',()=>openMyIndicators(P)); page.appendChild(act);
-    }
-    function chartPage(){
-      head('Chart',`Window ${idx}: bar style, colours and the legend. Bar type: ${btLabel(P.S.bt)}.`);
-      const f=el_('div','fields'); page.appendChild(f); buildFields(f,PROP_FIELDS,P.S.props,changed);
-      const act=el_('div','dact'); btn(act,'Bar type…',()=>openBtDialog(P)); btn(act,'Chart templates…',()=>openTemplates(P));
-      btn(act,'Copy indicators to all windows',()=>{for(const Q of panes) if(Q!==P){Q.S.ind=JSON.parse(JSON.stringify(P.S.ind)); Q.S.studies=JSON.parse(ser(P.S.studies)).map(x=>({...x,uid:Math.random().toString(36).slice(2,9)})); Q.stc=null; Q.dirty=true} saveLayout(); toast('Indicators copied to every window','info')});
-      page.appendChild(act);
-    }
-    function acctPage(){
-      head('Trading','Commission, slippage, order size and how you trade from the DOM and the chart.');
-      const f=el_('div','fields'); page.appendChild(f); buildFields(f,ACC_FIELDS,ACC,()=>{saveAcc(); allDirty(); syncTradeBars(true)});
-    }
-    const PAGES={chart:chartPage,add:addPage,acct:acctPage,
-      tpl:()=>openTemplates(P),dom:()=>openDomSettings(),tape:()=>openTapeSettings(),tpo:()=>openTpoSettings(P),draw:()=>openObjectTree(),
-      clr:()=>openColors(),app:()=>openAppSettings(),hk:()=>openHotkeys(),data:()=>openDataDialog(),diag:()=>openDiagnostics(),backup:()=>openBackups()};
-    function show(id){
-      cur=id; page.innerHTML=''; page.scrollTop=0;
-      navList.querySelectorAll('.irow').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
-      if(!hasChart&&(IND_BY[id]||id.startsWith('st:')||['chart','add','tpl'].includes(id))){page.appendChild(el_('p','idesc','Open a chart window to change its indicators.')); return}
-      if(IND_BY[id]) indPage(id); else if(id.startsWith('st:')) studyPage(id); else if(PAGES[id]) PAGES[id](); else indPage('fp');
-    }
-    const match=(txt,extra)=>{const q=srch.value.trim().toLowerCase(); if(!q) return true; const tr=s=>(UK[s]||s).toLowerCase(); return tr(txt).includes(q)||txt.toLowerCase().includes(q)||(extra||[]).some(s=>tr(s).includes(q)||s.toLowerCase().includes(q))};
-    const fieldLabels=x=>[...(x.fields||[]),...(x.tabs||[]).flatMap(t=>Array.isArray(t[1])?t[1]:[])].map(r=>r[1]);
+    const sec=(host,t)=>host.appendChild(el_('div','sxsec',t));
+    const link=(host,t,fn,small)=>{const b=el_('button','sxlink'); b.type='button'; const s=el_('span',null,t); if(small) s.appendChild(el_('small',null,small)); b.appendChild(s); b.addEventListener('click',fn); host.appendChild(b); return b};
+    const title=(host,t,d)=>{host.appendChild(el_('h3','sxh',t)); if(d) host.appendChild(el_('p','sxsub',d))};
+    const row=(host,label,ctl,hint)=>{const r=el_('label','frow'), l=el_('span','flab',label); if(hint) l.appendChild(el_('small','fhint',hint)); r.append(l,ctl); host.appendChild(r); return ctl};
+    const seg=(items,cur,fn)=>{const s=el_('div','sxseg'); s.setAttribute('role','group'); for(const [k,t] of items){const b=el_('button',null,t); b.type='button'; b.setAttribute('aria-pressed',k===cur); b.addEventListener('click',()=>fn(k)); s.appendChild(b)} return s};
+    const go=(sec_,o)=>{st.sec=sec_; st.sub=null; st.q=''; srch.value=''; if(o) Object.assign(st,o); if(o&&o.tabFor) st.tab[o.tabFor[0]]=o.tabFor[1]; render()};
+    const noChart=host=>host.appendChild(el_('p','sxsub','Open a chart window to change its indicators.'));
     function renderNav(){
-      navList.innerHTML='';
-      const grp=(name,rows)=>{const vis=rows.filter(Boolean); if(!vis.length) return; navList.appendChild(el_('div','igrp',name)); vis.forEach(r=>navList.appendChild(r))};
-      const item=(id,label,s,dot)=>{const row=el_('div','irow'); row.dataset.id=id; if(s) row.appendChild(s); else{const d=el_('span','sdot'); if(dot) d.style.background=dot; row.appendChild(d)}
-        const nm=el_('button','iname',label); nm.type='button'; nm.addEventListener('click',()=>show(id)); row.appendChild(nm); return row};
-      if(hasChart){
-        grp('Chart',[match('Chart',PROP_FIELDS.map(r=>r[1]))&&item('chart','Chart',null,'#c4b2ee'),match('Chart templates')&&item('tpl','Chart templates',null,'#6e6479')]);
-        for(const [gname,ids] of [['Order Flow',SET_ORDER.filter(k=>IND_BY[k]&&IND_BY[k].group==='Order Flow')],['Volume',SET_ORDER.filter(k=>IND_BY[k]&&IND_BY[k].group==='Volume')],['Price & trend',SET_ORDER.filter(k=>IND_BY[k]&&(IND_BY[k].group==='Price'||IND_BY[k].group==='Trend'))]])
-          grp(gname,ids.filter(k=>match(IND_BY[k].name,[IND_BY[k].desc,...fieldLabels(IND_BY[k])])).map(k=>{const o=P.S.ind[k];
-            const row=item(k,IND_BY[k].name,sw(o.on,IND_BY[k].name,b=>{o.on=!o.on; if(!o.on) o.hide=false; b.setAttribute('aria-checked',o.on); changed(); if(cur===k) show(k)}));
-            if(o.on&&o.hide) row.classList.add('hid'); return row}));
-        grp('Studies on this chart',[...(P.S.studies||[]).filter(Q=>STUDY_BY[Q.id]&&match(STUDY_BY[Q.id].label(Q),[STUDY_BY[Q.id].name])).map(Q=>item('st:'+Q.uid,STUDY_BY[Q.id].label(Q),sw(Q.on,STUDY_BY[Q.id].label(Q),b=>{Q.on=!Q.on; b.setAttribute('aria-checked',Q.on); changed()}))),match('Add a study',ST.map(x=>x.name))&&item('add','＋ Add a study',null,'#5b2368')]);
-      }
-      grp('Windows',[match('DOM',DOM_FIELDS.map(r=>r[1]))&&item('dom','DOM',null,'#e23cf0'),match('Time & Sales',TS_FIELDS.map(r=>r[1]))&&item('tape','Time & Sales',null,'#f7dcf3'),hasChart&&match('TPO')&&item('tpo','TPO window',null,'#8f6bff')]);
-      grp('Trading',[match('Trading',ACC_FIELDS.map(r=>r[1]))&&item('acct','Trading',null,'#7ee0d4')]);
-      grp('Drawings',[match('Drawings')&&item('draw','Drawings (object tree)',null,'#ffd166')]);
-      grp('Application',[match('Colours',['colour','color','theme','кольори'])&&item('clr','Colours',null,'#8fb7ff'),match('Appearance & language')&&item('app','Appearance & language',null,'#8fb7ff'),match('Hotkeys')&&item('hk','Hotkeys',null,'#8fb7ff'),match('Data')&&item('data','Data & instrument',null,'#8fb7ff'),match('Backups',['backup','restore'])&&item('backup','Backups',null,'#7ee0d4'),match('Diagnostics')&&item('diag','Diagnostics',null,'#6e6479')]);
-      navList.querySelectorAll('.irow').forEach(r=>r.classList.toggle('sel',r.dataset.id===cur));
+      nav.innerHTML='';
+      for(const [id,label,ic] of SET_SECS){const b=el_('button','sxnb'+(st.sec===id&&!st.q?' on':'')); b.type='button'; b.innerHTML=setIcon(ic); b.appendChild(el_('span',null,label));
+        if(st.sec===id&&!st.q) b.setAttribute('aria-current','page');
+        b.addEventListener('click',()=>go(id)); nav.appendChild(b)}
     }
-    srch.addEventListener('input',()=>{renderNav(); const first=navList.querySelector('.irow'); if(srch.value.trim()&&first&&!navList.querySelector('.irow.sel')) show(first.dataset.id)});
-    renderNav(); show(cur);
+    /* ---- Chart ---- */
+    function chartSec(host){
+      if(!hasChart){title(host,'Chart'); noChart(host); return}
+      title(host,'Chart',`How the candles and the chart look. Window ${idx}.`);
+      sec(host,'Bars');
+      const f0=el_('div','fields'); host.appendChild(f0);
+      const bt=el_('button','btn2 sm',btLabel(P.S.bt)+'  ▾'); bt.type='button'; bt.addEventListener('click',()=>openBtDialog(P)); row(f0,'Bar type',bt,'Time, ticks or volume in one bar');
+      const f=el_('div','fields'); host.appendChild(f); buildFields(f,PROP_FIELDS,P.S.props,changed);
+      sec(host,'Ready-made sets');
+      const g=el_('div','sgrid'); host.appendChild(g);
+      for(const k of Object.keys(CT_BUILTIN)) btn(g,k,()=>{applyChartTpl(P,CT_BUILTIN[k]); toast(`“${k}” applied to this window`,'info')},'sm');
+      link(host,'Chart templates',()=>{st.sub='tpl'; render()},'Save your own set and apply it to every chart');
+      sec(host,'Other');
+      link(host,'Drawings on the chart',()=>{st.sub='draw'; render()});
+      link(host,'TPO window',()=>{st.sub='tpo'; render()});
+      const act=el_('div','dact'); host.appendChild(act);
+      btn(act,'Copy indicators to all windows',()=>{for(const Q of panes) if(Q!==P){Q.S.ind=JSON.parse(JSON.stringify(P.S.ind)); Q.S.studies=JSON.parse(ser(P.S.studies)).map(x=>({...x,uid:Math.random().toString(36).slice(2,9)})); Q.stc=null; Q.dirty=true} saveLayout(); toast('Indicators copied to every window','info')});
+    }
+    /* ---- Indicators ---- */
+    function indSec(host){
+      if(!hasChart){title(host,'Indicators'); noChart(host); return}
+      const wrap=el_('div','sxind'), list=el_('div','sxlist'), det=el_('div','sxdet'); wrap.append(list,det); host.appendChild(wrap);
+      list.appendChild(el_('h3','sxh','Indicators')); list.appendChild(el_('p','sxsub','The switch shows it on the chart.'));
+      const irow=(id,name,small,on,hid,toggle)=>{const r=el_('div','sxir'+(st.sel===id?' sel':'')+(hid?' hid':'')), nb=el_('button','sxin'); nb.type='button';
+        nb.append(el_('b',null,name)); if(small) nb.append(el_('small',null,small)); nb.addEventListener('click',()=>{st.sel=id; render()});
+        r.append(nb); if(toggle) r.append(sw(on,name,b=>{toggle(); render()})); list.appendChild(r)};
+      const indRow=k=>{const o=P.S.ind[k]; irow(k,IND_BY[k].name,IND_SHORT[k],o.on,o.on&&o.hide,()=>{o.on=!o.on; if(!o.on) o.hide=false; changed()})};
+      for(const [g,ids] of SET_IGRP){list.appendChild(el_('div','sxsec',g)); ids.filter(k=>IND_BY[k]).forEach(indRow)}
+      const rare=SET_RARE.filter(k=>IND_BY[k]), shown=rare.filter(k=>st.more||P.S.ind[k].on||st.sel===k);
+      if(shown.length){list.appendChild(el_('div','sxsec','Less common')); shown.forEach(indRow)}
+      if(rare.length>shown.length||st.more){const m=el_('button','sxmore',st.more?'Show fewer':`More indicators (${rare.length-shown.length})`); m.type='button'; m.addEventListener('click',()=>{st.more=!st.more; render()}); list.appendChild(m)}
+      const stds=(P.S.studies||[]).filter(Q=>STUDY_BY[Q.id]);
+      list.appendChild(el_('div','sxsec','Studies on this chart'));
+      for(const Q of stds) irow('st:'+Q.uid,STUDY_BY[Q.id].label(Q),STUDY_BY[Q.id].name,Q.on,false,()=>{Q.on=!Q.on; changed()});
+      irow('add','＋ Add a study','RSI, MACD, Bollinger, pivots…',false,false,null);
+      EMBED.host=det;
+      if(IND_BY[st.sel]) indPage(det,st.sel); else if(st.sel.startsWith('st:')) studyPage(det,st.sel); else addPage(det);
+    }
+    function indPage(host,id){
+      const x=IND_BY[id], obj=P.S.ind[id], sp=indSplit(x);
+      const h=el_('div','sxdh'); h.appendChild(el_('h4',null,x.name));
+      const tabs=[['main','Basic'],sp.col.length&&['col','Colours'],sp.adv.length&&['adv','Advanced'],sp.tpl&&['tpl','Templates']].filter(Boolean);
+      let tab=st.tab[id]||'main'; if(!tabs.some(t=>t[0]===tab)) tab='main';
+      if(tabs.length>1) h.appendChild(seg(tabs,tab,k=>{st.tab[id]=k; render()}));
+      host.appendChild(h);
+      host.appendChild(el_('p','sxsub',IND_SHORT[id]?IND_SHORT[id]+'.':''));
+      const ctl=el_('div','sxctl');
+      const lab=(t,s)=>{const l=el_('label','schk'); l.append(s,el_('span',null,t)); ctl.appendChild(l)};
+      lab('On the chart',sw(obj.on,'On the chart',()=>{obj.on=!obj.on; if(!obj.on) obj.hide=false; changed(); render()}));
+      if(obj.on) lab('Visible',sw(!obj.hide,'Visible',()=>{obj.hide=!obj.hide; changed(); render()}));
+      host.appendChild(ctl);
+      const onCh=()=>{changed(); onIndChange(id,obj)};
+      const fl=rows=>{const f=el_('div','fields'); host.appendChild(f); buildFields(f,rows,obj,onCh); return f};
+      if(tab==='main') fl(sp.main);
+      else if(tab==='col') fl(sp.col);
+      else if(tab==='adv'){
+        host.appendChild(el_('p','sxadv','For experienced traders. Most of it is off by default, you can leave it as it is.'));
+        const groups=[]; for(const [g,r] of sp.adv){let G=groups.find(z=>z[0]===g); if(!G) groups.push(G=[g,[]]); G[1].push(r)}
+        for(const [g,rows] of groups){if(g&&groups.length>1) host.appendChild(el_('div','sxsec',g)); fl(rows)}
+      }else{const f=el_('div','fields'); host.appendChild(f); sp.tpl(f,obj,note=>{changed(); render(); if(note){const m=pg.querySelector('.tplmsg'); if(m) m.textContent=note}})}
+      const act=el_('div','dact'); host.appendChild(act);
+      btn(act,'Reset to defaults',()=>{const on=obj.on, hide=obj.hide; Object.assign(obj,x.def,{on,hide}); changed(); render()});
+      btn(act,'Copy to all chart windows',()=>{for(const Q of panes) if(Q!==P&&Q.S.view==='chart'){Q.S.ind[id]=JSON.parse(JSON.stringify(obj)); Q.dirty=true} saveLayout(); toast(`${x.name} copied to every chart window`,'info')});
+    }
+    function studyPage(host,id){
+      const Q=(P.S.studies||[]).find(x=>'st:'+x.uid===id), x=Q&&STUDY_BY[Q.id]; if(!x){st.sel='add'; addPage(host); return}
+      const h=el_('div','sxdh'), h4=el_('h4',null,x.label(Q)); h.appendChild(h4); host.appendChild(h);
+      host.appendChild(el_('p','sxsub',`${x.name} · ${x.place==='panel'?'in its own panel (drag the line above it to resize)':'on the price chart'}`));
+      const ctl=el_('div','sxctl'), vis=el_('label','schk'); vis.append(sw(Q.on,'Visible',()=>{Q.on=!Q.on; changed(); render()}),el_('span',null,'Visible')); ctl.appendChild(vis); host.appendChild(ctl);
+      const f=el_('div','fields'); host.appendChild(f);
+      buildFields(f,[...x.fields.filter(r=>!LEVF.some(l=>l[0]===r[0])),...(x.place==='panel'||x.fields.some(r=>r[0]==='alertOn')?LEVF:[['alertOn','Alert when price crosses the line','bool']])],Q,()=>{if(Q.alertOn&&x.place==='price') Q.alertMode='price'; Q._ap=null; changed(); h4.textContent=x.label(Q)});
+      const act=el_('div','dact'); host.appendChild(act);
+      btn(act,'Duplicate',()=>{const c=newStudy(Q.id,JSON.parse(ser(Q))); c.uid=Math.random().toString(36).slice(2,9); P.S.studies.push(c); changed(); st.sel='st:'+c.uid; render()});
+      btn(act,'Reset',()=>{Object.assign(Q,x.def); changed(); render()});
+      btn(act,'Remove',()=>{P.S.studies=P.S.studies.filter(z=>z!==Q); changed(); st.sel='add'; render()},'danger');
+    }
+    function addPage(host){
+      const h=el_('div','sxdh'); h.appendChild(el_('h4',null,'Add a study')); host.appendChild(h);
+      host.appendChild(el_('p','sxsub','Classic studies: each can be added more than once, on the price chart or in its own panel.'));
+      for(const g of ST_GROUPS){const items=ST.filter(x=>x.group===g); if(!items.length) continue; host.appendChild(el_('div','sxsec',g));
+        const grid=el_('div','sgrid'); host.appendChild(grid);
+        for(const x of items) btn(grid,'＋ '+x.name,()=>{const Q=newStudy(x.id); (P.S.studies||(P.S.studies=[])).push(Q); changed(); st.sel='st:'+Q.uid; render()},'sm');
+      }
+    }
+    /* ---- DOM & tape ---- */
+    function domSec(host){
+      const h=el_('div','sxdh'); h.appendChild(el_('h3','sxh','DOM & tape')); h.appendChild(seg([['dom','Order book'],['cols','Columns'],['tape','Time & Sales']],st.dom,k=>{st.dom=k; render()})); host.appendChild(h);
+      host.appendChild(el_('p','sxsub','For every DOM and every Time & Sales window.'));
+      // one DOM dialog, shown in two parts: the look (Order book) and the column table (Columns)
+      const sub=el_('div','sxemb sxd-'+st.dom); host.appendChild(sub); EMBED.host=sub;
+      if(st.dom==='tape') openTapeSettings(); else openDomSettings();
+    }
+    /* ---- Trading ---- */
+    function acctSec(host){
+      title(host,'Trading','How you place orders and what goes into P&L.');
+      const f=el_('div','fields'); host.appendChild(f); buildFields(f,ACC_FIELDS,ACC,()=>{saveAcc(); allDirty(); syncTradeBars(true)});
+    }
+    /* ---- Program ---- */
+    function appSec(host){
+      title(host,'Program','Theme, language, time and your saved settings.');
+      sec(host,'Look');
+      const f=el_('div','fields'); host.appendChild(f);
+      const th=row(f,'Theme',el_('select'),'The colours of the whole screen'); for(const [k,x] of Object.entries(THEMES)){const o=el_('option',null,x.name); o.value=k; th.appendChild(o)} th.value=THEME;
+      th.addEventListener('change',()=>applyTheme(th.value,true));
+      const lg=row(f,'Language · Мова',el_('select')); for(const [k,t] of [['en','English'],['uk','Українська']]){const o=el_('option',null,t); o.value=k; lg.appendChild(o)} lg.value=LANG;
+      lg.addEventListener('change',()=>{setLang(lg.value); render()});
+      const tz=row(f,'Time zone',el_('select'),'Clock and time scale'); for(const [z,t] of DISP_TZS){const o=el_('option',null,t); o.value=z; tz.appendChild(o)} tz.value=DISP_TZ;
+      tz.addEventListener('change',()=>{DISP_TZ=tz.value; try{localStorage.setItem('potik.tz',DISP_TZ)}catch(e){} lastClk=0; allDirty()});
+      row(f,'Data window',sw(DWIN,'Data window',b=>{toggleDataWin(); b.setAttribute('aria-checked',DWIN)}),'A small panel with the values under the cursor');
+      link(host,'Colours',()=>{st.sub='clr'; render()},'Background, text, buyers and sellers');
+      sec(host,'Controls');
+      link(host,'Hotkeys',()=>{st.sub='hk'; render()});
+      link(host,'Data & instrument',()=>{st.sub='data'; render()},'Binance, instrument, days of history');
+      sec(host,'Saved settings');
+      link(host,'Backups',()=>{st.sub='backup'; render()},'Snapshots every 5 minutes, recently deleted');
+      const f2=el_('div','fields'); host.appendChild(f2); const bo={journal:true,replace:false};
+      buildFields(f2,[['journal','Include the trade journal','bool'],['replace','Import replaces everything (off = merge)','bool']],bo,()=>{});
+      const a2=el_('div','dact'), fi=el_('input'); fi.type='file'; fi.accept='.json,application/json'; fi.hidden=true;
+      btn(a2,'Export settings…',()=>exportSettings(bo.journal)); btn(a2,'Import settings…',()=>fi.click());
+      fi.addEventListener('change',()=>{if(fi.files[0]) importSettings(fi.files[0],bo.replace)}); a2.appendChild(fi); host.appendChild(a2);
+      sec(host,'For developers');
+      link(host,'Diagnostics',()=>{st.sub='diag'; render()});
+      if(hasChart) link(host,'My Indicators code',()=>{st.sub='myind'; render()},'Your own indicators in JavaScript');
+    }
+    const SUBS={tpl:()=>openTemplates(P),draw:()=>openObjectTree(),tpo:()=>openTpoSettings(P),clr:()=>openColors(),hk:()=>openHotkeys(),data:()=>openDataDialog(),
+      backup:()=>openBackups(),diag:()=>openDiagnostics(),myind:()=>openMyIndicators(P)};
+    /* ---- search: every section, indicator and field ---- */
+    let IDX=null;
+    function searchIndex(){
+      const E=[], add=(label,path,fn)=>E.push({label,path,fn});
+      for(const [id,label] of SET_SECS) add(label,'',()=>go(id));
+      if(hasChart){
+        for(const r of PROP_FIELDS) add(r[1],'Chart',()=>go('chart'));
+        add('Bar type','Chart',()=>go('chart'));
+        for(const k of SET_ORDER){const x=IND_BY[k]; if(!x) continue; add(x.name,'Indicators',()=>go('ind',{sel:k,more:SET_RARE.includes(k)}));
+          const sp=indSplit(x); for(const [t,rows] of [['main',sp.main],['col',sp.col],['adv',sp.adv.map(a=>a[1])]]) for(const r of rows) add(r[1],'Indicators › '+x.name,()=>go('ind',{sel:k,more:SET_RARE.includes(k),tabFor:[k,t]}))}
+        for(const x of ST) add(x.name,'Indicators › Add a study',()=>go('ind',{sel:'add'}));
+      }
+      for(const r of DOM_FIELDS) add(r[1],'DOM & tape › Order book',()=>go('dom',{dom:'dom'}));
+      add('Columns','DOM & tape',()=>go('dom',{dom:'cols'}));
+      for(const r of TS_FIELDS) add(r[1],'DOM & tape › Time & Sales',()=>go('dom',{dom:'tape'}));
+      for(const r of ACC_FIELDS) add(r[1],'Trading',()=>go('acct'));
+      for(const t of ['Theme','Language · Мова','Time zone','Data window','Export settings…','Import settings…']) add(t,'Program',()=>go('app'));
+      for(const [k,[s,t]] of Object.entries(SET_SUB)) if(hasChart||!['tpl','draw','tpo','myind'].includes(k)) add(t,SET_SECS.find(z=>z[0]===s)[1],()=>go(s,{sub:k}));
+      return E;
+    }
+    function searchPage(host){
+      const q=st.q.toLowerCase(), tr=s=>trText(s).toLowerCase();
+      IDX=IDX||searchIndex();
+      const hits=IDX.filter(e=>tr(e.label).includes(q)||e.label.toLowerCase().includes(q)).slice(0,60);
+      title(host,'Search');
+      if(!hits.length){host.appendChild(el_('p','sxsub','Nothing found. Try another word.')); return}
+      const box=el_('div','sxres'); host.appendChild(box);
+      for(const e of hits){const b=el_('button'); b.type='button'; b.append(el_('b',null,e.label)); if(e.path) b.append(el_('small',null,e.path.split(' › ').map(trText).join(' › '))); b.addEventListener('click',e.fn); box.appendChild(b)}
+    }
+    function render(){
+      const keep=pg.scrollTop, same=render.k===st.sec+'|'+st.sub+'|'+st.q; render.k=st.sec+'|'+st.sub+'|'+st.q;
+      renderNav(); pg.innerHTML=''; EMBED.host=pg;
+      if(st.q) searchPage(pg);
+      else if(st.sub&&SUBS[st.sub]){
+        const parent=SET_SECS.find(s=>s[0]===st.sec);
+        const bk=el_('button','sxback'); bk.type='button'; bk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+        bk.appendChild(el_('span',null,parent[1])); bk.addEventListener('click',()=>{st.sub=null; render()}); pg.appendChild(bk);
+        const sub=el_('div','sxemb'); pg.appendChild(sub); EMBED.host=sub; SUBS[st.sub]();
+      }
+      else ({chart:chartSec,ind:indSec,dom:domSec,acct:acctSec,app:appSec}[st.sec]||indSec)(pg);
+      SET_LAST=st.sec; try{localStorage.setItem('potik.set.sec',st.sec)}catch(e){}
+      pg.scrollTop=same?keep:0;
+    }
+    srch.addEventListener('input',()=>{st.q=srch.value.trim(); render()});
+    dlg.hidden=false;   // pages that open inside (DOM, colours…) check that the window is showing
+    render();
   });
 }
 // a few settings change more than the drawing
@@ -5605,6 +5841,11 @@ const UK_RX=[
   [/^Session (\d) from \((ET|UTC)\)$/,'Сесія $1 від ($2)'],[/^Session (\d) to \((ET|UTC)\)$/,'Сесія $1 до ($2)'],[/^Recently deleted \((\d+)\)$/,'Нещодавно видалені ($1)'],[/^before version (.+)$/,'перед версією $1'],
   [/^(\w+) · (.+) · Binance live$/,'$1 · $2 · Binance наживо'],[/^(\w+) · (.+) · simulated$/,'$1 · $2 · симуляція'],[/^Chart$/,'Графік'],[/^Linked: group ([ABC]) \(click to change\)$/,'Зв’язано: група $1 (клік — змінити)'],
 ];
+Object.assign(UK,{"DOM & tape": "Стакан і стрічка", "Program": "Програма", "Basic": "Основне", "Advanced": "Розширене", "Time zone": "Часовий пояс", "Order book": "Стакан", "Search": "Пошук", "My Indicators code": "Код моїх індикаторів", "Search: colour, DOM, sound…": "Пошук: «колір», «стакан», «звук»…", "Settings sections": "Розділи налаштувань", "Bars": "Бари", "Ready-made sets": "Готові набори", "Other": "Інше", "Drawings on the chart": "Малюнки на графіку", "Save your own set and apply it to every chart": "Збережи свій набір і застосуй до всіх графіків", "Time, ticks or volume in one bar": "Час, тіки або об’єм в одному барі", "The switch shows it on the chart.": "Перемикач — показати на графіку.", "Less common": "Рідше потрібні", "Show fewer": "Сховати зайві", "＋ Add a study": "＋ Класичний індикатор", "RSI, MACD, Bollinger, pivots…": "RSI, MACD, Боллінджер, півоти…", "For experienced traders. Most of it is off by default, you can leave it as it is.": "Для досвідчених. Майже все тут вимкнене за замовчуванням — можна не чіпати.", "For every DOM and every Time & Sales window.": "Для всіх вікон стакану і стрічки угод.", "How you place orders and what goes into P&L.": "Як ти ставиш ордери і що рахує P&L.", "Theme, language, time and your saved settings.": "Тема, мова, час і твої збереження.", "Look": "Вигляд", "The colours of the whole screen": "Кольори всього екрана", "Clock and time scale": "Годинник і шкала часу", "A small panel with the values under the cursor": "Невелика панель зі значеннями під курсором", "Background, text, buyers and sellers": "Фон, текст, покупці й продавці", "Controls": "Керування", "Binance, instrument, days of history": "Binance, інструмент, днів історії", "Saved settings": "Збереження", "Snapshots every 5 minutes, recently deleted": "Копії кожні 5 хвилин, нещодавно видалене", "For developers": "Для розробника", "Your own indicators in JavaScript": "Свої індикатори на JavaScript", "Nothing found. Try another word.": "Нічого не знайдено. Спробуй інше слово.", "Open a chart window to change its indicators.": "Відкрий вікно графіка, щоб змінити його індикатори.", "Buys and sells at every price in the bar": "Купівлі й продажі на кожній ціні бару", "Bubbles where big trades went through": "Бульбашки там, де пройшли великі угоди", "Where big limit orders are waiting": "Де стоять великі лімітні заявки", "Buys minus sells, added up": "Покупки мінус продажі, наростаючим підсумком", "Average price by volume since the open": "Середня ціна за об’ємом з початку дня", "Where the most volume traded": "Де торгували найбільше", "Time spent at every price": "Скільки часу ціна була на кожному рівні", "Boxes around blocks of time": "Рамки навколо блоків часу", "Colours the bars by RSI": "Фарбує свічки за RSI", "Two moving averages": "Дві ковзні середні", "Volume and delta rows under the chart": "Рядки об’єму й дельти під графіком", "Resting size on each side of the book": "Лімітки з кожного боку стакану", "How fast the trades come in": "Як швидко йдуть угоди", "Zoomed out, coloured cells take the place of the numbers": "Віддалено — кольорові клітинки замість цифр", "What every cell shows": "Що показує кожна клітинка", "Something else beside it, if you want": "Ще щось поруч, якщо хочеш", "How many ticks go into one row": "Скільки тіків в одному рядку", "The brighter the cell, the more volume or delta": "Чим яскравіша клітинка, тим більше об’єму чи дельти", "The price with the most volume in each bar": "Ціна з найбільшим об’ємом у кожному барі", "Buys minus sells for the whole bar": "Покупки мінус продажі за весь бар", "Total volume of the bar": "Весь об’єм бару", "Smaller trades get no bubble": "Менші угоди без бульбашки", "Thin lines one standard deviation away from VWAP": "Тонкі лінії на одне стандартне відхилення від VWAP", "A faint halo around the line": "Ледь помітне світіння навколо лінії", "Each day: its own profile for every day on the chart": "«Кожен день» — свій профіль для кожного дня на графіку", "Where 70% of the day’s volume traded": "Де пройшло 70% денного об’єму", "Colours from few orders to many": "Кольори від малих заявок до великих", "The current book beside the newest bar": "Поточний стакан біля останнього бару", "One box for every block of this many minutes": "Одна рамка на кожен такий блок хвилин", "OHLC line and indicator names at the top": "Рядок OHLC і назви індикаторів угорі", "Candles, bars, line…": "Свічки, бари, лінія…", "A click on Bid / Ask places a limit order": "Клік по Bid / Ask ставить лімітний ордер", "Buy / Sell / Flatten buttons under the DOM": "Кнопки Купити / Продати / Флет під стаканом", "Taken off P&L on every fill": "Віднімається від P&L при кожному виконанні", "How much worse market and stop orders fill": "Наскільки гірше виконуються ринкові й стоп-ордери", "Filled Bid / Ask columns and volume bars": "Залиті колонки Bid / Ask і смужки об’єму", "Smaller prints are not listed": "Менші угоди не показуються", "Prints that come close together become one row": "Угоди, що йдуть впритул, стають одним рядком", "Buys and sells at every price in the bar.": "Купівлі й продажі на кожній ціні бару.", "Bubbles where big trades went through.": "Бульбашки там, де пройшли великі угоди.", "Where big limit orders are waiting.": "Де стоять великі лімітні заявки.", "Buys minus sells, added up.": "Покупки мінус продажі, наростаючим підсумком.", "Average price by volume since the open.": "Середня ціна за об’ємом з початку дня.", "Where the most volume traded.": "Де торгували найбільше.", "Time spent at every price.": "Скільки часу ціна була на кожному рівні.", "Boxes around blocks of time.": "Рамки навколо блоків часу.", "Colours the bars by RSI.": "Фарбує свічки за RSI.", "Two moving averages.": "Дві ковзні середні.", "Volume and delta rows under the chart.": "Рядки об’єму й дельти під графіком.", "Resting size on each side of the book.": "Лімітки з кожного боку стакану.", "How fast the trades come in.": "Як швидко йдуть угоди."});
+UK_RX.push([/^Window (\d+) · (.+)$/,'Вікно $1 · $2'],[/^How the candles and the chart look\. Window (\d+)\.$/,'Як виглядають свічки і сам графік. Вікно $1.'],[/^More indicators \((\d+)\)$/,'Ще індикатори ($1)'],[/^“(.+)” applied to this window$/,'«$1» застосовано до цього вікна']);
+Object.assign(UK,{"1 tick": "1 тік", "2 ticks": "2 тіки", "Absorption (heavy volume, price rejects it)": "Поглинання (великий об’єм, а ціна не пішла)", "Absorption color": "Колір поглинання", "Absorption: close at least N ticks away": "Поглинання: закриття щонайменше за N тіків", "Absorption: × average level volume": "Поглинання: × середній об’єм рівня", "Always": "Завжди", "Ask color": "Колір Ask", "Ask colour (when separate)": "Колір Ask (якщо окремо)", "Ask volume": "Об’єм Ask", "Automatic": "Автоматично", "Background color": "Колір фону", "Background opacity %": "Прозорість фону %", "Band color": "Колір смуг", "Band opacity %": "Прозорість смуг %", "Band style": "Стиль смуг", "Band width": "Товщина смуг", "Band ±1σ": "Смуга ±1σ", "Band ±2σ": "Смуга ±2σ", "Band ±3σ": "Смуга ±3σ", "Bar color": "Колір барів", "Bid % / Ask % above bar": "Bid % / Ask % над баром", "Bid color": "Колір Bid", "Bid colour (when separate)": "Колір Bid (якщо окремо)", "Bid volume": "Об’єм Bid", "Bid x Ask separator": "Роздільник Bid x Ask", "Bid − ask line color": "Колір лінії Bid − Ask", "Bid/Ask profile": "Профіль Bid/Ask", "Bookmap: navy → blue → grey → orange": "Bookmap: темно-синій → синій → сірий → помаранчевий", "Buy (ask) color": "Колір покупців (Ask)", "Buy imbalance color": "Колір дисбалансу покупців", "Buy zone color": "Колір зони покупців", "Buyers color (Bids, Buy Vol)": "Колір покупців (Bids, Buy Vol)", "By delta": "За дельтою", "By volume": "За об’ємом", "Candle strip (open/close, high/low)": "Смужка свічки (відкриття/закриття, хай/лоу)", "Cell background": "Фон клітинки", "Cell width px": "Ширина клітинки px", "Cells from bar width ≥ px": "Клітинки від ширини бару ≥ px", "Classic ladder look (filled Bids / Asks, volume bars)": "Класичний вигляд (залиті Bids / Asks, смужки об’єму)", "Classic: blue → yellow → red": "Класика: синій → жовтий → червоний", "Color at RSI 30": "Колір при RSI 30", "Color at RSI 70": "Колір при RSI 70", "Colour bids and asks separately": "Окремі кольори для Bid і Ask", "Coloured cells": "Кольорові клітинки", "Combine prints at one price and side within ms (0 = off)": "Склеювати угоди на одній ціні й стороні за мс (0 = вимк.)", "Compare": "Порівнювати", "Composite sessions": "Сесій у композиті", "Contrast (higher shows smaller orders)": "Контраст (більше — видно дрібніші заявки)", "Count 0 on the other side as 1": "Рахувати 0 на іншій стороні як 1", "DOM window: Time & Sales on the left": "Вікно стакану: стрічка угод зліва", "Daily profile: thin lines on the value area edges (VAH / VAL)": "Денний профіль: тонкі лінії на межах value area (VAH / VAL)", "Dark background where the book was recorded": "Темний фон там, де стакан записано", "Delta under bar": "Дельта під баром", "Developing line color": "Колір ліній, що формуються", "Diagonal (ask vs bid one tick lower)": "По діагоналі (Ask проти Bid на тік нижче)", "Each day, from its start (00:00) to the next day": "Кожен день, від початку (00:00) до наступного дня", "Exhaustion (thin print at the extreme)": "Виснаження (тонка угода на екстремумі)", "Exhaustion color": "Колір виснаження", "Exhaustion: max volume at the extreme": "Виснаження: макс. об’єм на екстремумі", "Extend previous high/low": "Продовжувати попередній хай / лоу", "Extend stacked zones to the right": "Продовжувати зони праворуч", "Extension color": "Колір продовження", "Fast color": "Колір швидкої", "Fast period": "Період швидкої", "Fill full chart height": "На всю висоту графіка", "Filter line color": "Колір лінії фільтра", "Filter: SMA period": "Фільтр: період SMA", "Filter: × SMA": "Фільтр: × SMA", "Full brightness at size (0 = auto)": "Повна яскравість від розміру (0 = авто)", "Full footprint from bar width ≥ px": "Повний футпринт від ширини бару ≥ px", "HVN color": "Колір HVN", "Hide numbers ≤": "Ховати числа ≤", "Hide sizes below": "Ховати розміри менші за", "High / low lines": "Лінії хаю / лоу", "High / low volume nodes on the side profile": "Вузли високого / низького об’єму на бічному профілі", "Highlight color": "Колір підсвітки", "Histogram color": "Колір гістограми", "Horizontal (same price)": "Горизонтально (та сама ціна)", "Keep zones and lines when zoomed out": "Лишати зони й лінії при віддаленні", "LVN color": "Колір LVN", "Ladder": "Драбина", "Ladder (bid left, ask right)": "Драбина (Bid зліва, Ask справа)", "Left side of the chart": "Зліва на графіку", "Letter period (min)": "Період літери (хв)", "Letters when there is room": "Літери, коли є місце", "Level 1 ratio %": "Рівень 1, співвідношення %", "Level 2 ratio % (0 = off)": "Рівень 2, співвідношення % (0 = вимк.)", "Level 3 ratio % (0 = off)": "Рівень 3, співвідношення % (0 = вимк.)", "Level of detail: coloured cells when zoomed out": "Деталізація: кольорові клітинки при віддаленні", "Levels per side": "Рівнів з кожного боку", "Lines and zones: only untested ones": "Лінії й зони: лише неторкнуті", "Look back sessions": "Сесій назад", "Manual (double-click or click Price)": "Вручну (подвійний клік або клік по ціні)", "Max font size": "Макс. розмір шрифту", "Max footprint width px (0 = whole bar)": "Макс. ширина футпринту px (0 = весь бар)", "Min difference (delta filter)": "Мін. різниця (фільтр дельти)", "Min volume": "Мін. об’єм", "Monochrome": "Монохром", "Naked POC color": "Колір голих POC", "Naked POC lines": "Лінії голих POC", "Naked VAH / VAL too": "Також голі VAH / VAL", "Naked level color": "Колір голих рівнів", "Node lines across the chart": "Лінії вузлів через графік", "Number color": "Колір цифр", "Only prints ≥ size (0 = all; works from 10)": "Лише угоди ≥ розміру (0 = усі; працює від 10)", "Only when against the candle": "Лише коли проти свічки", "Outside value area %": "Поза value area %", "Outside value area color": "Колір поза value area", "POC / VAH / VAL lines across the chart": "Лінії POC / VAH / VAL через графік", "POC fill strength %": "Яскравість заливки POC %", "POC line across the session": "Лінія POC через сесію", "POC outline box": "Рамка навколо POC", "POC: soft fill across the row": "POC бару: м’яка заливка рядка", "Paint price bars above the filter": "Фарбувати цінові бари вище фільтра", "Per N seconds": "За N секунд", "Range length (min)": "Довжина блоку (хв)", "Right side of the chart": "Справа на графіку", "Row height px": "Висота рядка px", "Sell (bid) color": "Колір продавців (Bid)", "Sell imbalance color": "Колір дисбалансу продавців", "Sell zone color": "Колір зони продавців", "Sellers color (Asks, Sell Vol)": "Колір продавців (Asks, Sell Vol)", "Session POC line": "Лінія POC сесії", "Show prints ≥ size": "Показувати угоди ≥ розміру", "Show the live book right of the last bar": "Живий стакан праворуч від останнього бару", "Show zeros": "Показувати нулі", "Slow color": "Колір повільної", "Slow period": "Період повільної", "Soft fill inside the first band": "М’яка заливка всередині першої смуги", "Soft glow": "М’яке світіння", "Stacked imbalances": "Сходинки дисбалансів", "Stacked: allowed gap (ticks)": "Сходинки: дозволений пропуск (тіки)", "Stacked: levels in a row": "Сходинки: рівнів поспіль", "Time & Sales width px": "Ширина стрічки угод px", "Trades count": "Кількість угод", "Unfinished auction color": "Колір незавершеного аукціону", "Unfinished auctions (bid and ask both traded at the high / low)": "Незавершені аукціони (на хаї / лоу торгували і Bid, і Ask)", "Value area bracket": "Дужка value area", "Value area opacity %": "Прозорість value area %", "Volume above bar": "Об’єм над баром", "Volume histogram behind numbers": "Гістограма об’єму за цифрами", "Where": "Де", "Width % of the session": "Ширина % сесії", "dashed": "пунктир", "Потік: violet → magenta → white": "Потік: фіолетовий → маджента → білий", "Notes: click a cell to write; drawn as lines on charts": "Нотатки: клік по клітинці, щоб написати; малюються лініями на графіках", "P/L: profit or loss of the open position if it closed at that price": "P/L: прибуток чи збиток позиції, якщо закрити на цій ціні", "Orders: your working orders; click one to cancel it": "Ордери: твої робочі ордери; клік — скасувати", "Bid Δ: bid size added (+) or pulled (−) since the last price change": "Bid Δ: скільки додали (+) чи зняли (−) на Bid після останньої зміни ціни", "Bids: resting buy orders": "Bids: лімітки на купівлю", "@Bid: volume sold into the bid since the last reset": "@Bid: скільки продали в Bid після скидання", "@Ask: volume bought at the ask since the last reset": "@Ask: скільки купили по Ask після скидання", "Asks: resting sell orders": "Asks: лімітки на продаж", "Ask Δ: ask size added (+) or pulled (−) since the last price change": "Ask Δ: скільки додали (+) чи зняли (−) на Ask після останньої зміни ціни", "LTQ: size of the last trade": "LTQ: розмір останньої угоди", "Volume: session volume at price, bid/ask split, POC and value area": "Volume: об’єм сесії на ціні, Bid/Ask, POC і value area", "Sell Vol: session volume sold at price": "Sell Vol: продано на ціні за сесію", "Buy Vol: session volume bought at price": "Buy Vol: куплено на ціні за сесію", "Delta: session buy minus sell volume at price": "Delta: куплено мінус продано на ціні за сесію", "DOM settings · all DOMs": "Стакан · усі стакани", "Pick the columns for the DOM beside a chart (+DOM) and for a DOM window. Arrows change the order. Beside a chart, columns drop by priority when the window gets narrow.": "Вибери колонки для стакану біля графіка (+DOM) і для вікна стакану. Стрілки міняють порядок. Біля графіка зайві колонки ховаються, коли вікно вузьке.", "Column": "Колонка", "Beside chart": "Біля графіка", "DOM window": "Вікно стакану", "Columns": "Колонки", "Time & Sales settings · all tapes": "Стрічка угод · усі стрічки", "Newest print on top. Hover the list to pause it, then scroll for older prints; move away or double-click to go live again.": "Найновіша угода зверху. Наведи мишу — список зупиниться, прокрути до старіших; прибери мишу або двічі клацни, щоб повернутись наживо.", "Bold from size": "Жирним від розміру", "Highlight row from size": "Підсвічувати рядок від розміру", "Buy color": "Колір покупок", "Sell color": "Колір продажів", "Show milliseconds": "Показувати мілісекунди"});
+Object.assign(UK,{"Re-centre when price is N rows from centre": "Центрувати, коли ціна за N рядків від центру", "@Bid / @Ask: reset a price after N s without trades (0 = never)": "@Bid / @Ask: скидати ціну після N с без угод (0 = ніколи)", "Histograms in Bid / Ask / @ columns": "Гістограми в колонках Bid / Ask / @", "Bid / Ask histogram full at size (0 = auto)": "Гістограма Bid / Ask повна від розміру (0 = авто)", "Highlight resting orders ≥": "Підсвічувати лімітки ≥", "Full price (off = last 3 digits)": "Повна ціна (вимк. = останні 3 цифри)", "Price column: session range, open, high, low, previous close": "Колонка ціни: діапазон сесії, відкриття, хай, лоу, попереднє закриття", "Dividers: bid/ask, session high/low": "Роздільники: Bid/Ask, хай / лоу сесії", "Footer: book totals and tape speed": "Унизу: підсумки стакану і швидкість стрічки", "Draw notes as lines on charts": "Малювати нотатки лініями на графіках", "Volume column value area %": "Колонка Volume: value area %", "Note color": "Колір нотаток", "Order": "Порядок"});
+
 
 /* ---------- linked windows: same colour = same time (scroll) and a shared crosshair ---------- */
 const LINK_COL=['','#7ee0d4','#ffd166','#8fd3ff'], LINK_NAME=['','A','B','C'];
