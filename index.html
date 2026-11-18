@@ -199,7 +199,12 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid var(--q251e2c,#
 .dt svg{width:20px;height:20px}
 .dt .vs{width:1px;height:20px;background:var(--q2a2232,#2a2232);margin:0 3px}
 .dt.fav{z-index:21;padding:3px 4px;transform:none}
-.dt.fav button{width:32px;height:30px}
+.dt.fav button{width:30px;height:28px;color:var(--text,#e6e6e6)}
+.dt.fav{padding:2px 3px;gap:1px;border-radius:8px}
+.dt.fav .fl{display:contents}
+.dt.fav svg{width:22px;height:22px}
+.dt.fav .fadd{width:22px;color:var(--muted,#8c8c8c)}
+.dt.fav .fadd svg{width:16px;height:16px}
 /* drawing toolbar (17.11, like TradingView): shown while one drawing is selected */
 .dt.dsb{z-index:22;padding:3px 4px;transform:none}
 .dt.dsb[hidden]{display:none}
@@ -229,6 +234,8 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid var(--q251e2c,#
 .dt.dock .tgw{flex:none}
 .dt.dock .tgw .tgc{position:absolute;right:-3px;bottom:1px;width:10px!important;height:12px!important;border-radius:3px}
 .dt.dock .sp{flex:1}
+.dt.off{display:none!important}
+#tbeye{display:inline-grid;place-items:center;padding:0 8px}#tbeye[hidden]{display:none}#tbeye svg{width:17px;height:17px}
 .tfly.fx{position:fixed;top:auto;left:auto}
 
 
@@ -240,6 +247,7 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid var(--q251e2c,#
 .mitem:hover,.msubw.open>.mitem{background:var(--q241c2c,#241c2c);color:#fff}
 .mitem:disabled{opacity:.35;cursor:default;background:none}
 .mitem svg,.mitem .noic{width:16px;height:16px;flex:none}
+.mitem.on>.noic::before{content:'✓';display:block;text-align:center;font-size:12px;line-height:1;color:var(--text)}
 .mitem.on>svg:first-child{color:var(--q0b0710,#0b0710);background:var(--mag);border-radius:3px;padding:1px}
 .mitem.danger{color:#ff8a9a}
 .mlab{flex:1}
@@ -424,6 +432,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
     <div class="mtray" id="mtray" role="group" aria-label="Minimized windows" hidden></div>
     <div class="right">
       <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)" hidden>⌘ K</button>
+      <button type="button" class="hbtn ic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button type="button" class="hbtn" id="clrb" title="Colours: the theme and every colour in one place">Colours</button>
       <button type="button" class="hbtn" id="setb" title="Settings: every tool in one place">Settings</button>
       <button type="button" class="hbtn" id="appb" title="Appearance & language" hidden>Aa</button>
@@ -691,7 +700,7 @@ function contractOf(d){
 const SYM=DS&&DS.meta.label?DS.meta.label:contractOf(CAL[CAL.length-1]);
 
 /* ---------- global replay settings ---------- */
-const G={speed:1,playing:true,globalX:false,cross:null,hideDraw:(()=>{try{return localStorage.getItem('potik.hidedraw')==='1'}catch(e){return false}})()};
+const G={speed:1,playing:true,globalX:(()=>{try{return localStorage.getItem('potik.gcross')!=='0'}catch(e){return true}})(),cross:null,hideDraw:(()=>{try{return localStorage.getItem('potik.hidedraw')==='1'}catch(e){return false}})()};
 const setHideDraw=v=>{G.hideDraw=v; try{localStorage.setItem('potik.hidedraw',v?'1':'0')}catch(e){} const b=document.getElementById('hidb'); if(b) b.setAttribute('aria-pressed',v); for(const P of panes) P.dirty=true};
 // replay: the session being replayed, its checkpoints (rewind), blind training, pause on big trades, the live point to return to
 const RP={on:false,day:-1,start:0,blind:false,big:0,cps:[],cpMax:-1e9,id:'',j0:0,hit:null,ended:false,seeking:false,live:null,poff:0,reported:false};
@@ -1943,7 +1952,7 @@ function drawChartOverlay(P,ctx,w,h){
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,plotW,timeTop); ctx.clip(); ctx.setLineDash([3,3]); ctx.lineWidth=1;
   if(showX){ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.beginPath(); ctx.moveTo(Math.round(hv.x)+.5,0); ctx.lineTo(Math.round(hv.x)+.5,timeTop); if(hv.y<pH){ctx.moveTo(0,Math.round(hv.y)+.5); ctx.lineTo(plotW,Math.round(hv.y)+.5)} ctx.stroke()}
   else if(G.cross&&G.cross.P!==P&&(G.globalX||(P.S.link&&G.cross.link===P.S.link))){const x=Math.round(g.xAt(G.cross.t))+.5, y=Math.round(g.yOf(G.cross.p))+.5;
-    ctx.strokeStyle=hexA('#e23cf0',.45); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,timeTop); if(y>=0&&y<=pH){ctx.moveTo(0,y); ctx.lineTo(plotW,y)} ctx.stroke()}
+    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,timeTop); if(y>=0&&y<=pH){ctx.moveTo(0,y); ctx.lineTo(plotW,y)} ctx.stroke()}
   ctx.setLineDash([]); ctx.restore();
   if(showX&&hv.y<pH){ctx.font=`600 10.5px ${MONO}`; tag(ctx,plotW,AX,hv.y,0,pH,'#3a2c47','#fff',fP(Math.round(g.pAt(hv.y))))}
   if(showX&&hi!=null&&B[hi]){const x=clamp(hv.x,58,plotW-58); ctx.fillStyle='#3a2c47'; ctx.fillRect(x-58,timeTop+3,116,16);
@@ -3739,6 +3748,7 @@ function posZones(ctx,g,d,st){
 }
 function lockIcon(ctx,x,y){ctx.fillStyle='#000'; ctx.fillRect(x-7,y-7,14,14); ctx.strokeStyle='#efe9f5'; ctx.lineWidth=1.3; ctx.strokeRect(x-4.5,y-1,9,6.5); ctx.beginPath(); ctx.arc(x,y-1,3,Math.PI,0); ctx.stroke()}
 function segDist(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,l=dx*dx+dy*dy; let t=l?((px-x1)*dx+(py-y1)*dy)/l:0; t=clamp(t,0,1); return Math.hypot(px-(x1+t*dx),py-(y1+t*dy))}
+const nearEdge=(p,b,E)=>p.x>=b[0]-E&&p.x<=b[2]+E&&p.y>=b[1]-E&&p.y<=b[3]+E&&(Math.abs(p.x-b[0])<=E||Math.abs(p.x-b[2])<=E||Math.abs(p.y-b[1])<=E||Math.abs(p.y-b[3])<=E);
 function hitTest(P,p){
   const g=P.V.g; if(!g||P.S.view==='tpo'||G.hideDraw) return null;
   for(const sel of selected()) if(visibleIn(sel,P)) for(const [h,x,y] of handlesOf(sel,g)) if(Math.hypot(p.x-x,p.y-y)<=8) return {d:sel,h};
@@ -3747,8 +3757,10 @@ function hitTest(P,p){
     if(d.type==='vprof'&&d._hi!=null){
       const x=g.xAt(d.a.t),x2=g.xAt(d.b.t), y=g.yOf(d._hi), y2=g.yOf(d._lo), xb=d.st.mode==='live'?Math.max(g.xAt(sim.t),x+40):x2;
       if(p.x>=Math.min(x,xb)-4&&p.x<=Math.max(x,xb)+4&&p.y>=Math.min(y,y2)-6&&p.y<=Math.max(y,y2)+6) return {d,h:'body'}; continue}
+    // 18.11 (user: «квадрат рухається лише коли наводжусь на його границі; так само з позиціями»): inside them the chart gets the mouse
     if(d.type==='long'||d.type==='short'){const x=g.xAt(d.t0),x2=g.xAt(d.t1),ys=[g.yOf(d.target),g.yOf(d.stop)];
-      if(p.x>=Math.min(x,x2)&&p.x<=Math.max(x,x2)&&p.y>=Math.min(...ys)&&p.y<=Math.max(...ys)) return {d,h:'body'}; continue}
+      if(nearEdge(p,[Math.min(x,x2),Math.min(...ys),Math.max(x,x2),Math.max(...ys)],5)||(p.x>=Math.min(x,x2)-5&&p.x<=Math.max(x,x2)+5&&Math.abs(p.y-g.yOf(d.entry))<=5)) return {d,h:'body'}; continue}
+    if(d.type==='rect'){const b=shapeOf(d,g,P).boxes[0]; if(b&&nearEdge(p,b,6)) return {d,h:'body'}; continue}
     const sh=shapeOf(d,g,P);
     if(sh.segs.some(q=>segDist(p.x,p.y,q[0],q[1],q[2],q[3])<=6)) return {d,h:'body'};
     if(sh.boxes.some(b=>p.x>=b[0]-4&&p.x<=b[2]+4&&p.y>=b[1]-4&&p.y<=b[3]+4)) return {d,h:'body'};
@@ -3876,6 +3888,7 @@ const TICON={
   eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
   del:'<path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2h9.2L17.5 7M10.2 10.5v5.5M13.8 10.5v5.5" stroke-linecap="round"/>',
   dock:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M15 4.5v15M17.3 8h1M17.3 11h1M17.3 14h1"/>',
+  eyeoff:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/>',
 };
 const TOOL_NAME=t=>({rectB:'Blue zone (rectangle)',rectR:'Red zone (rectangle)',cursor:'Cursor (Esc)',ell5:'Elliott impulse 1-2-3-4-5',ell3:'Elliott correction A-B-C'}[t]||TNAME[t]||t);
 // 29.10: only the tools in use (ray, extended line, horizontal ray, arrow, channel, Fibonacci, ellipse, brush, price label and Elliott are gone from the toolbar;
@@ -3907,6 +3920,7 @@ function buildToolbar(){
   const hid=mk('hidb','eye','Hide / show all drawings'); hid.setAttribute('aria-pressed',G.hideDraw); hid.addEventListener('click',()=>setHideDraw(!G.hideDraw));
   const del=mk('del','del','Delete selected drawing'); let arm=0;
   add(el_('span','sp'));
+  mk('tbhide','eyeoff','Hide this toolbar (the eye at the top right brings it back)').addEventListener('click',()=>setTbOff(true));   // 18.11
   const dk=mk('dockb','dock','Toolbar position: right, left or floating'); dk.addEventListener('click',e=>{const r=dk.getBoundingClientRect(); showMenu([['right','Right side'],['left','Left side'],['float','Floating']].map(([v,t])=>({label:t,on:TB_MODE===v,act:()=>setTbMode(v)})),TB_MODE==='left'?r.right+6:r.left-200,r.top)});
   del.addEventListener('click',()=>{
     if(selected().length){deleteSelected(); return}
@@ -3943,6 +3957,10 @@ function setTbMode(m){
   if(TB_MODE==='right') row.appendChild(dt); else if(TB_MODE==='left') row.insertBefore(dt,ws); else{ws.appendChild(dt); const r=ws.getBoundingClientRect(); barPos?placeBar(barPos.x,barPos.y):placeBar((r.width-dt.offsetWidth)/2,40)}
   applyLayout(); allDirty();
 }
+// 18.11: the eye at the bottom of the toolbar hides it; the eye in the top bar brings it back (localStorage potik.tboff)
+let TB_OFF=false; try{TB_OFF=localStorage.getItem('potik.tboff')==='1'}catch(e){}
+function setTbOff(v){TB_OFF=v; try{localStorage.setItem('potik.tboff',v?'1':'0')}catch(e){} dt.classList.toggle('off',v); $('#tbeye').hidden=!v; applyLayout(); allDirty()}
+dt.classList.toggle('off',TB_OFF); $('#tbeye').hidden=!TB_OFF; $('#tbeye').addEventListener('click',()=>setTbOff(false));
 let gdrag=null;
 grip.addEventListener('pointerdown',e=>{grip.setPointerCapture(e.pointerId); gdrag={x:e.clientX,y:e.clientY,l:parseFloat(dt.style.left)||0,t:parseFloat(dt.style.top)||0}});
 grip.addEventListener('pointermove',e=>{if(!gdrag||TB_MODE!=='float')return; placeBar(gdrag.l+e.clientX-gdrag.x,gdrag.t+e.clientY-gdrag.y)});
@@ -3950,17 +3968,35 @@ grip.addEventListener('pointerup',()=>{gdrag=null; try{localStorage.setItem('pot
 
 /* favourites bar (29.10, like TradingView's): short, long, rectangle and two ready zones — blue and red — to grab and stretch.
    It floats over the charts, is always shown (it does not hide by itself), moves by its grip and remembers where it was put. */
-const FAV_TOOLS=['short','long','rect','rectB','rectR'];
+/* 18.11: you choose the tools here (the «+» at the end, right-click on the bar, or right-click a tool in the left column);
+   icons are thin, like TradingView's. Kept in localStorage potik.favtools. */
+const FAV_ALL=['short','long','rect','rectB','rectR','trend','hline','vline','text','measure','vprof','avwap'];
+let FAV_TOOLS=['short','long','rect','rectB','rectR']; try{const x=JSON.parse(localStorage.getItem('potik.favtools')||'null'); if(Array.isArray(x)) FAV_TOOLS=x.filter(t=>FAV_ALL.includes(t))}catch(e){}
+const FB='var(--bg,#000)';
 const FICON={
-  short:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">S</text>',
-  long:'<path d="M9 6h11M9 18h11"/><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><text x="14.5" y="14.8" font-size="8.5" font-weight="600" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">L</text>',
-  rect:'<rect x="5.5" y="5.5" width="13" height="13"/><g fill="#16121b"><circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></g>',
-  rectB:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#566fb8" stroke="#7a8dcc" stroke-width="1"/>',
-  rectR:'<rect x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#9a434b" stroke="#bd5f67" stroke-width="1"/>',
+  short:`<path d="M9 6.5h11M9 17.5h11"/><circle cx="6.5" cy="6.5" r="1.8" style="fill:${FB}"/><circle cx="6.5" cy="17.5" r="1.8" style="fill:${FB}"/><text x="14.5" y="14.6" font-size="7.5" font-weight="400" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">S</text>`,
+  long:`<path d="M9 6.5h11M9 17.5h11"/><circle cx="6.5" cy="6.5" r="1.8" style="fill:${FB}"/><circle cx="6.5" cy="17.5" r="1.8" style="fill:${FB}"/><text x="14.5" y="14.6" font-size="7.5" font-weight="400" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">L</text>`,
+  rect:`<rect x="5.5" y="5.5" width="13" height="13"/><g style="fill:${FB}"><circle cx="5.5" cy="5.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="18.5" r="1.8"/></g>`,
+  rectB:'<rect x="5" y="5" width="14" height="14" rx="2.5" fill="#566fb8" stroke="#7a8dcc" stroke-width=".8"/>',
+  rectR:'<rect x="5" y="5" width="14" height="14" rx="2.5" fill="#9a434b" stroke="#bd5f67" stroke-width=".8"/>',
+  trend:`<path d="M7 17L17 7"/><circle cx="5.7" cy="18.3" r="1.8" style="fill:${FB}"/><circle cx="18.3" cy="5.7" r="1.8" style="fill:${FB}"/>`,
+  hline:`<path d="M3 12h7.2M13.8 12H21"/><circle cx="12" cy="12" r="1.8" style="fill:${FB}"/>`,
+  vline:`<path d="M12 3v7.2M12 13.8V21"/><circle cx="12" cy="12" r="1.8" style="fill:${FB}"/>`,
 };
+const favIcon=t=>FICON[t]||TICON[t]||'';
 const fav=document.createElement('div'); fav.className='dt fav'; fav.id='fav'; fav.setAttribute('role','toolbar'); fav.setAttribute('aria-label','Favourite tools');
-fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span>`+FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${FICON[t]}</svg></button>`).join('');
+fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span><span class="fl"></span><button type="button" class="fadd" title="Add or remove tools" aria-label="Add or remove tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M12 7v10M7 12h10"/></svg></button>`;
+function favRender(){
+  fav.querySelector('.fl').innerHTML=FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="${tool===t}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round">${favIcon(t)}</svg></button>`).join('');
+}
+function favToggle(t){FAV_TOOLS=FAV_TOOLS.includes(t)?FAV_TOOLS.filter(x=>x!==t):[...FAV_TOOLS,t]; try{localStorage.setItem('potik.favtools',JSON.stringify(FAV_TOOLS))}catch(e){} favRender(); requestAnimationFrame(()=>favHome())}
+function favMenu(x,y){showMenu([...FAV_ALL.map(t=>({label:TOOL_NAME(t),on:FAV_TOOLS.includes(t),act:()=>favToggle(t)}))],x,y)}
+favRender();
 ws.appendChild(fav);
+fav.querySelector('.fadd').addEventListener('click',e=>{e.stopPropagation(); const r=e.currentTarget.getBoundingClientRect(); favMenu(r.left,r.bottom+4)});
+fav.addEventListener('contextmenu',e=>{e.preventDefault(); favMenu(e.clientX,e.clientY)});
+$('#dt').addEventListener('contextmenu',e=>{const b=e.target.closest('[data-t]'); if(!b||!FAV_ALL.includes(b.dataset.t)) return; e.preventDefault(); const t=b.dataset.t, on=FAV_TOOLS.includes(t);
+  showMenu([{label:on?'Remove from favourites':'Add to favourites',act:()=>favToggle(t)}],e.clientX,e.clientY)});
 let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav')||'null')}catch(e){}
 function placeFav(x,y){const r=ws.getBoundingClientRect(), w=fav.offsetWidth, h=fav.offsetHeight;
   fav.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; fav.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
@@ -5445,6 +5481,8 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"Blue zone (rectangle)":"Синя зона (прямокутник)","Red zone (rectangle)":"Червона зона (прямокутник)",
+"Show the drawing toolbar":"Показати панель малювання","Hide this toolbar (the eye at the top right brings it back)":"Сховати цю панель (око вгорі праворуч поверне її)","Add or remove tools":"Додати або прибрати інструменти","Favourite tools":"Улюблені інструменти","Add to favourites":"Додати в улюблені","Remove from favourites":"Прибрати з улюблених",
 "Glow: POC of each bar":"Світіння: POC кожного бару","White box":"Біла рамка","White glow":"Біле світіння","Marks at the sides":"Мітки по краях","Yellow numbers":"Жовті цифри","Faint spot":"Слабка пляма",
 "Background: glow by volume":"Фон: світіння за обсягом","Background: solid":"Фон: суцільна заливка",
 "Glow by volume, colour of the stronger side":"Світіння за обсягом, колір сильнішої сторони","Glow: where":"Світіння: де","Whole cell, soft edges":"Уся клітинка, м’які краї","Stronger side only":"Лише сильніша сторона","Whole cell, grey when balanced":"Уся клітинка, сіра при рівновазі","Glow: brightest at the most volume %":"Світіння: найяскравіше при найбільшому обсязі %","Glow: faintest %":"Світіння: найслабше %",
@@ -6070,7 +6108,7 @@ document.addEventListener('pointerdown',e=>{if(!cmenu.hidden&&!cmenu.contains(e.
 window.addEventListener('blur',closeMenu);
 
 function setMode(P,m){P.mode=m; P.dirty=true; saveLayout()}
-function toggleGlobal(){G.globalX=!G.globalX; G.cross=null; allDirty()}
+function toggleGlobal(){G.globalX=!G.globalX; G.cross=null; try{localStorage.setItem('potik.gcross',G.globalX?'1':'0')}catch(e){} allDirty()}
 function resetView(P){const V=P.V; V.scroll=0; V.autoY=true; V.fit=true; V.barW=defaultBarW(P.S); P.dirty=true}
 
 const KEYS=new Set();
