@@ -1533,8 +1533,8 @@ const IND=[
    def:{on:true,period:14,low:'#e23cf0',high:'#f7dcf3'},
    fields:[['period','Period','num',2,100,1],['low','Color at RSI 30','color'],['high','Color at RSI 70','color']]},
   {id:'rng',name:'Time Ranges',group:'Price',desc:'Boxes around fixed time blocks with high, low, size and volume.',
-   def:{on:true,minutes:90,color:'#7b23b4',opacity:40,full:true,hilo:true,labels:true,ext:true,extColor:'#c4b2ee'},
-   fields:[['minutes','Range length (min)','select',[15,30,60,90,120,240]],['color','Background color','color'],['opacity','Background opacity %','range',5,90,1],['full','Fill full chart height','bool'],['hilo','High / low lines','bool'],['labels','Labels','bool'],['ext','Extend previous high/low','bool'],['extColor','Extension color','color']]},
+   def:{on:true,minutes:90,bg:false,color:'#7b23b4',opacity:40,full:true,hilo:true,labels:true,ext:true,extColor:'#c4b2ee'},
+   fields:[['minutes','Range length (min)','select',[15,30,60,90,120,240]],['bg','Background fill','bool'],['color','Background color','color'],['opacity','Background opacity %','range',5,90,1],['full','Fill full chart height','bool'],['hilo','High / low lines','bool'],['labels','Labels','bool'],['ext','Extend previous high/low','bool'],['extColor','Extension color','color']]},
   {id:'ema',name:'EMA',group:'Trend',desc:'Two exponential moving averages.',
    def:{on:false,p1:9,c1:'#f7dcf3',p2:21,c2:'#8f6bff',width:1.3},
    fields:[['p1','Fast period','num',2,400,1],['c1','Fast color','color'],['p2','Slow period','num',2,400,1],['c2','Slow color','color'],['width','Line width','num',.5,4,.1]]},
@@ -2003,7 +2003,7 @@ function drawChart(P,ctx,w,h){
   for(const r of RG){
     if(r.b<i0||r.a>i1) continue;
     const x0=xOf(r.a)-bw/2, x1=xOf(r.b)+bw/2, yT=I.rng.full?0:yOf(r.hi)-tp/2, yB=I.rng.full?pH:yOf(r.lo)+tp/2;
-    ctx.fillStyle=hexA(I.rng.color,ro); ctx.fillRect(x0,yT,x1-x0,yB-yT);
+    if(I.rng.bg){ctx.fillStyle=hexA(I.rng.color,ro); ctx.fillRect(x0,yT,x1-x0,yB-yT)}   // 18.11 (user: «забери фіолетовий фон, тільки чорний»): no fill unless turned on
     if(I.rng.hilo){ctx.fillStyle=hexA(I.rng.extColor,.45); ctx.fillRect(x0,Math.round(yOf(r.hi))-.5,x1-x0,1); ctx.fillRect(x0,Math.round(yOf(r.lo))-.5,x1-x0,1)}
   }
 
@@ -5368,6 +5368,7 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"Background fill":"Заливка фону",
 "Footprint colours":"Кольори принтів","Blue / red (60%)":"Синьо-червоні (60%)","My old colours":"Мої старі кольори","Solid, by delta sign":"Суцільна, за знаком дельти","Solid fill strength %":"Сила суцільної заливки %",
 "Data":"Дані","Replay":"Повтор","Pause":"Пауза","Play":"Старт","+ Window":"+ Вікно","Chart":"Графік","Tape":"Стрічка","Acct":"Рахунок","Indicators":"Індикатори","+DOM":"+DOM",
 "One window":"Одне вікно","Two side by side":"Два поруч","Two stacked":"Два одне над одним","Three windows":"Три вікна","Four windows":"Чотири вікна","Layout":"Розкладка","Windows":"Вікна",
