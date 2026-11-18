@@ -573,7 +573,7 @@ const CLR_APPLY={
   vwap:(S,c)=>{if(S.ind.vwap)S.ind.vwap.color=c},
   band:(S,c)=>{if(S.ind.vwap)S.ind.vwap.band=c},
   prof:(S,c,I=S.ind)=>{if(I.prof)I.prof.color=c; if(I.tpoov)I.tpoov.col=c; if(I.cvd)I.cvd.color=c; if(I.sot)I.sot.lineCol=c},
-  poc:(S,c,I=S.ind)=>{if(I.prof)I.prof.poc=c; if(I.tpoov)I.tpoov.pocCol=c},
+  poc:(S,c,I=S.ind)=>{if(I.prof)I.prof.poc=c; if(I.tpoov)I.tpoov.pocCol=c; if(I.fp)I.fp.poc=c},
   lines:(S,c,I=S.ind)=>{if(I.prof)I.prof.vaCol=c; if(I.rng){I.rng.color=c; I.rng.extColor=c} if(I.tpoov)I.tpoov.vaCol=c},
   stVol:(S,c)=>{if(S.ind.stats)S.ind.stats.vol=c},
 };
@@ -1480,7 +1480,7 @@ const FP_TPL={
   'Colours: classic red/green':{buy:'#26a69a',sell:'#ef5350',imbBuy:'#2ee6c8',imb:'#ff5c5c',stackBuy:'#26a69a',stackSell:'#ef5350',poc:'#ffd166',nakedCol:'#ffd166'},
   'Colours: colour-blind blue/orange':{buy:'#4da3ff',sell:'#ff9f1a',imbBuy:'#9ccfff',imb:'#ffb347',stackBuy:'#4da3ff',stackSell:'#ff9f1a',poc:'#ffffff',nakedCol:'#ffffff'},
   'Colours: Потік magenta':{buy:'#f7dcf3',sell:'#e23cf0',imbBuy:'#f7dcf3',imb:'#e23cf0',stackBuy:'#f7dcf3',stackSell:'#e23cf0',poc:'#e23cf0',nakedCol:'#e23cf0'},
-  'Colours: blue / red 60%':{buy:'#1e90fc',sell:'#da3431',imbBuy:'#d6ebff',imb:'#ffd9d6',stackBuy:'#1e90fc',stackSell:'#da3431',text:'#ffffff',shade:'glow',glowStyle:'full',glowOp:70,glowMin:4,sep:'x',shadeOp:60,histOn:false,poc:'#ffffff',nakedCol:'#ffffff'},
+  'Colours: blue / red 60%':{buy:'#1e90fc',sell:'#da3431',imbBuy:'#d6ebff',imb:'#ffd9d6',stackBuy:'#1e90fc',stackSell:'#da3431',text:'#ffffff',shade:'glow',glowStyle:'full',glowOp:70,glowMin:4,pocStyle:'box',sep:'x',shadeOp:60,histOn:false,poc:'#ffffff',nakedCol:'#ffffff'},
   'Colours: my old ones (before 17.11)':{buy:'#f7dcf3',sell:'#e23cf0',imbBuy:'#f7dcf3',imb:'#e23cf0',stackBuy:'#f7dcf3',stackSell:'#e23cf0',text:'#e9e3ef',shade:'delta',shadeOp:60,histOn:true,poc:'#ffffff',nakedCol:'#e23cf0'},
 };
 // 17.11 (user: «як на скріні Bid-Ask Profile», 60%): blue / red prints, each cell filled solid by the sign of its delta at 60%.
@@ -1525,7 +1525,7 @@ const IND=[
      ['col','Outside value area color','color'],['vaCol','Value area color','color'],['pocCol','POC color','color'],['pocLine','POC line across the session','bool']]},
   {id:'fp',name:'Footprint',group:'Order Flow',desc:'Volume at every price inside each bar: bid x ask, delta, volume, profile, ladder or trades, in one or two columns. Imbalances are found tick by tick, with stacked zones, unfinished auctions, absorption, exhaustion and naked POCs. Shown at any zoom (Show footprint: Always): numbers when they fit, coloured cells when zoomed far out. Or only when zoomed in, like before.',
    def:{on:true,view:'always',mode1:'bidask',mode2:'none',rows:'auto',minBar:70,lod:true,lodBar:16,candle:true,maxW:0,
-     shade:'delta',shadeOp:60,glowStyle:'full',glowOp:70,glowMin:4,histOn:true,hist:'#c4b2ee',buy:'#f7dcf3',sell:'#e23cf0',text:'#e9e3ef',font:11.5,sep:'x',zeros:true,sizeFilter:0,
+     shade:'delta',shadeOp:60,glowStyle:'full',glowOp:70,glowMin:4,pocStyle:'box',histOn:true,hist:'#c4b2ee',buy:'#f7dcf3',sell:'#e23cf0',text:'#e9e3ef',font:11.5,sep:'x',zeros:true,sizeFilter:0,
      poc:'#ffffff',pocFill:true,pocOp:16,pocBox:false,v2:true,va:false,vaPct:70,vaCol:'#a66bff',
      imbType:'diag',ratio:300,ratio2:450,ratio3:600,minVol:10,deltaF:0,zero1:true,imbBuy:'#f7dcf3',imb:'#e23cf0',
      stack:false,stackN:3,stackGap:0,stackZone:false,stackBuy:'#f7dcf3',stackSell:'#e23cf0',
@@ -1537,7 +1537,7 @@ const IND=[
       ['rows','Row size','select',[['auto','Auto'],[1,'1 tick'],[2,'2 ticks'],...[4,8,16].map(k=>[k,`${k} ticks (${+(k*TICK).toFixed(DEC)} pt)`])]],
       ['minBar','Full footprint from bar width ≥ px','num',30,220,1],['lod','Level of detail: coloured cells when zoomed out','bool'],['lodBar','Cells from bar width ≥ px','num',6,100,1],
       ['candle','Candle strip (open/close, high/low)','bool'],['maxW','Max footprint width px (0 = whole bar)','num',0,600,1]]],
-    ['Display',[['shade','Cell background','select',[['none','None'],['delta','By delta'],['volume','By volume'],['solid','Solid, by delta sign'],['glow','Glow by volume, colour of the stronger side']]],['shadeOp','Solid fill strength %','range',10,100,1],['glowStyle','Glow: where','select',[['full','Whole cell, soft edges'],['side','Stronger side only'],['mix','Whole cell, grey when balanced']]],['glowOp','Glow: brightest at the most volume %','range',20,100,1],['glowMin','Glow: faintest %','range',0,30,1],['histOn','Volume histogram behind numbers','bool'],['hist','Histogram color','color'],
+    ['Display',[['shade','Cell background','select',[['none','None'],['delta','By delta'],['volume','By volume'],['solid','Solid, by delta sign'],['glow','Glow by volume, colour of the stronger side']]],['shadeOp','Solid fill strength %','range',10,100,1],['glowStyle','Glow: where','select',[['full','Whole cell, soft edges'],['side','Stronger side only'],['mix','Whole cell, grey when balanced']]],['glowOp','Glow: brightest at the most volume %','range',20,100,1],['glowMin','Glow: faintest %','range',0,30,1],['pocStyle','Glow: POC of each bar','select',[['box','White box'],['glow','White glow'],['mark','Marks at the sides'],['text','Yellow numbers'],['spot','Faint spot']]],['histOn','Volume histogram behind numbers','bool'],['hist','Histogram color','color'],
       ['buy','Buy (ask) color','color'],['sell','Sell (bid) color','color'],['text','Number color','color'],['font','Max font size','num',7,14,.5],
       ['sep','Bid x Ask separator','select',[['x','x'],['×','×'],['|','|'],['·','·'],['none','none']]],['zeros','Show zeros','bool'],['sizeFilter','Hide numbers ≤','num',0,1000,1],
       ['poc','POC color','color'],['pocFill','POC: soft fill across the row','bool'],['pocOp','POC fill strength %','range',5,60,1],['pocBox','POC outline box','bool'],['va','Value area bracket','bool'],['vaPct','Value area %','num',40,95,1],['vaCol','Value area color','color']]],
@@ -2606,6 +2606,14 @@ function fpGlow(ctx,F,R,r,x,y,w,rh,mid){
   const g=ctx.createLinearGradient(x,0,x+w,0); g.addColorStop(0,hexA(col,0)); g.addColorStop(.22,hexA(col,al)); g.addColorStop(.78,hexA(col,al)); g.addColorStop(1,hexA(col,0));
   ctx.fillStyle=g; ctx.fillRect(x,y,w,rh);
 }
+// 18.11 POC of each bar in the glow look (user: «щоб POC принта було видно»): F.pocStyle
+function fpPocMark(ctx,F,x,y,w,rh){
+  const st=F.pocStyle||'spot', c=F.poc||'#ffffff';
+  if(st==='box'){ctx.strokeStyle=hexA(c,.9); ctx.lineWidth=1; ctx.strokeRect(Math.round(x)+1.5,Math.round(y)+.5,Math.round(w)-3,Math.round(rh)-1); return}
+  if(st==='glow'){const g=ctx.createLinearGradient(x,0,x+w,0); g.addColorStop(0,hexA(c,0)); g.addColorStop(.2,hexA(c,.4)); g.addColorStop(.8,hexA(c,.4)); g.addColorStop(1,hexA(c,0)); ctx.fillStyle=g; ctx.fillRect(x,y,w,rh); return}
+  if(st==='mark'){ctx.fillStyle=c; ctx.fillRect(Math.round(x)+1,y+1,3,rh-2); ctx.fillRect(Math.round(x+w)-4,y+1,3,rh-2); return}
+  if(st==='spot'&&F.pocFill){ctx.fillStyle=hexA(c,(+F.pocOp||16)/100*.6); ctx.fillRect(x+w*.22,y,w*.56,rh)}
+}
 // one footprint column in the given mode
 function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
   const BU=F.buy, SE=F.sell, h=Math.max(1,rh-1), hb=Math.max(1,rh-2);
@@ -2623,7 +2631,7 @@ function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
     const b=r.b, a=r.a, v=a+b, d=a-b, yc=y+rh/2;
     if(mode==='cells'){ctx.fillStyle=hexA(d>=0?BU:SE,.1+.72*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
     const glow=shade==='glow'&&mode==='bidask';
-    if(glow){fpGlow(ctx,F,R,r,x,y,w,rh,x+w/2); if(r.poc&&F.pocFill){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100*.6); ctx.fillRect(x+w*.22,y,w*.56,rh)}}
+    if(glow){fpGlow(ctx,F,R,r,x,y,w,rh,x+w/2); if(r.poc) fpPocMark(ctx,F,x,y,w,rh)}
     else if(shade==='solid'){if(d){ctx.fillStyle=hexA(d>0?BU:SE,(+F.shadeOp||60)/100); ctx.fillRect(x,y+.5,w,h)} if(r.poc&&F.pocFill){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}}
     else if(r.poc&&F.pocFill&&mode!=='cells'&&mode!=='profile'){ctx.fillStyle=hexA(F.poc,(+F.pocOp||16)/100); ctx.fillRect(x,y+.5,w,h)}
     else if(shade==='delta'){ctx.fillStyle=hexA(d>=0?BU:SE,.04+.28*Math.abs(d)/R.md); ctx.fillRect(x,y+.5,w,h)}
@@ -2635,10 +2643,10 @@ function fpCol(ctx,mode,R,x,w,yT,rh,pH,F,txt,fs){
         if(!glow&&r.al>=3){ctx.fillStyle=hexA(F.imbBuy,.32); ctx.fillRect(x+w/2,y+.5,w/2,h)}
         if(txt){
           const mid=x+w/2, g=sp?fs*.62:fs*.3;
-          const tl=glow&&v<R.mx*.06?mixHex(F.text,C.bg||'#000000',.45):F.text;
-          ctx.font=`${r.bl>=2?700:500} ${fs}px ${MONO}`; ctx.fillStyle=glow?(r.bl>=2?'#ffffff':tl):r.bl?F.imb:F.text; ctx.textAlign='right'; ctx.fillText(fpTxt(b,F),mid-g,yc+.5);
+          const tl=glow&&r.poc?(F.pocStyle==='text'?(F.pocText||'#ffd166'):'#ffffff'):glow&&v<R.mx*.06?mixHex(F.text,C.bg||'#000000',.45):F.text, pw=glow&&r.poc&&F.pocStyle!=='spot';
+          ctx.font=`${r.bl>=2||pw?700:500} ${fs}px ${MONO}`; ctx.fillStyle=glow?(r.bl>=2&&!pw?'#ffffff':tl):r.bl?F.imb:F.text; ctx.textAlign='right'; ctx.fillText(fpTxt(b,F),mid-g,yc+.5);
           if(sp){ctx.font=`500 ${fs}px ${MONO}`; ctx.fillStyle=C.muted; ctx.textAlign='center'; ctx.fillText(sp,mid,yc+.5)}
-          ctx.font=`${r.al>=2?700:500} ${fs}px ${MONO}`; ctx.fillStyle=glow?(r.al>=2?'#ffffff':tl):r.al?F.imbBuy:F.text; ctx.textAlign='left'; ctx.fillText(fpTxt(a,F),mid+g,yc+.5);
+          ctx.font=`${r.al>=2||pw?700:500} ${fs}px ${MONO}`; ctx.fillStyle=glow?(r.al>=2&&!pw?'#ffffff':tl):r.al?F.imbBuy:F.text; ctx.textAlign='left'; ctx.fillText(fpTxt(a,F),mid+g,yc+.5);
         }
         break}
       case 'delta':{
@@ -5437,6 +5445,7 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"Glow: POC of each bar":"Світіння: POC кожного бару","White box":"Біла рамка","White glow":"Біле світіння","Marks at the sides":"Мітки по краях","Yellow numbers":"Жовті цифри","Faint spot":"Слабка пляма",
 "Background: glow by volume":"Фон: світіння за обсягом","Background: solid":"Фон: суцільна заливка",
 "Glow by volume, colour of the stronger side":"Світіння за обсягом, колір сильнішої сторони","Glow: where":"Світіння: де","Whole cell, soft edges":"Уся клітинка, м’які краї","Stronger side only":"Лише сильніша сторона","Whole cell, grey when balanced":"Уся клітинка, сіра при рівновазі","Glow: brightest at the most volume %":"Світіння: найяскравіше при найбільшому обсязі %","Glow: faintest %":"Світіння: найслабше %",
 "Colours":"Кольори","Colours…":"Кольори…","Colours: the theme and every colour in one place":"Кольори: тема і всі кольори в одному місці","Graphite (black / grey)":"Графіт (чорний / сірий)","Потік magenta (old)":"Потік magenta (старий)","Interface":"Інтерфейс","Market":"Ринок","Indicators":"Індикатори","Background":"Фон","Panels and top bar":"Панелі й верхня смуга","Borders and grid":"Рамки й сітка","Text":"Текст","Muted text":"Приглушений текст","Accent: buttons, selection":"Акцент: кнопки, виділення","Buyers / up candles":"Покупці / зростаючі свічки","Sellers / down candles":"Продавці / спадні свічки","VWAP bands":"Смуги VWAP","Volume profile, CVD":"Профіль об’єму, CVD","Lines: VAH / VAL, time ranges":"Лінії: VAH / VAL, часові діапазони","Bar statistics: volume":"Статистика барів: об’єм","Reset to Graphite":"Скинути до Графіту","Volume rows color":"Колір рядків об’єму","Theme":"Тема","Pick the theme «Graphite (black / grey)» to change every colour here. Each indicator also keeps its own colours in its settings.":"Обери тему «Графіт (чорний / сірий)», щоб змінювати тут кожен колір. Кожен індикатор має й свої кольори в налаштуваннях.","A change goes to every window at once. One indicator only: right-click the chart → Indicators → its settings.":"Зміна йде одразу в усі вікна. Лише для одного індикатора: ПКМ по графіку → Індикатори → його налаштування.",
