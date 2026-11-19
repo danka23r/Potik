@@ -946,13 +946,14 @@ const DOM_COLS=[
 ];
 const DOMC=Object.fromEntries(DOM_COLS.map(c=>[c[0],c]));
 const DOM_DEF=()=>({order:DOM_COLS.map(c=>c[0]),side:Object.fromEntries(DOM_COLS.map(c=>[c[0],c[3]])),win:Object.fromEntries(DOM_COLS.map(c=>[c[0],c[4]])),
-  rowH:15,recenter:'auto',recRows:10,resetSec:60,hist:true,histMax:0,wallSize:60,fullPrice:true,fills:true,dividers:true,totals:true,noteGuides:true,vaPct:70,
+  rowH:15,recenter:'auto',recRows:1,resetSec:60,hist:true,histMax:0,wallSize:60,fullPrice:true,fills:true,dividers:true,totals:true,noteGuides:true,vaPct:70,
   bidCol:'#e23cf0',askCol:'#c4b2ee',volCol:'#c4b2ee',noteCol:'#ffd166',
   solid:true,tape:true,tapeW:120,buyCol:'#8f7cf6',sellCol:'#d43bdf'});   // solid: book columns filled like a classic ladder; buyCol / sellCol: buyers / sellers
 let DOMCFG=DOM_DEF();
 try{const s=JSON.parse(localStorage.getItem('potik.dom.v1')||'null'); if(s&&typeof s==='object'){const d=DOM_DEF(), o=Array.isArray(s.order)?s.order.filter(id=>DOMC[id]):[];
   DOMCFG={...d,...s,side:{...d.side,...(s.side||{})},win:{...d.win,...(s.win||{})},order:[...o,...d.order.filter(id=>!o.includes(id))]}}}catch(e){}
 const saveDom=()=>{try{localStorage.setItem('potik.dom.v1',JSON.stringify(DOMCFG))}catch(e){}};
+if(!DOMCFG.follow19){DOMCFG.recenter='auto'; DOMCFG.recRows=1; DOMCFG.follow19=1; saveDom()}   // 19.11: the ladder follows the price tick by tick (scroll the wheel to look away, the button brings it back)
 // 29.10: the DOM window in the classic ladder layout: Sell Vol | Buy Vol | Price | Bids | @Bid | @Ask | Asks | Delta, the tape on its left
 if(!DOMCFG.look2){const L2=['bvol','avol','price','bid','abid','aask','ask','dvol']; DOMCFG.order=[...L2,...DOMCFG.order.filter(id=>!L2.includes(id))];
   DOMCFG.win=Object.fromEntries(DOM_COLS.map(c=>[c[0],L2.includes(c[0])])); Object.assign(DOMCFG,{solid:true,tape:true,look2:true}); for(const k of ['buyCol','sellCol','tapeW']) if(DOMCFG[k]==null) DOMCFG[k]=DOM_DEF()[k]; saveDom()}
@@ -2501,6 +2502,7 @@ function drawChart(P,ctx,w,h){
     const Q=I.cvd; ctx.fillStyle=C.line; ctx.fillRect(0,cvdTop,chartW,1);
     let a=Infinity,b=-Infinity; for(let i=i0;i<=i1;i++){const v=B[i].cvd; if(v<a)a=v; if(v>b)b=v}
     const pd=Math.max(50,(b-a)*.12); a-=pd; b+=pd;
+    {const z=+P.S.ind.cvd.zoom||1; if(z!==1){const m=(a+b)/2, hh=(b-a)/2/z; a=m-hh; b=m+hh}}   // 19.11: dragged up / down in the panel (double-click: auto)
     const top=cvdTop+6, ht=cvdH-12, yc=v=>top+(b-v)/(b-a)*ht;
     ctx.save(); ctx.beginPath(); ctx.rect(0,cvdTop+1,plotW,cvdH-1); ctx.clip();
     ctx.strokeStyle=Q.color; ctx.lineWidth=Q.width; for(const [a,b] of segs){const pts=[]; for(let i=a;i<=b;i++) pts.push([xOf(i),yc(B[i].cvd)]); polyline(ctx,pts)}
@@ -3018,6 +3020,14 @@ function drawDom(P,ctx,x0,W,h,full){
     ctx.fillStyle=C.mag; ctx.fillRect(x0,Math.round(rowY(day.lo)+rh),W,1);               // below the session low
   }
   ctx.restore();
+  // 19.11: scrolled away from the price → a button low on the right brings the ladder back (and it follows the price again)
+  V.dg.back=null;
+  if(V.domHold){const up=D.last>V.domC+mid, dn=D.last<V.domC+mid-nR+1, t=(up?'↑ ':dn?'↓ ':'')+(LANG==='uk'?'До ціни':'Back to price');
+    ctx.font=`600 11px ${UI}`; const bw=Math.ceil(ctx.measureText(t).width)+22, bh=24, bx=x0+W-bw-10, by=h-FT-TB-bh-10;
+    ctx.fillStyle='rgba(20,20,23,.94)'; ctx.strokeStyle='rgba(210,210,215,.55)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(bx+.5,by+.5,bw,bh,6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#e6e6ea'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,bx+bw/2,by+bh/2+.5);
+    V.dg.back=[bx,by,bx+bw,by+bh]}
   if(FT){
     const y0=h-FT-TB; ctx.fillStyle=C.line; ctx.fillRect(x0,y0,W,1);
     let sb=0,sa=0; for(let d=0;d<10;d++){sb+=bkSize(bid-d); sa+=bkSize(ask+d)}
@@ -6347,7 +6357,8 @@ function domHit(P,p){
   return {hdr:false,col:c.id,px:P.V.domC+g.mid-r,x:g.x0+c.x,y:g.top+r*g.rh,w:c.w,h:g.rh};
 }
 function domClick(P,p){
-  const g=P.V.dg; if(g&&!g.full&&p.y<g.hd&&p.x>=g.x0+g.W-20&&P.S.view==='chart'){P.S.dom=false; const b=P.el.querySelector('.dom'); if(b) b.setAttribute('aria-pressed',false); P.dirty=true; saveLayout(); toast('DOM hidden · right click on the chart → “DOM beside the chart” brings it back','info'); return}
+  const g=P.V.dg;
+  if(g&&g.back&&p.x>=g.back[0]&&p.x<=g.back[2]&&p.y>=g.back[1]&&p.y<=g.back[3]){domRecentre(P); return} if(g&&!g.full&&p.y<g.hd&&p.x>=g.x0+g.W-20&&P.S.view==='chart'){P.S.dom=false; const b=P.el.querySelector('.dom'); if(b) b.setAttribute('aria-pressed',false); P.dirty=true; saveLayout(); toast('DOM hidden · right click on the chart → “DOM beside the chart” brings it back','info'); return}
   const h=domHit(P,p); if(!h) return;
   if(h.hdr){if(h.col==='price') domRecentre(P); else if(h.col==='abid'||h.col==='aask'){AT.clear(); allDirty()} return}
   if(h.col==='notes') setTimeout(()=>editNote(P,h),30);   // after the click, so focus stays in the field
@@ -6750,6 +6761,7 @@ function wireCanvas(P){
   const setCursor=p=>{
     if(P.S.view==='tape'){cv.style.cursor='default'; return}
     if(P.S.view==='tpo'){cv.style.cursor=V.tg&&p.x>V.tg.plotW?'ns-resize':V.tg&&p.y>V.tg.pH?'ew-resize':'grab'; return}
+    if((P.S.view==='dom'||zone(p)==='dom')&&P.V.dg&&P.V.dg.back){const b=P.V.dg.back; if(p.x>=b[0]&&p.x<=b[2]&&p.y>=b[1]&&p.y<=b[3]){cv.style.cursor='pointer'; return}}
     if(P.S.view==='dom'||zone(p)==='dom'){const h=domHit(P,p); cv.style.cursor=h&&(h.hdr?['price','abid','aask'].includes(h.col):h.col==='notes')?'pointer':'default'; return}
     const z=zone(p);
     if((z==='plot'||z==='lower')&&legendAt(p)){cv.style.cursor='pointer';return}
@@ -6757,6 +6769,7 @@ function wireCanvas(P){
     if(z==='plot'){const oh=orderHit(P,p); if(oh){cv.style.cursor=oh.act==='x'?'pointer':'ns-resize'; return}}
     if(z==='plot'&&P.mode==='hand'){cv.style.cursor='grab';return}
     if(z==='plot'){const h=hitTest(P,p); if(h){cv.style.cursor=h.h==='body'?'move':'pointer';return}}
+    if(z==='lower'&&indAt(P,p)==='cvd'){cv.style.cursor='ns-resize'; return}
     cv.style.cursor=z==='split'?'row-resize':z==='price'?'ns-resize':z==='time'?'ew-resize':z==='plot'||z==='lower'?(P.mode==='pointer'?'default':'crosshair'):'default';
   };
   const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,yoff:V.yoff||0,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
@@ -6818,6 +6831,7 @@ function wireCanvas(P){
           P.drag={z:'edit',e:{d:h.d,h:h.h,o:JSON.parse(ser(h.d)),list,p0:ptAt(P,p)},x:p.x,y:p.y,moved:false,type:e.pointerType}; allDirty(); return}
         else if(selId!=null||SEL.size){selId=null; SEL.clear(); allDirty()}}
       begin(p,e.pointerType); if(P.drag.z==='plot'||P.drag.z==='lower') cv.style.cursor='grabbing';
+      if(P.drag.z==='lower'&&indAt(P,p)==='cvd'){P.drag.cvd=true; P.drag.cz0=+P.S.ind.cvd.zoom||1}
     }
     else if(ptrs.size===2){const [a,b]=[...ptrs.values()]; P.drag={z:'pinch',dx:Math.max(30,Math.abs(a.x-b.x)),dy:Math.abs(a.y-b.y),barW:V.barW,tickPx:V.tickPx,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,moved:true}}
   });
@@ -6846,7 +6860,11 @@ function wireCanvas(P){
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
     else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(!V.autoY) V.center=drag.center+dy/V.tickPx}   // auto scale on: the drag only moves in time (TradingView)
-    else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
+    else if(drag.z==='lower'){
+      // 19.11: in the CVD panel the first clear move decides: up / down stretches the line (up = taller), sideways scrolls time
+      if(drag.cvd&&drag.lock==null&&Math.abs(dx)+Math.abs(dy)>4) drag.lock=Math.abs(dy)>Math.abs(dx)?'v':'h';
+      if(drag.lock==='v'){P.S.ind.cvd.zoom=clamp(drag.cz0*Math.exp(-dy*.012),.25,40); cv.style.cursor='ns-resize'; P.dirty=true}
+      else V.scroll=drag.scroll-dx/V.barW}
     else if(drag.z==='price'){manualY(); V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
@@ -6866,6 +6884,7 @@ function wireCanvas(P){
         if(SEL.size){selId=[...SEL][0]; SEL.delete(selId)}}}
     else if(drag&&drag.z==='edit'){ if(drag.moved) save(); else UNDO.pop() }
     else if(drag&&drag.z==='split') saveLayout();
+    else if(drag&&drag.z==='lower'&&drag.lock==='v') saveLayout();
     else if(drag&&drag.z==='ord'){
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag; delete o._drag; if(drag.moved) modifyOrder(o.id,np)}}
       else if(drag.kind==='alert') saveAlerts();
@@ -6886,6 +6905,7 @@ function wireCanvas(P){
     if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
+    if(z==='lower'&&indAt(P,p)==='cvd'){P.S.ind.cvd.zoom=1; P.dirty=true; saveLayout(); return}
     if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.autoY=true; V.userY=false; V.yoff=0}
     P.dirty=true;
   });
