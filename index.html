@@ -2502,7 +2502,8 @@ function drawChart(P,ctx,w,h){
     const Q=I.cvd; ctx.fillStyle=C.line; ctx.fillRect(0,cvdTop,chartW,1);
     let a=Infinity,b=-Infinity; for(let i=i0;i<=i1;i++){const v=B[i].cvd; if(v<a)a=v; if(v>b)b=v}
     const pd=Math.max(50,(b-a)*.12); a-=pd; b+=pd;
-    {const z=+P.S.ind.cvd.zoom||1; if(z!==1){const v=B[Math.min(i1,last)].cvd; a=v-(v-a)/z; b=v+(b-v)/z}}   // 19.11: CVD scale (drag / wheel on its strip right of the panel; double-click: auto) — the newest visible point stays put
+    {const z=+P.S.ind.cvd.zoom||1; if(z!==1){const v=B[Math.min(i1,last)].cvd; a=v-(v-a)/z; b=v+(b-v)/z}
+     const off=+P.S.ind.cvd.off||0; if(off){const r=b-a; a+=off*r; b+=off*r}}   // 19.11: moved up / down in the panel (mouse drag or wheel); time stays tied to the candles   // 19.11: CVD scale (drag / wheel on its strip right of the panel; double-click: auto) — the newest visible point stays put
     const top=cvdTop+6, ht=cvdH-12, yc=v=>top+(b-v)/(b-a)*ht;
     ctx.save(); ctx.beginPath(); ctx.rect(0,cvdTop+1,plotW,cvdH-1); ctx.clip();
     ctx.strokeStyle=Q.color; ctx.lineWidth=Q.width; for(const [a,b] of segs){const pts=[]; for(let i=a;i<=b;i++) pts.push([xOf(i),yc(B[i].cvd)]); polyline(ctx,pts)}
@@ -3660,6 +3661,7 @@ function handlesOf(d,g){
   const X=q=>g.xAt(q.t), Y=q=>g.yOf(q.p);
   if(d.pts) return d.type==='brush'?[['p0',X(d.pts[0]),Y(d.pts[0])]]:d.pts.map((q,k)=>['p'+k,X(q),Y(q)]);
   if(d.type==='vline') return [['a',X(d.a),g.pH/2]];
+  if(d.type==='hline') return [['move',g.plotW/2,Y({p:d.p})]];   // 19.11: a horizontal line keeps only its price (d.p), no point a — selecting it used to crash the window
   if(d.type==='avwap'){const v=d._hy; return [['a',X(d.a),v!=null?v:Y(d.a)]]}
   if(ONE.has(d.type)) return [['a',X(d.a),Y(d.a)]];
   if(d.type==='rect'||d.type==='ellipse'){const xa=X(d.a),xb=X(d.b),ya=Y(d.a),yb=Y(d.b), xm=(xa+xb)/2, ym=(ya+yb)/2; return [['a',xa,ya],['b',xb,yb],['ab',xa,yb],['ba',xb,ya],['xa',xa,ym],['xb',xb,ym],['ya',xm,ya],['yb',xm,yb]]}   // corners + sides (TradingView)
@@ -6842,6 +6844,7 @@ function wireCanvas(P){
           P.drag={z:'edit',e:{d:h.d,h:h.h,o:JSON.parse(ser(h.d)),list,p0:ptAt(P,p)},x:p.x,y:p.y,moved:false,type:e.pointerType}; allDirty(); return}
         else if(selId!=null||SEL.size){selId=null; SEL.clear(); allDirty()}}
       begin(p,e.pointerType); if(P.drag.z==='plot'||P.drag.z==='lower') cv.style.cursor='grabbing';
+      if(P.drag.z==='lower'&&indAt(P,p)==='cvd'){const r=V.g.regs.find(x=>x.id==='cvd'); P.drag.cvd=true; P.drag.off0=+P.S.ind.cvd.off||0; P.drag.ch=Math.max(20,r.b-r.a-12)}
     }
     else if(ptrs.size===2){const [a,b]=[...ptrs.values()]; P.drag={z:'pinch',dx:Math.max(30,Math.abs(a.x-b.x)),dy:Math.abs(a.y-b.y),barW:V.barW,tickPx:V.tickPx,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,moved:true}}
   });
@@ -6871,7 +6874,7 @@ function wireCanvas(P){
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
     else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(!V.autoY) V.center=drag.center+dy/V.tickPx}   // auto scale on: the drag only moves in time (TradingView)
-    else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
+    else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW; if(drag.cvd){P.S.ind.cvd.off=drag.off0+dy/drag.ch; P.dirty=true}}   // CVD: sideways = time (with the candles), up / down = the line
     else if(drag.z==='price'){manualY(); V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
@@ -6892,6 +6895,7 @@ function wireCanvas(P){
     else if(drag&&drag.z==='edit'){ if(drag.moved) save(); else UNDO.pop() }
     else if(drag&&drag.z==='split') saveLayout();
     else if(drag&&drag.z==='cvdax') saveLayout();
+    else if(drag&&drag.z==='lower'&&drag.cvd&&drag.moved) saveLayout();
     else if(drag&&drag.z==='ord'){
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag; delete o._drag; if(drag.moved) modifyOrder(o.id,np)}}
       else if(drag.kind==='alert') saveAlerts();
@@ -6912,7 +6916,7 @@ function wireCanvas(P){
     if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
-    if(cvdAx(p)){P.S.ind.cvd.zoom=1; P.dirty=true; saveLayout(); return}
+    if(cvdAx(p)||(z==='lower'&&indAt(P,p)==='cvd')){P.S.ind.cvd.zoom=1; P.S.ind.cvd.off=0; P.dirty=true; saveLayout(); return}   // double-click on CVD or its scale: back to auto
     if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.autoY=true; V.userY=false; V.yoff=0}
     P.dirty=true;
   });
@@ -6921,7 +6925,8 @@ function wireCanvas(P){
     const p0=pos(e);
     if(P.S.view==='tape'){if(V.tsN!=null){V.tsOff=Math.max(0,(V.tsOff||0)+Math.sign(e.deltaY)*3); P.dirty=true} return}
     if(P.S.view==='dom'||zone(p0)==='dom'){V.domC=(V.domC==null?D.last:V.domC)-Math.sign(e.deltaY)*3; V.domHold=true; P.dirty=true; return}
-    if(cvdAx(p0)){const c=P.S.ind.cvd; c.zoom=clamp((+c.zoom||1)*Math.exp(-e.deltaY*.0015),.2,40); P.dirty=true; clearTimeout(P._cvdSv); P._cvdSv=setTimeout(saveLayout,400); return}
+    if(zone(p0)==='lower'&&indAt(P,p0)==='cvd'&&!e.ctrlKey){const c=P.S.ind.cvd, r=V.g.regs.find(x=>x.id==='cvd'); c.off=(+c.off||0)-e.deltaY/Math.max(20,r.b-r.a-12)*.2; P.dirty=true; clearTimeout(P._cvdSv); P._cvdSv=setTimeout(saveLayout,400); return}   // wheel over CVD: moves the line (Ctrl+wheel: zoom)
+    if(cvdAx(p0)||(zone(p0)==='lower'&&indAt(P,p0)==='cvd')){const c=P.S.ind.cvd; c.zoom=clamp((+c.zoom||1)*Math.exp(-e.deltaY*.0015),.2,40); P.dirty=true; clearTimeout(P._cvdSv); P._cvdSv=setTimeout(saveLayout,400); return}
     if(P.S.view==='tpo'){const m=e.deltaMode===1?16:1, dY=e.deltaY*m, g=V.tg, ax=g&&p0.x>g.plotW;
       if((e.ctrlKey||e.metaKey||ax)&&g&&V.tpt){const y=ax?g.pH/2:p0.y, at=V.tpc+(g.pH/2-y)/V.tpt, nt=clamp(V.tpt*Math.exp(-dY*.0016),.002,60); V.tauto=false; V.tpt=nt; V.tpc=at-(g.pH/2-y)/nt}
       else if(e.altKey&&V.tpt){V.tauto=false; V.tpc+=dY/V.tpt*.5}
