@@ -1702,7 +1702,7 @@ const GROUPS=['Volume','Order Flow','Price','Trend','My Indicators'];
 const DEF_PROPS={bg:'#000000',up:'#f7dcf3',down:'#e23cf0',legend:true,style:'candle'};
 const PROP_FIELDS=[['style','Bar style','select',[['candle','Candles'],['hollow','Hollow candles'],['ohlc','OHLC bars'],['ha','Heikin Ashi'],['line','Line'],['area','Area'],['none','No bars (footprint only)']]],['bg','Background','color'],['up','Up bar color (RSI off)','color'],['down','Down bar color (RSI off)','color'],['legend','Show legend','bool']];
 const IND_GONE=['rng','rsi','ema'];   // 19.11: the user never uses them — always off, not listed anywhere (code kept)
-function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})}; for(const k of IND_GONE) if(o[k]) o[k].on=false;
+function freshInd(src){const o={}; for(const x of IND) o[x.id]={...x.def,...((src||{})[x.id]||{})}; for(const k of IND_GONE) if(o[k]) o[k].on=false; if(o.cvd&&!o.cvd.z2){o.cvd.zoom=1; o.cvd.z2=true};
   if(src&&src.fp&&!src.fp.v2) Object.assign(o.fp,{stack:false,absorb:false,pocBox:false,poc:'#ffffff',pocFill:true,pocOp:16,v2:true});   // 29.10: no boxes, soft white POC
   if(src&&src.vwap&&!src.vwap.v2) Object.assign(o.vwap,{color:'#e8b4f8',width:1.6,glow:true,b3:false,bandW:.8,bandOp:22,dash:'solid',fill:true,fillOp:4,v2:true});   // 29.10: softer VWAP
   if(src&&src.big&&!src.big.v2) Object.assign(o.big,{count:false,sweep:false,glow:false,v2:true});   // 29.10: compact big trades
@@ -2502,7 +2502,7 @@ function drawChart(P,ctx,w,h){
     const Q=I.cvd; ctx.fillStyle=C.line; ctx.fillRect(0,cvdTop,chartW,1);
     let a=Infinity,b=-Infinity; for(let i=i0;i<=i1;i++){const v=B[i].cvd; if(v<a)a=v; if(v>b)b=v}
     const pd=Math.max(50,(b-a)*.12); a-=pd; b+=pd;
-    {const z=+P.S.ind.cvd.zoom||1; if(z!==1){const m=(a+b)/2, hh=(b-a)/2/z; a=m-hh; b=m+hh}}   // 19.11: dragged up / down in the panel (double-click: auto)
+    {const z=+P.S.ind.cvd.zoom||1; if(z!==1){const v=B[Math.min(i1,last)].cvd; a=v-(v-a)/z; b=v+(b-v)/z}}   // 19.11: CVD scale (drag / wheel on its strip right of the panel; double-click: auto) — the newest visible point stays put
     const top=cvdTop+6, ht=cvdH-12, yc=v=>top+(b-v)/(b-a)*ht;
     ctx.save(); ctx.beginPath(); ctx.rect(0,cvdTop+1,plotW,cvdH-1); ctx.clip();
     ctx.strokeStyle=Q.color; ctx.lineWidth=Q.width; for(const [a,b] of segs){const pts=[]; for(let i=a;i<=b;i++) pts.push([xOf(i),yc(B[i].cvd)]); polyline(ctx,pts)}
@@ -6757,6 +6757,8 @@ function wireCanvas(P){
   const pos=e=>{const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
   const splitAt=p=>V.g&&V.g.splits&&p.x<V.g.plotW?V.g.splits.find(s=>Math.abs(p.y-s.top)<=3):null;
   const zone=p=>{const g=V.g; if(!g||P.S.view!=='chart') return 'none'; if(splitAt(p)) return 'split'; if(p.x>g.chartW) return g.DW?'dom':'none'; if(p.x>g.plotW) return p.y<g.pH?'price':'none'; if(p.y>g.timeTop) return 'time'; return p.y<g.pH?'plot':'lower'};
+  // 19.11: the empty strip right of the CVD panel (under the price scale) is the CVD scale: drag up / down or wheel = zoom
+  const cvdAx=p=>{const g=V.g; if(!g||P.S.view!=='chart'||p.x<=g.plotW||p.x>g.chartW||!g.regs) return false; const r=g.regs.find(x=>x.id==='cvd'); return !!r&&p.y>=r.a&&p.y<r.b};
   const legendAt=p=>V.g&&V.g.legend.find(l=>p.x>=l.x&&p.x<=l.x+l.w&&p.y>=l.y&&p.y<=l.y+l.h);
   const setCursor=p=>{
     if(P.S.view==='tape'){cv.style.cursor='default'; return}
@@ -6769,7 +6771,7 @@ function wireCanvas(P){
     if(z==='plot'){const oh=orderHit(P,p); if(oh){cv.style.cursor=oh.act==='x'?'pointer':'ns-resize'; return}}
     if(z==='plot'&&P.mode==='hand'){cv.style.cursor='grab';return}
     if(z==='plot'){const h=hitTest(P,p); if(h){cv.style.cursor=h.h==='body'?'move':'pointer';return}}
-    if(z==='lower'&&indAt(P,p)==='cvd'){cv.style.cursor='ns-resize'; return}
+    if(cvdAx(p)){cv.style.cursor='ns-resize'; return}
     cv.style.cursor=z==='split'?'row-resize':z==='price'?'ns-resize':z==='time'?'ew-resize':z==='plot'||z==='lower'?(P.mode==='pointer'?'default':'crosshair'):'default';
   };
   const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,yoff:V.yoff||0,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
@@ -6809,6 +6811,7 @@ function wireCanvas(P){
     if(ptrs.size===1){
       const z=zone(p), ab=V.g&&V.g.abtn;
       if(ab&&p.x>=ab[0]-2&&p.x<=ab[2]+2&&p.y>=ab[1]-2&&p.y<=ab[3]+2){V.autoY=!V.autoY; if(!V.autoY){V.userY=true; V.base=V.center} P.drag={z:'none',moved:true}; P.dirty=true; return}
+      if(cvdAx(p)){P.drag={z:'cvdax',x:p.x,y:p.y,cz0:+P.S.ind.cvd.zoom||1,moved:false}; return}
       if(z==='split'){const sp=splitAt(p); P.drag={z:'split',obj:sp.obj,h0:+sp.obj.height||14,y:p.y,x:p.x,H:cv.getBoundingClientRect().height,moved:false}; return}
       if(z==='plot'||z==='lower'){const l=legendAt(p); if(l){P.drag={z:'none',moved:true}; legendAct(P,l,legBtn(l,p)); return}}
       if(z==='plot'&&tool==='cursor'&&!pending){
@@ -6831,7 +6834,6 @@ function wireCanvas(P){
           P.drag={z:'edit',e:{d:h.d,h:h.h,o:JSON.parse(ser(h.d)),list,p0:ptAt(P,p)},x:p.x,y:p.y,moved:false,type:e.pointerType}; allDirty(); return}
         else if(selId!=null||SEL.size){selId=null; SEL.clear(); allDirty()}}
       begin(p,e.pointerType); if(P.drag.z==='plot'||P.drag.z==='lower') cv.style.cursor='grabbing';
-      if(P.drag.z==='lower'&&indAt(P,p)==='cvd'){P.drag.cvd=true; P.drag.cz0=+P.S.ind.cvd.zoom||1}
     }
     else if(ptrs.size===2){const [a,b]=[...ptrs.values()]; P.drag={z:'pinch',dx:Math.max(30,Math.abs(a.x-b.x)),dy:Math.abs(a.y-b.y),barW:V.barW,tickPx:V.tickPx,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,moved:true}}
   });
@@ -6851,6 +6853,7 @@ function wireCanvas(P){
     if(drag.z==='tpoax'){if(drag.t0!=null){V.tauto=false; V.tpt=clamp(drag.t0*Math.exp(-dy*.008),.002,60)} P.dirty=true; return}
     if(drag.z==='brush'){const d=drag.d, l=d.pts[d.pts.length-1]; if(Math.hypot(V.g.xAt(l.t)-p.x,V.g.yOf(l.p)-p.y)>3) d.pts.push(ptAt(P,p)); allDirty(); return}
     if(drag.z==='box'){V.box=[drag.x,drag.y,p.x,p.y]; P.dirty=true; return}
+    if(drag.z==='cvdax'){P.S.ind.cvd.zoom=clamp(drag.cz0*Math.exp(-dy*.012),.2,40); P.dirty=true; return}
     if(drag.z==='split'){drag.obj.height=Math.round(clamp(drag.h0+(drag.y-p.y)/drag.H*100,6,60)); P.dirty=true; return}
     if(drag.z==='ord'){
       const np=Math.round(V.g.pAt(p.y));
@@ -6860,11 +6863,7 @@ function wireCanvas(P){
     }
     if(drag.z==='edit'){applyEdit(P,drag.e,p); allDirty()}
     else if(drag.z==='plot'){V.scroll=drag.scroll-dx/V.barW; if(!V.autoY) V.center=drag.center+dy/V.tickPx}   // auto scale on: the drag only moves in time (TradingView)
-    else if(drag.z==='lower'){
-      // 19.11: in the CVD panel the first clear move decides: up / down stretches the line (up = taller), sideways scrolls time
-      if(drag.cvd&&drag.lock==null&&Math.abs(dx)+Math.abs(dy)>4) drag.lock=Math.abs(dy)>Math.abs(dx)?'v':'h';
-      if(drag.lock==='v'){P.S.ind.cvd.zoom=clamp(drag.cz0*Math.exp(-dy*.012),.25,40); cv.style.cursor='ns-resize'; P.dirty=true}
-      else V.scroll=drag.scroll-dx/V.barW}
+    else if(drag.z==='lower'){V.scroll=drag.scroll-dx/V.barW}
     else if(drag.z==='price'){manualY(); V.tickPx=clamp(drag.tickPx*Math.exp(-dy*.008),.05,60)}
     else if(drag.z==='time'){V.barW=clamp(drag.barW*Math.exp(dx*.008),0.5,220); V.scroll=drag.scroll}
     else if(drag.z==='pinch'&&ptrs.size===2){
@@ -6884,7 +6883,7 @@ function wireCanvas(P){
         if(SEL.size){selId=[...SEL][0]; SEL.delete(selId)}}}
     else if(drag&&drag.z==='edit'){ if(drag.moved) save(); else UNDO.pop() }
     else if(drag&&drag.z==='split') saveLayout();
-    else if(drag&&drag.z==='lower'&&drag.lock==='v') saveLayout();
+    else if(drag&&drag.z==='cvdax') saveLayout();
     else if(drag&&drag.z==='ord'){
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag; delete o._drag; if(drag.moved) modifyOrder(o.id,np)}}
       else if(drag.kind==='alert') saveAlerts();
@@ -6905,7 +6904,7 @@ function wireCanvas(P){
     if(P.S.view==='tpo'){if(!(V.tg&&p.x>V.tg.plotW)) V.tscroll=0; V.tauto=true; P.dirty=true; return}
     if(P.S.view==='dom'||z==='dom'){const h=domHit(P,p); if(h&&!h.hdr&&ACC.clickTrade&&ACC.dblClick&&(h.col==='bid'||h.col==='ask')){priceOrder(h.col==='bid'?1:-1,h.px); return} if(!h||(h.col!=='notes'&&h.col!=='bid'&&h.col!=='ask'&&h.col!=='orders')){V.domC=D.last; V.domHold=false; P.dirty=true} return}
     if(z==='plot'){const h=hitTest(P,p); if(h){openDrawingSettings(h.d); return}}
-    if(z==='lower'&&indAt(P,p)==='cvd'){P.S.ind.cvd.zoom=1; P.dirty=true; saveLayout(); return}
+    if(cvdAx(p)){P.S.ind.cvd.zoom=1; P.dirty=true; saveLayout(); return}
     if(z==='price'){V.autoY=true; V.fit=true} else if(z==='time') V.barW=defaultBarW(P.S); else if(z==='plot'||z==='lower'){V.scroll=0; V.autoY=true; V.userY=false; V.yoff=0}
     P.dirty=true;
   });
@@ -6914,6 +6913,7 @@ function wireCanvas(P){
     const p0=pos(e);
     if(P.S.view==='tape'){if(V.tsN!=null){V.tsOff=Math.max(0,(V.tsOff||0)+Math.sign(e.deltaY)*3); P.dirty=true} return}
     if(P.S.view==='dom'||zone(p0)==='dom'){V.domC=(V.domC==null?D.last:V.domC)-Math.sign(e.deltaY)*3; V.domHold=true; P.dirty=true; return}
+    if(cvdAx(p0)){const c=P.S.ind.cvd; c.zoom=clamp((+c.zoom||1)*Math.exp(-e.deltaY*.0015),.2,40); P.dirty=true; clearTimeout(P._cvdSv); P._cvdSv=setTimeout(saveLayout,400); return}
     if(P.S.view==='tpo'){const m=e.deltaMode===1?16:1, dY=e.deltaY*m, g=V.tg, ax=g&&p0.x>g.plotW;
       if((e.ctrlKey||e.metaKey||ax)&&g&&V.tpt){const y=ax?g.pH/2:p0.y, at=V.tpc+(g.pH/2-y)/V.tpt, nt=clamp(V.tpt*Math.exp(-dY*.0016),.002,60); V.tauto=false; V.tpt=nt; V.tpc=at-(g.pH/2-y)/nt}
       else if(e.altKey&&V.tpt){V.tauto=false; V.tpc+=dY/V.tpt*.5}
