@@ -199,11 +199,11 @@ canvas.eq{display:block;width:100%;height:150px;border:1px solid var(--q251e2c,#
 .dt svg{width:20px;height:20px}
 .dt .vs{width:1px;height:20px;background:var(--q2a2232,#2a2232);margin:0 3px}
 .dt.fav{z-index:21;padding:3px 4px;transform:none}
-.dt.fav button{width:30px;height:28px;color:var(--text,#e6e6e6)}
+.dt.fav button{width:36px;height:34px;color:var(--text,#e6e6e6)}
 .dt.fav{padding:2px 3px;gap:1px;border-radius:8px}
 .dt.fav .fl{display:contents}
-.dt.fav svg{width:22px;height:22px}
-.dt.fav .fadd{width:22px;color:var(--muted,#8c8c8c)}
+.dt.fav svg{width:28px;height:28px;shape-rendering:geometricPrecision}
+.dt.fav .fadd{width:24px;color:var(--muted,#8c8c8c)}
 .dt.fav .fadd svg{width:16px;height:16px}
 /* drawing toolbar (17.11, like TradingView): shown while one drawing is selected */
 .dt.dsb{z-index:22;padding:3px 4px;transform:none}
@@ -4096,22 +4096,30 @@ grip.addEventListener('pointerup',()=>{gdrag=null; try{localStorage.setItem('pot
    icons are thin, like TradingView's. Kept in localStorage potik.favtools. */
 const FAV_ALL=['short','long','rect','rectB','rectR','trend','hline','vline','text','measure','vprof','avwap'];
 let FAV_TOOLS=['short','long','rect','rectB','rectR']; try{const x=JSON.parse(localStorage.getItem('potik.favtools')||'null'); if(Array.isArray(x)) FAV_TOOLS=x.filter(t=>FAV_ALL.includes(t))}catch(e){}
-const FB='var(--bg,#000)';
+/* 19.11: favourites redrawn on a 28 px grid, shown 1:1 like TradingView — 1 px strokes on half pixels (crisp, no blur),
+   hollow end points, thin letters. Tools without their own drawing use TICON (24 px) centred in the 28 px box. */
+const FB='var(--q16121b,#16121b)';
+const FT_=(x,y,t)=>`<text x="${x}" y="${y}" font-size="8.5" font-weight="400" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">${t}</text>`;
 const FICON={
-  short:`<path d="M9 6.5h11M9 17.5h11"/><circle cx="6.5" cy="6.5" r="1.8" style="fill:${FB}"/><circle cx="6.5" cy="17.5" r="1.8" style="fill:${FB}"/><text x="14.5" y="14.6" font-size="7.5" font-weight="400" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">S</text>`,
-  long:`<path d="M9 6.5h11M9 17.5h11"/><circle cx="6.5" cy="6.5" r="1.8" style="fill:${FB}"/><circle cx="6.5" cy="17.5" r="1.8" style="fill:${FB}"/><text x="14.5" y="14.6" font-size="7.5" font-weight="400" text-anchor="middle" fill="currentColor" stroke="none" font-family="Geist,system-ui,sans-serif">L</text>`,
-  rect:`<rect x="5.5" y="5.5" width="13" height="13"/><g style="fill:${FB}"><circle cx="5.5" cy="5.5" r="1.8"/><circle cx="18.5" cy="5.5" r="1.8"/><circle cx="5.5" cy="18.5" r="1.8"/><circle cx="18.5" cy="18.5" r="1.8"/></g>`,
-  rectB:'<rect x="5" y="5" width="14" height="14" rx="2.5" fill="#566fb8" stroke="#7a8dcc" stroke-width=".8"/>',
-  rectR:'<rect x="5" y="5" width="14" height="14" rx="2.5" fill="#9a434b" stroke="#bd5f67" stroke-width=".8"/>',
-  trend:`<path d="M7 17L17 7"/><circle cx="5.7" cy="18.3" r="1.8" style="fill:${FB}"/><circle cx="18.3" cy="5.7" r="1.8" style="fill:${FB}"/>`,
-  hline:`<path d="M3 12h7.2M13.8 12H21"/><circle cx="12" cy="12" r="1.8" style="fill:${FB}"/>`,
-  vline:`<path d="M12 3v7.2M12 13.8V21"/><circle cx="12" cy="12" r="1.8" style="fill:${FB}"/>`,
+  short:`<path d="M10 8.5h12.5M10 19.5h12.5"/><circle cx="7.5" cy="8.5" r="2" style="fill:${FB}"/><circle cx="7.5" cy="19.5" r="2" style="fill:${FB}"/>${FT_(16.5,17.1,'S')}`,
+  long:`<path d="M10 8.5h12.5M10 19.5h12.5"/><circle cx="7.5" cy="8.5" r="2" style="fill:${FB}"/><circle cx="7.5" cy="19.5" r="2" style="fill:${FB}"/>${FT_(16.5,17.1,'L')}`,
+  rect:`<rect x="7.5" y="7.5" width="13" height="13"/><g style="fill:${FB}"><circle cx="7.5" cy="7.5" r="2"/><circle cx="20.5" cy="7.5" r="2"/><circle cx="7.5" cy="20.5" r="2"/><circle cx="20.5" cy="20.5" r="2"/></g>`,
+  rectB:'<rect x="6.5" y="6.5" width="15" height="15" rx="2.5" fill="#566fb8" stroke="#8fa0d6" stroke-width="1"/>',
+  rectR:'<rect x="6.5" y="6.5" width="15" height="15" rx="2.5" fill="#9a434b" stroke="#c9737b" stroke-width="1"/>',
+  trend:`<path d="M9 19L19 9"/><circle cx="7.5" cy="20.5" r="2" style="fill:${FB}"/><circle cx="20.5" cy="7.5" r="2" style="fill:${FB}"/>`,
+  hline:`<path d="M4 14.5h7.5M16.5 14.5H24"/><circle cx="14" cy="14.5" r="2" style="fill:${FB}"/>`,
+  vline:`<path d="M14.5 4v7.5M14.5 16.5V24"/><circle cx="14.5" cy="14" r="2" style="fill:${FB}"/>`,
+  // fixed range volume profile: the anchor line, hollow rows, the longest (POC) filled
+  vprof:'<path d="M6.5 4.5v19"/><rect x="8.5" y="6.5" width="5" height="2"/><rect x="8.5" y="10.5" width="9" height="2"/><rect x="8.5" y="14.5" width="13" height="2" fill="currentColor"/><rect x="8.5" y="18.5" width="7" height="2"/><path d="M8.5 22.5h3"/>',
+  text:'<path d="M8.5 8.5h11M14 8.5v12M12 20.5h4"/>',
+  measure:'<rect x="4.5" y="10.5" width="19" height="7" rx="1"/><path d="M8.5 10.5v3M12.5 10.5v2M16.5 10.5v3M20.5 10.5v2"/>',
+  avwap:`<path d="M5 19.5c3-1 4.5-6 8-7s5 3 10-5"/><circle cx="7" cy="21" r="2" style="fill:${FB}"/>`,
 };
 const favIcon=t=>FICON[t]||TICON[t]||'';
 const fav=document.createElement('div'); fav.className='dt fav'; fav.id='fav'; fav.setAttribute('role','toolbar'); fav.setAttribute('aria-label','Favourite tools');
-fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span><span class="fl"></span><button type="button" class="fadd" title="Add or remove tools" aria-label="Add or remove tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M12 7v10M7 12h10"/></svg></button>`;
+fav.innerHTML=`<span class="grip" title="Move">${grip.innerHTML}</span><span class="fl"></span><button type="button" class="fadd" title="Add or remove tools" aria-label="Add or remove tools"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><path d="M8 3v10M3 8h10"/></svg></button>`;
 function favRender(){
-  fav.querySelector('.fl').innerHTML=FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="${tool===t}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round">${favIcon(t)}</svg></button>`).join('');
+  fav.querySelector('.fl').innerHTML=FAV_TOOLS.map(t=>`<button type="button" data-t="${t}" title="${TOOL_NAME(t)}" aria-label="${TOOL_NAME(t)}" aria-pressed="${tool===t}"><svg viewBox="${FICON[t]?'0 0 28 28':'-2 -2 28 28'}" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter">${favIcon(t)}</svg></button>`).join('');
 }
 function favToggle(t){FAV_TOOLS=FAV_TOOLS.includes(t)?FAV_TOOLS.filter(x=>x!==t):[...FAV_TOOLS,t]; try{localStorage.setItem('potik.favtools',JSON.stringify(FAV_TOOLS))}catch(e){} favRender(); requestAnimationFrame(()=>favHome())}
 function favMenu(x,y){showMenu([...FAV_ALL.map(t=>({label:TOOL_NAME(t),on:FAV_TOOLS.includes(t),act:()=>favToggle(t)}))],x,y)}
