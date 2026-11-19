@@ -673,6 +673,14 @@ const CLR_APPLY={
   lines:(S,c,I=S.ind)=>{if(I.prof)I.prof.vaCol=c; if(I.rng){I.rng.color=c; I.rng.extColor=c} if(I.tpoov)I.tpoov.vaCol=c},
   stVol:(S,c)=>{if(S.ind.stats)S.ind.stats.vol=c},
 };
+/* 19.11: indicator defaults still carry the old magenta / pink, which the Graphite layer turns grey — so «Reset to defaults» or a ready-made
+   set turned the Big Trades bubbles colourless. themedDef(k) = the default with the Graphite colours; clrHeal(S) puts them back where a
+   field still holds the untouched old default (a colour you picked yourself is in USERCOL and is left alone). */
+function themedDef(k){const x=IND_BY[k]; if(!x) return {}; const tmp={props:{},ind:{[k]:JSON.parse(JSON.stringify(x.def))}}; if(THEME_G) for(const c of Object.keys(CLR_APPLY)) CLR_APPLY[c](tmp,CLR[c]); return tmp.ind[k]}
+function clrHeal(S){if(!THEME_G||!S||!S.ind) return;
+  for(const k in S.ind){const x=IND_BY[k], o=S.ind[k]; if(!x||!o) continue; const td=themedDef(k);
+    for(const f in x.def){const v=x.def[f]; if(typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v)&&o[f]===v&&td[f]!==v&&!USERCOL.has(v.toLowerCase())) o[f]=td[f]}}
+  if(S.props){if(S.props.up===DEF_PROPS.up&&!USERCOL.has(DEF_PROPS.up)) S.props.up=CLR.buy; if(S.props.down===DEF_PROPS.down&&!USERCOL.has(DEF_PROPS.down)) S.props.down=CLR.sell}}
 function clrPane(S,only){for(const k of only?[only]:Object.keys(CLR_APPLY)) CLR_APPLY[k](S,CLR[k]); if(!only&&S.ind.heat&&S.ind.heat.palette==='potik') S.ind.heat.palette='bookmap'; S.props.clr18=true}
 function clrGlobal(){Object.assign(DOMCFG,{bidCol:CLR.sell,askCol:CLR.buy,buyCol:CLR.buy,sellCol:CLR.sell,volCol:CLR.prof}); Object.assign(TSCFG,{buy:CLR.buy,sell:CLR.sell})}
 const MONO='"Geist Mono", ui-monospace, Menlo, Consolas, monospace';
@@ -2510,6 +2518,12 @@ function drawChart(P,ctx,w,h){
     ctx.font=`10px ${UI}`; ctx.fillStyle=C.muted; ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText('CVD',6,cvdTop+5);
     ctx.restore();
     ctx.font=`500 10.5px ${MONO}`; tag(ctx,plotW,AX,yc(B[last].cvd),cvdTop,cvdTop+cvdH,hexA(Q.color,.2),Q.color,fK(B[last].cvd));
+    // 19.11: moved or zoomed → a small button bottom right of the panel puts CVD back (auto)
+    V.g.cvdBtn=null;
+    if((+P.S.ind.cvd.off||0)!==0||(+P.S.ind.cvd.zoom||1)!==1){const t=LANG==='uk'?'⟲ CVD на місце':'⟲ Reset CVD';
+      ctx.font=`500 11px ${UI}`; const bw=Math.ceil(ctx.measureText(t).width)+20, bh=22, bx=plotW-bw-8, by=cvdTop+cvdH-bh-6;
+      ctx.fillStyle='rgba(20,20,23,.94)'; ctx.strokeStyle='rgba(210,210,215,.5)'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(bx+.5,by+.5,bw,bh,6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#e6e6ea'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,bx+bw/2,by+bh/2+.5); V.g.cvdBtn=[bx,by,bx+bw,by+bh]}
   }
 
   // bar statistics
@@ -4019,7 +4033,7 @@ const TOOL_NAME=t=>({rectB:'Blue zone (rectangle)',rectR:'Red zone (rectangle)',
 // drawings made with them earlier still show). A group with a single tool is a plain button.
 // every tool is its own button in the left column (no dropdowns); TOOL_SETS only groups them in the right-click menu
 const TOOL_SETS=[['cursor'],['trend','hline','vline'],['rect','text'],['measure'],['long','short'],['vprof','avwap']];
-const TOOL_GROUPS=TOOL_SETS.flat().map(t=>[t]);
+const TOOL_GROUPS=TOOL_SETS.flatMap(s=>s[0]==='trend'?[s]:s.map(t=>[t]));   // 19.11: the three lines share one button (arrow → the other two); the rest stay single
 let TG_LAST={}; try{TG_LAST=JSON.parse(localStorage.getItem('potik.tg')||'{}')||{}}catch(e){}
 const svgI=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${TICON[k]||''}</svg>`;
 function buildToolbar(){
@@ -4453,7 +4467,7 @@ function openSettings(P0,focus){
         for(const [g,rows] of groups){if(g&&groups.length>1) host.appendChild(el_('div','sxsec',g)); fl(rows)}
       }else{const f=el_('div','fields'); host.appendChild(f); sp.tpl(f,obj,note=>{changed(); render(); if(note){const m=pg.querySelector('.tplmsg'); if(m) m.textContent=note}})}
       const act=el_('div','dact'); host.appendChild(act);
-      btn(act,'Reset to defaults',()=>{const on=obj.on, hide=obj.hide; Object.assign(obj,x.def,{on,hide}); changed(); render()});
+      btn(act,'Reset to defaults',()=>{const on=obj.on, hide=obj.hide; Object.assign(obj,themedDef(id),{on,hide}); changed(); render()});
       btn(act,'Copy to all chart windows',()=>{for(const Q of panes) if(Q!==P&&Q.S.view==='chart'){Q.S.ind[id]=JSON.parse(JSON.stringify(obj)); Q.dirty=true} saveLayout(); toast(`${x.name} copied to every chart window`,'info')});
     }
     function studyPage(host,id){
@@ -4598,6 +4612,7 @@ const CT_BUILTIN={
 function chartTplOf(P,parts){const t={}; if(parts.bt) t.bt=P.S.bt; if(parts.ind){t.ind=JSON.parse(JSON.stringify(P.S.ind)); t.studies=JSON.parse(ser(P.S.studies||[])).map(x=>{delete x.uid; return x})} if(parts.props) t.props={...P.S.props}; return t}
 function applyChartTpl(P,t){
   if(t.ind) for(const k in P.S.ind) if(t.ind[k]) Object.assign(P.S.ind[k],IND_BY[k].def,t.ind[k]);
+  clrHeal(P.S);
   for(const k of IND_GONE) if(P.S.ind[k]) P.S.ind[k].on=false;
   if(t.studies) P.S.studies=t.studies.filter(x=>STUDY_BY[x.id]).map(x=>newStudy(x.id,{...x,uid:undefined}));
   if(t.props) Object.assign(P.S.props,t.props);
@@ -6662,6 +6677,7 @@ function makePane(cfg){
   if(S.ind.fp.pal!==FP_PAL) fpSetPalette(S,FP_PAL);   // 17.11: blue / red prints, the old colours stay in ind.fp.old17
   if(!S.ind.fp.glow18){const F=S.ind.fp; if(F.pal!=='old'&&F.shade==='solid') Object.assign(F,{shade:'glow',glowStyle:'full',sep:'x'}); F.glow18=true}   // 18.11: prints glow by volume (variant 1); back: right-click → Footprint colours → Background: solid
   if(THEME_G&&!S.props.clr18) clrPane(S);   // 18.11: Graphite colours once per window; after that the window keeps what you set
+  clrHeal(S);   // 19.11: old magenta defaults left by a reset / ready-made set → Graphite colours
   const P={el,cv:el.querySelector('canvas'),ov:el.querySelector('canvas.ov'),live:el.querySelector('.live'),S,mode:XMODE==='off'?'pointer':(c.mode||'cross'),
     V:{barW:c.barW||defaultBarW(S),scroll:0,tickPx:3,center:null,autoY:true,fit:true,hover:null,g:null,lastN:0},
     dirty:true,drag:null,ptrs:new Map()};
@@ -6782,6 +6798,7 @@ function wireCanvas(P){
     if(z==='plot'&&P.mode==='hand'){cv.style.cursor='grab';return}
     if(z==='plot'){const h=hitTest(P,p); if(h){cv.style.cursor=h.h==='body'?'move':'pointer';return}}
     if(cvdAx(p)){cv.style.cursor='ns-resize'; return}
+    {const cb=V.g&&V.g.cvdBtn; if(cb&&p.x>=cb[0]&&p.x<=cb[2]&&p.y>=cb[1]&&p.y<=cb[3]){cv.style.cursor='pointer'; return}}
     cv.style.cursor=z==='split'?'row-resize':z==='price'?'ns-resize':z==='time'?'ew-resize':z==='plot'||z==='lower'?(P.mode==='pointer'?'default':'crosshair'):'default';
   };
   const begin=(p,type)=>{P.drag={z:zone(p),x:p.x,y:p.y,scroll:V.scroll,center:V.center,yoff:V.yoff||0,tickPx:V.tickPx,barW:V.barW,moved:false,type}};
@@ -6821,6 +6838,7 @@ function wireCanvas(P){
     if(ptrs.size===1){
       const z=zone(p), ab=V.g&&V.g.abtn;
       if(ab&&p.x>=ab[0]-2&&p.x<=ab[2]+2&&p.y>=ab[1]-2&&p.y<=ab[3]+2){V.autoY=!V.autoY; if(!V.autoY){V.userY=true; V.base=V.center} P.drag={z:'none',moved:true}; P.dirty=true; return}
+      {const cb=V.g&&P.S.view==='chart'&&V.g.cvdBtn; if(cb&&p.x>=cb[0]&&p.x<=cb[2]&&p.y>=cb[1]&&p.y<=cb[3]){P.S.ind.cvd.off=0; P.S.ind.cvd.zoom=1; P.drag={z:'none',moved:true}; P.dirty=true; saveLayout(); return}}
       if(cvdAx(p)){P.drag={z:'cvdax',x:p.x,y:p.y,cz0:+P.S.ind.cvd.zoom||1,moved:false}; return}
       if(z==='split'){const sp=splitAt(p); P.drag={z:'split',obj:sp.obj,h0:+sp.obj.height||14,y:p.y,x:p.x,H:cv.getBoundingClientRect().height,moved:false}; return}
       if(z==='plot'||z==='lower'){const l=legendAt(p); if(l){P.drag={z:'none',moved:true}; legendAct(P,l,legBtn(l,p)); return}}
