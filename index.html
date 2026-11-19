@@ -475,7 +475,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .sxlist{display:flex;flex-direction:column;min-width:0}
 .sxlist .sxsec{margin:16px 0 4px 10px}
 .sxlist>.sxsub{margin-bottom:0}
-.sxir{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:7px}
+.sxir{display:flex;align-items:center;gap:10px;padding:5px 10px;min-height:34px;border-radius:7px}
 .sxir:hover{background:var(--sx-p2)}
 .sxir.sel{background:var(--sx-sel)}
 .sxin{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;padding:2px 0}
@@ -4382,7 +4382,7 @@ function openSettings(P0,focus){
       const wrap=el_('div','sxind'), list=el_('div','sxlist'), det=el_('div','sxdet'); wrap.append(list,det); host.appendChild(wrap);
       list.appendChild(el_('h3','sxh','Indicators')); list.appendChild(el_('p','sxsub','The switch shows it on the chart.'));
       const irow=(id,name,small,on,hid,toggle)=>{const r=el_('div','sxir'+(st.sel===id?' sel':'')+(hid?' hid':'')), nb=el_('button','sxin'); nb.type='button';
-        nb.append(el_('b',null,name)); if(small) nb.append(el_('small',null,small)); nb.addEventListener('click',()=>{st.sel=id; render()});
+        nb.append(el_('b',null,name)); /* 19.11: names only, no small line under them */ nb.addEventListener('click',()=>{st.sel=id; render()});
         r.append(nb); if(toggle) r.append(sw(on,name,b=>{toggle(); render()})); list.appendChild(r)};
       const indRow=k=>{const o=P.S.ind[k]; irow(k,IND_BY[k].name,IND_SHORT[k],o.on,o.on&&o.hide,()=>{o.on=!o.on; if(!o.on) o.hide=false; changed()})};
       for(const [g,ids] of SET_IGRP){list.appendChild(el_('div','sxsec',g)); ids.filter(k=>IND_BY[k]).forEach(indRow)}
