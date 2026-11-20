@@ -518,12 +518,10 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ptx{display:grid;place-items:center;flex:none;width:20px;height:20px;margin-left:auto;border-radius:4px;color:var(--muted)}
 .ptx:hover{background:color-mix(in srgb,var(--text,#e6e6e6) 14%,var(--bar,#0b0b0b));color:var(--text)}
 .ptx svg{width:10px;height:10px}
-.favslot{display:flex;align-items:center;padding-right:8px;margin-right:2px;border-right:1px solid var(--line)}
-.tb .dt.fav{position:static;transform:none;display:flex;align-items:center;gap:0;height:30px;padding:0 2px;border:0;border-radius:6px;background:none;box-shadow:none;z-index:auto}
-.tb .dt.fav .grip{display:none}
-.tb .dt.fav button{width:32px;height:30px;border-radius:5px}
-.tb .dt.fav svg{width:28px;height:28px}
-.tb .dt.fav .fadd{width:22px}
+.dt.fav{position:fixed;z-index:45;height:34px;box-sizing:border-box;padding:2px 3px;gap:0;border-radius:8px}
+.dt.fav button{width:30px;height:28px;border-radius:5px}
+.dt.fav .grip{width:12px;height:28px}
+.dt.fav .fadd{width:20px}
 .indpop{position:fixed;z-index:60;width:250px;max-height:70vh;overflow:auto;padding:6px;border:1px solid var(--q2a2232,#2a2232);border-radius:10px;background:var(--q16121b,#16121b);box-shadow:0 10px 30px rgba(0,0,0,.6)}
 .indpop .iph{padding:6px 8px 8px;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .indpop .ipempty{margin:8px;color:var(--muted);font-size:12.5px}
@@ -548,7 +546,6 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
       <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)" hidden>⌘ K</button>
       <button type="button" class="hbtn hic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button type="button" class="hbtn" id="clrb" hidden title="Colours: the theme and every colour in one place">Colours</button>
-      <span class="favslot" id="favslot"></span>
       <button type="button" class="hbtn hic" id="indb" title="Indicators on this chart" aria-label="Indicators on this chart" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5l3.5-4 3 2.5L14 7l3 4 4-3"/><path d="M3 20.5h18" opacity=".55"/></svg></button>
       <button type="button" class="hbtn hic" id="addwin" title="Add a chart to this screen" aria-label="Add a chart to this screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="3.5" y="5.5" width="8" height="13" rx="1.5"/><rect x="13.5" y="5.5" width="7" height="13" rx="1.5" stroke-dasharray="2 1.7"/><path d="M17 9.8v4.4M14.8 12h4.4" stroke-linecap="round"/></svg></button>
       <button type="button" class="hbtn hic" id="setb" title="Settings: every tool in one place" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.8L4.5 9l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="2.7"/></svg></button>
@@ -4181,20 +4178,21 @@ function favRender(){
 function favToggle(t){FAV_TOOLS=FAV_TOOLS.includes(t)?FAV_TOOLS.filter(x=>x!==t):[...FAV_TOOLS,t]; try{localStorage.setItem('potik.favtools',JSON.stringify(FAV_TOOLS))}catch(e){} favRender(); requestAnimationFrame(()=>favHome())}
 function favMenu(x,y){showMenu([...FAV_ALL.map(t=>({label:TOOL_NAME(t),on:FAV_TOOLS.includes(t),act:()=>favToggle(t)}))],x,y)}
 favRender();
-$('#favslot').appendChild(fav);   // 20.11: in the top bar next to the indicators / add-chart buttons, not floating over the charts
+document.body.appendChild(fav);   // 20.11: floating again, over the whole page (not only the charts), so it can be pulled up into the top bar — it is short enough to fit there
 fav.querySelector('.fadd').addEventListener('click',e=>{e.stopPropagation(); const r=e.currentTarget.getBoundingClientRect(); favMenu(r.left,r.bottom+4)});
 fav.addEventListener('contextmenu',e=>{e.preventDefault(); favMenu(e.clientX,e.clientY)});
 $('#dt').addEventListener('contextmenu',e=>{const b=e.target.closest('[data-t]'); if(!b||!FAV_ALL.includes(b.dataset.t)) return; e.preventDefault(); const t=b.dataset.t, on=FAV_TOOLS.includes(t);
   showMenu([{label:on?'Remove from favourites':'Add to favourites',act:()=>favToggle(t)}],e.clientX,e.clientY)});
-let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav')||'null')}catch(e){}
-function placeFav(x,y){const r=ws.getBoundingClientRect(), w=fav.offsetWidth, h=fav.offsetHeight;
-  fav.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; fav.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
-const favHome=()=>{};   // 20.11: the panel sits in the top bar, nothing to place
+let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav2')||'null')}catch(e){}   // page coordinates (potik.fav was inside the charts)
+function placeFav(x,y){const w=fav.offsetWidth, h=fav.offsetHeight;
+  fav.style.left=clamp(x,2,Math.max(2,window.innerWidth-w-2))+'px'; fav.style.top=clamp(y,1,Math.max(1,window.innerHeight-h-2))+'px'}
+const favHome=()=>{if(favPos) placeFav(favPos.x,favPos.y); else{const r=ws.getBoundingClientRect(); placeFav(r.left+r.width/2-fav.offsetWidth/2,r.top+40)}};
+favHome(); window.addEventListener('resize',()=>favHome());
 fav.addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) return; const t=b.dataset.t; cancelPending(); setTool(tool===t?'cursor':t)});
 {const fg=fav.querySelector('.grip'); let fd=null;
   fg.addEventListener('pointerdown',e=>{fg.setPointerCapture(e.pointerId); fd={x:e.clientX,y:e.clientY,l:parseFloat(fav.style.left)||0,t:parseFloat(fav.style.top)||0}});
   fg.addEventListener('pointermove',e=>{if(fd) placeFav(fd.l+e.clientX-fd.x,fd.t+e.clientY-fd.y)});
-  fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav',JSON.stringify(favPos))}catch(e){}});}
+  fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav2',JSON.stringify(favPos))}catch(e){}});}
 
 /* drawing toolbar (17.11, like TradingView's): while one drawing is selected a small bar floats over the charts with its
    line colour, fill colour, text colour, line width, line style, settings, lock, delete and more. It moves by its grip and
