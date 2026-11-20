@@ -518,10 +518,14 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ptx{display:grid;place-items:center;flex:none;width:20px;height:20px;margin-left:auto;border-radius:4px;color:var(--muted)}
 .ptx:hover{background:color-mix(in srgb,var(--text,#e6e6e6) 14%,var(--bar,#0b0b0b));color:var(--text)}
 .ptx svg{width:10px;height:10px}
-.dt.fav{position:fixed;z-index:45;height:34px;box-sizing:border-box;padding:2px 3px;gap:0;border-radius:8px}
-.dt.fav button{width:30px;height:28px;border-radius:5px}
-.dt.fav .grip{width:12px;height:28px}
+/* 20.11: favourites — one flat strip that fits inside a window's 30 px header row (snaps there), no shadow, no frame */
+.dt.fav{position:fixed;z-index:45;height:26px;box-sizing:border-box;padding:0 2px;gap:0;border:0;border-radius:6px;box-shadow:none;background:color-mix(in srgb,var(--text,#e6e6e6) 6%,var(--bar,#0b0b0b))}
+.dt.fav:not(.snap){box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.dt.fav button{width:28px;height:26px;border-radius:5px}
+.dt.fav .grip{width:12px;height:26px}
 .dt.fav .fadd{width:20px}
+.tb{border-bottom:0!important}
+.ws{padding-top:0!important}
 .indpop{position:fixed;z-index:60;width:250px;max-height:70vh;overflow:auto;padding:6px;border:1px solid var(--q2a2232,#2a2232);border-radius:10px;background:var(--q16121b,#16121b);box-shadow:0 10px 30px rgba(0,0,0,.6)}
 .indpop .iph{padding:6px 8px 8px;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .indpop .ipempty{margin:8px;color:var(--muted);font-size:12.5px}
@@ -4183,16 +4187,21 @@ fav.querySelector('.fadd').addEventListener('click',e=>{e.stopPropagation(); con
 fav.addEventListener('contextmenu',e=>{e.preventDefault(); favMenu(e.clientX,e.clientY)});
 $('#dt').addEventListener('contextmenu',e=>{const b=e.target.closest('[data-t]'); if(!b||!FAV_ALL.includes(b.dataset.t)) return; e.preventDefault(); const t=b.dataset.t, on=FAV_TOOLS.includes(t);
   showMenu([{label:on?'Remove from favourites':'Add to favourites',act:()=>favToggle(t)}],e.clientX,e.clientY)});
-let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav2')||'null')}catch(e){}   // page coordinates (potik.fav was inside the charts)
-function placeFav(x,y){const w=fav.offsetWidth, h=fav.offsetHeight;
-  fav.style.left=clamp(x,2,Math.max(2,window.innerWidth-w-2))+'px'; fav.style.top=clamp(y,1,Math.max(1,window.innerHeight-h-2))+'px'}
-const favHome=()=>{if(favPos) placeFav(favPos.x,favPos.y); else{const r=ws.getBoundingClientRect(); placeFav(r.left+r.width/2-fav.offsetWidth/2,r.top+40)}};
+let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav3')||'null')}catch(e){}   // 20.11: page coordinates; snaps into a window header row
+// 20.11: never above the window area (the tabs row stays free); near a window's header row it snaps right into it
+const favRows=()=>[...document.querySelectorAll('.ws .win:not(.mini) .wh')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>0);
+function placeFav(x,y){const w=fav.offsetWidth, h=fav.offsetHeight, top=$('header.tb').getBoundingClientRect().bottom+1;
+  x=clamp(x,2,Math.max(2,window.innerWidth-w-2)); y=clamp(y,top,Math.max(top,window.innerHeight-h-2));
+  let best=null; for(const r of favRows()){const sy=Math.round(r.top+(r.height-1-h)/2); if(Math.abs(y-sy)<16&&x+w/2>=r.left&&x+w/2<=r.right&&(!best||Math.abs(y-sy)<Math.abs(y-best))) best=sy}
+  if(best!=null) y=best; fav.classList.toggle('snap',best!=null); fav.style.left=x+'px'; fav.style.top=y+'px'}
+const favHome=()=>{if(favPos) placeFav(favPos.x,favPos.y); else{const rs=favRows().sort((a,b)=>a.top-b.top||b.width-a.width), r=rs[0]||ws.getBoundingClientRect(); placeFav(r.left+r.width/2-fav.offsetWidth/2,r.top)}};
+setTimeout(favHome,300); try{new ResizeObserver(()=>favHome()).observe(ws)}catch(e){}
 favHome(); window.addEventListener('resize',()=>favHome());
 fav.addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) return; const t=b.dataset.t; cancelPending(); setTool(tool===t?'cursor':t)});
 {const fg=fav.querySelector('.grip'); let fd=null;
   fg.addEventListener('pointerdown',e=>{fg.setPointerCapture(e.pointerId); fd={x:e.clientX,y:e.clientY,l:parseFloat(fav.style.left)||0,t:parseFloat(fav.style.top)||0}});
   fg.addEventListener('pointermove',e=>{if(fd) placeFav(fd.l+e.clientX-fd.x,fd.t+e.clientY-fd.y)});
-  fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav2',JSON.stringify(favPos))}catch(e){}});}
+  fg.addEventListener('pointerup',()=>{if(!fd) return; fd=null; favPos={x:parseFloat(fav.style.left),y:parseFloat(fav.style.top)}; try{localStorage.setItem('potik.fav3',JSON.stringify(favPos))}catch(e){}});}
 
 /* drawing toolbar (17.11, like TradingView's): while one drawing is selected a small bar floats over the charts with its
    line colour, fill colour, text colour, line width, line style, settings, lock, delete and more. It moves by its grip and
@@ -6558,7 +6567,7 @@ function syncTree(){
   for(const u of ids) if(!leafs(TREE).includes(u)){const L_=leafs(TREE), t=active&&L_.includes(active.S.uid)?active.S.uid:L_[L_.length-1]; TREE=treeInsert(TREE,t,u,'right')}
 }
 function layoutRects(){
-  const cs=getComputedStyle(ws), pl=parseFloat(cs.paddingLeft)||4, pr=parseFloat(cs.paddingRight)||4, pt=parseFloat(cs.paddingTop)||4, pb=parseFloat(cs.paddingBottom)||4, G=4;
+  const cs=getComputedStyle(ws), pv=v=>{const n=parseFloat(v); return isNaN(n)?4:n}, pl=pv(cs.paddingLeft), pr=pv(cs.paddingRight), pt=pv(cs.paddingTop), pb=pv(cs.paddingBottom), G=4;
   const out=new Map(), splits=[];
   const rec=(n,x,y,w,h)=>{if(n.p!=null){out.set(n.p,{x,y,w,h}); return}
     const H=n.d==='h', tot=Math.max(1,(H?w:h)-G*(n.k.length-1)); let o=H?x:y;
