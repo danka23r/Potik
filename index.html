@@ -518,6 +518,20 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ptx{display:grid;place-items:center;flex:none;width:20px;height:20px;margin-left:auto;border-radius:4px;color:var(--muted)}
 .ptx:hover{background:color-mix(in srgb,var(--text,#e6e6e6) 14%,var(--bar,#0b0b0b));color:var(--text)}
 .ptx svg{width:10px;height:10px}
+.favslot{display:flex;align-items:center;padding-right:8px;margin-right:2px;border-right:1px solid var(--line)}
+.tb .dt.fav{position:static;transform:none;display:flex;align-items:center;gap:0;height:30px;padding:0 2px;border:0;border-radius:6px;background:none;box-shadow:none;z-index:auto}
+.tb .dt.fav .grip{display:none}
+.tb .dt.fav button{width:32px;height:30px;border-radius:5px}
+.tb .dt.fav svg{width:28px;height:28px}
+.tb .dt.fav .fadd{width:22px}
+.indpop{position:fixed;z-index:60;width:250px;max-height:70vh;overflow:auto;padding:6px;border:1px solid var(--q2a2232,#2a2232);border-radius:10px;background:var(--q16121b,#16121b);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.indpop .iph{padding:6px 8px 8px;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.indpop .ipempty{margin:8px;color:var(--muted);font-size:12.5px}
+.iprow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:8px 8px;border-radius:7px;color:var(--text);font-size:13px;text-align:left}
+.iprow:hover{background:var(--q1c1424,#1c1424)}
+.iprow .sw{pointer-events:none;display:inline-block}
+.iprow[aria-checked="true"] .sw{background:var(--text)}
+.iprow[aria-checked="true"] .sw::after{background:var(--bg);transform:translateX(15px)}
 </style>
 
 <div class="app">
@@ -534,7 +548,9 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
       <button type="button" class="hbtn" id="cmdb" title="Command palette (Ctrl+K)" hidden>⌘ K</button>
       <button type="button" class="hbtn hic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button type="button" class="hbtn" id="clrb" hidden title="Colours: the theme and every colour in one place">Colours</button>
-      <button type="button" class="hbtn hic" id="addwin" title="Add a chart to this screen" aria-label="Add a chart to this screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M12 4.5v15M3.5 12h8.5"/><path d="M16.25 9.5v5M13.75 12h5" stroke-linecap="round"/></svg></button>
+      <span class="favslot" id="favslot"></span>
+      <button type="button" class="hbtn hic" id="indb" title="Indicators on this chart" aria-label="Indicators on this chart" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5l3.5-4 3 2.5L14 7l3 4 4-3"/><path d="M3 20.5h18" opacity=".55"/></svg></button>
+      <button type="button" class="hbtn hic" id="addwin" title="Add a chart to this screen" aria-label="Add a chart to this screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="3.5" y="5.5" width="8" height="13" rx="1.5"/><rect x="13.5" y="5.5" width="7" height="13" rx="1.5" stroke-dasharray="2 1.7"/><path d="M17 9.8v4.4M14.8 12h4.4" stroke-linecap="round"/></svg></button>
       <button type="button" class="hbtn hic" id="setb" title="Settings: every tool in one place" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.8L4.5 9l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="2.7"/></svg></button>
       <button type="button" class="hbtn" id="appb" title="Appearance & language" hidden>Aa</button>
       <button type="button" class="hbtn" id="datab" title="Instrument, session, data source, tick import" hidden>Data</button>
@@ -3802,15 +3818,18 @@ function drawDrawings0(ctx,g,P,ph){
       const x0=Math.min(xa,xb), x1=Math.max(xa,xb), W=x1-x0, tp=g.tp;
       const yT=g.yOf(v.hi)-tp/2, yB=g.yOf(v.lo)+tp/2;
       if(st.bg){ctx.fillStyle=hexA(st.color,.06); ctx.fillRect(x0,yT,W,yB-yT); ctx.strokeStyle=hexA(st.color,sel?.8:.3); ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.strokeRect(x0+.5,yT+.5,W,yB-yT); ctx.setLineDash([])}
-      const rp=[1,2,3,4,6,8].find(r=>r*tp>=2.5)||12; let mx=1,md=1; const rows=[];
+      // 20.11: thin, even stripes — every row the same pixel height with a 1 px gap (pitch ≥ 3 px), so more rows show and none is thicker
+      const rp=[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50,60,80,100,150,200].find(r=>r*tp>=3)||250, pitch=rp*tp, bh=Math.max(2,Math.floor(pitch)-1);
+      let mx=1,md=1; const rows=[];
       for(let i=0;i<v.vol.length;i+=rp){let sb=0,sa=0; for(let j=i;j<i+rp&&j<v.vol.length;j++){sb+=v.vb[j]; sa+=v.va[j]} rows.push([v.lo+i,sb,sa]); if(sb+sa>mx)mx=sb+sa; if(Math.abs(sa-sb)>md)md=Math.abs(sa-sb)}
-      const bh=Math.max(1,rp*tp-(rp*tp>3?1:0)), WW=W*st.widthPct/100;
-      for(const [k,sb,sa] of rows){
-        const inVA=k+rp-1>=v.val&&k<=v.vah, isP=v.poc>=k&&v.poc<k+rp, op=(inVA?st.vaOp:st.outOp)/100, y=g.yOf(k+rp-1)-tp/2;
-        if(st.vmode==='split'){const wb=sb/mx*WW, wa=sa/mx*WW; ctx.fillStyle=hexA(C.mag,op); ctx.fillRect(x0,y,wb,bh); ctx.fillStyle=isP?st.poc:hexA(st.color,op); ctx.fillRect(x0+wb,y,wa,bh)}
-        else if(st.vmode==='delta'){ctx.fillStyle=hexA(sa>=sb?st.color:C.mag,op); ctx.fillRect(x0,y,Math.abs(sa-sb)/md*WW,bh)}
-        else{ctx.fillStyle=isP?st.poc:hexA(st.color,op); ctx.fillRect(x0,y,(sb+sa)/mx*WW,bh)}
-      }
+      const WW=W*st.widthPct/100, xs=Math.round(x0), y0=g.yOf(v.lo)+tp/2;
+      rows.forEach(([k,sb,sa],ri)=>{
+        const inVA=k+rp-1>=v.val&&k<=v.vah, isP=v.poc>=k&&v.poc<k+rp, op=(inVA?st.vaOp:st.outOp)/100, y=Math.round(y0-(ri+1)*pitch)+(pitch-bh>=1?1:0);
+        const bar=(x,w,c)=>{w=Math.round(w); if(w<1) return; ctx.fillStyle=c; ctx.fillRect(x,y,w,bh)};
+        if(st.vmode==='split'){const wb=sb/mx*WW, wa=sa/mx*WW; bar(xs,wb,hexA(C.mag,op)); bar(xs+Math.round(wb),wa,isP?st.poc:hexA(st.color,op))}
+        else if(st.vmode==='delta') bar(xs,Math.abs(sa-sb)/md*WW,hexA(sa>=sb?st.color:C.mag,op));
+        else bar(xs,(sb+sa)/mx*WW,isP?st.poc:hexA(st.color,op));
+      });
       const xl=st.ext?g.plotW:x1;
       ctx.fillStyle=st.poc; ctx.fillRect(x0,Math.round(g.yOf(v.poc))-.5,xl-x0,1);
       if(st.vaLines){ctx.strokeStyle=hexA(st.color,.75); ctx.lineWidth=1; ctx.setLineDash([5,3]); for(const p of [v.vah,v.val]){const y=Math.round(g.yOf(p))+.5; ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(xl,y); ctx.stroke()} ctx.setLineDash([])}
@@ -4162,7 +4181,7 @@ function favRender(){
 function favToggle(t){FAV_TOOLS=FAV_TOOLS.includes(t)?FAV_TOOLS.filter(x=>x!==t):[...FAV_TOOLS,t]; try{localStorage.setItem('potik.favtools',JSON.stringify(FAV_TOOLS))}catch(e){} favRender(); requestAnimationFrame(()=>favHome())}
 function favMenu(x,y){showMenu([...FAV_ALL.map(t=>({label:TOOL_NAME(t),on:FAV_TOOLS.includes(t),act:()=>favToggle(t)}))],x,y)}
 favRender();
-ws.appendChild(fav);
+$('#favslot').appendChild(fav);   // 20.11: in the top bar next to the indicators / add-chart buttons, not floating over the charts
 fav.querySelector('.fadd').addEventListener('click',e=>{e.stopPropagation(); const r=e.currentTarget.getBoundingClientRect(); favMenu(r.left,r.bottom+4)});
 fav.addEventListener('contextmenu',e=>{e.preventDefault(); favMenu(e.clientX,e.clientY)});
 $('#dt').addEventListener('contextmenu',e=>{const b=e.target.closest('[data-t]'); if(!b||!FAV_ALL.includes(b.dataset.t)) return; e.preventDefault(); const t=b.dataset.t, on=FAV_TOOLS.includes(t);
@@ -4170,8 +4189,7 @@ $('#dt').addEventListener('contextmenu',e=>{const b=e.target.closest('[data-t]')
 let favPos=null; try{favPos=JSON.parse(localStorage.getItem('potik.fav')||'null')}catch(e){}
 function placeFav(x,y){const r=ws.getBoundingClientRect(), w=fav.offsetWidth, h=fav.offsetHeight;
   fav.style.left=clamp(x,4,Math.max(4,r.width-w-4))+'px'; fav.style.top=clamp(y,4,Math.max(4,r.height-h-4))+'px'}
-const favHome=()=>favPos?placeFav(favPos.x,favPos.y):placeFav(ws.getBoundingClientRect().width/2-fav.offsetWidth/2,40);
-favHome(); try{new ResizeObserver(()=>favHome()).observe(ws)}catch(e){}   // stays inside the charts when the window size changes
+const favHome=()=>{};   // 20.11: the panel sits in the top bar, nothing to place
 fav.addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) return; const t=b.dataset.t; cancelPending(); setTool(tool===t?'cursor':t)});
 {const fg=fav.querySelector('.grip'); let fd=null;
   fg.addEventListener('pointerdown',e=>{fg.setPointerCapture(e.pointerId); fd={x:e.clientX,y:e.clientY,l:parseFloat(fav.style.left)||0,t:parseFloat(fav.style.top)||0}});
@@ -5914,6 +5932,9 @@ const UK_RX=[
   [/^Session (\d) from \((ET|UTC)\)$/,'Сесія $1 від ($2)'],[/^Session (\d) to \((ET|UTC)\)$/,'Сесія $1 до ($2)'],[/^Recently deleted \((\d+)\)$/,'Нещодавно видалені ($1)'],[/^before version (.+)$/,'перед версією $1'],
   [/^(\w+) · (.+) · Binance live$/,'$1 · $2 · Binance наживо'],[/^(\w+) · (.+) · simulated$/,'$1 · $2 · симуляція'],[/^Chart$/,'Графік'],[/^Linked: group ([ABC]) \(click to change\)$/,'Зв’язано: група $1 (клік — змінити)'],
 ];
+Object.assign(UK,{"Indicators on this chart":"Індикатори на цьому графіку"});
+UK_RX.push([/^Indicators · (.+)$/,'Індикатори · $1']);
+
 Object.assign(UK,{"Add a chart to this screen":"Додати графік на цей екран","Duplicate tab":"Дублювати вкладку","Close other tabs":"Закрити інші вкладки","window":"вікно","windows":"вікон","Tab closed · right click a tab → Reopen closed tab":"Вкладку закрито · ПКМ по вкладці → Відновити закриту вкладку"});
 
 Object.assign(UK,{"New tab":"Нова вкладка","Duplicate this tab":"Дублювати цю вкладку","Reopen closed tab":"Відновити закриту вкладку","New window in this tab…":"Нове вікно в цій вкладці…","New tab or window":"Нова вкладка або вікно","Close tab":"Закрити вкладку","Tab name":"Назва вкладки","Tabs":"Вкладки","Show":"Показати","Rename":"Перейменувати","Duplicate":"Дублювати","This is the only tab":"Це єдина вкладка","A tab with this name already exists":"Вкладка з такою назвою вже є"});
@@ -6858,7 +6879,23 @@ function tabNewHere(){   // a new tab with one chart like the first chart of thi
       {label:'Close tab',danger:true,disabled:!many,act:()=>tabClose(n)},{label:'Close other tabs',disabled:!many,act:()=>{if(n!==WSP.cur) switchWorkspace(n,true); for(const m of wsNames()) if(m!==n) tabClose(m)}}],e.clientX,e.clientY)});
 }
 $('#addw').addEventListener('click',()=>tabNewHere());   // 20.11: + = a new tab straight away, like TradingView
-$('#addwin').addEventListener('click',()=>openAddWindow());   // several charts on one screen: this button, or right click on a tab
+$('#addwin').addEventListener('click',()=>openAddWindow());
+/* 20.11: the indicators button (top right) — only the indicators, each with a switch for the active chart; nothing else */
+{const pop=el_('div','indpop'); pop.hidden=true; pop.setAttribute('role','dialog'); pop.setAttribute('aria-label','Indicators on this chart'); document.body.appendChild(pop);
+  const chartP=()=>active&&active.S.view==='chart'?active:panes.find(Q=>Q.S.view==='chart');
+  const fill=()=>{const P=chartP(); pop.innerHTML='';
+    if(!P){pop.appendChild(el_('p','ipempty','Open a chart window to change its indicators.')); return}
+    pop.appendChild(el_('div','iph',`Indicators · ${winLabel(P)}`));
+    const ids=[...SET_IGRP.flatMap(g=>g[1]),...SET_RARE].filter(k=>IND_BY[k]&&!IND_GONE.includes(k));
+    for(const k of ids){const o=P.S.ind[k], r=el_('button','iprow'); r.type='button'; r.setAttribute('role','switch'); r.setAttribute('aria-checked',!!o.on);
+      r.append(el_('span',null,IND_BY[k].name),el_('i','sw')); r.querySelector('.sw').setAttribute('aria-hidden','true');
+      r.addEventListener('click',()=>{o.on=!o.on; if(!o.on) o.hide=false; P.dirty=true; saveLayout(); r.setAttribute('aria-checked',o.on)}); pop.appendChild(r)}};
+  const close=()=>{pop.hidden=true; $('#indb').setAttribute('aria-expanded','false')};
+  $('#indb').addEventListener('click',e=>{e.stopPropagation(); if(!pop.hidden){close(); return} fill(); pop.hidden=false; $('#indb').setAttribute('aria-expanded','true');
+    const r=$('#indb').getBoundingClientRect(); pop.style.top=(r.bottom+6)+'px'; pop.style.left=Math.max(6,Math.min(window.innerWidth-pop.offsetWidth-6,r.right-pop.offsetWidth))+'px'});
+  document.addEventListener('pointerdown',e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.closest('#indb')) close()},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden) close()});
+}   // several charts on one screen: this button, or right click on a tab
 
 /* ---------- canvas gestures (per window) ---------- */
 function wireCanvas(P){
