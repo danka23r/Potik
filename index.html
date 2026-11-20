@@ -532,7 +532,8 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .dt.fav button:hover{color:var(--text,#e6e6e6);background:color-mix(in srgb,var(--text,#e6e6e6) 9%,var(--bar,#0b0b0b))}
 .dt.fav button[aria-pressed="true"]{color:var(--text,#e6e6e6);background:color-mix(in srgb,var(--text,#e6e6e6) 13%,var(--bar,#0b0b0b))}
 .dt.fav svg{width:28px;height:28px}
-.dt.fav .grip{width:12px;height:28px}
+.dt.fav .grip{width:14px;height:28px;flex:none;margin-right:2px;overflow:hidden}
+.dt.fav .grip svg{width:10px;height:20px}   /* 20.11: the 28 px icon size used to hit the grip dots too — they ran under the first tool and its highlight hid them */
 .dt.fav .fadd{width:22px}
 .tb{border-bottom:0!important}
 .ws{padding-top:0!important}
