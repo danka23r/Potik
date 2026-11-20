@@ -518,12 +518,16 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .ptx{display:grid;place-items:center;flex:none;width:20px;height:20px;margin-left:auto;border-radius:4px;color:var(--muted)}
 .ptx:hover{background:color-mix(in srgb,var(--text,#e6e6e6) 14%,var(--bar,#0b0b0b));color:var(--text)}
 .ptx svg{width:10px;height:10px}
-/* 20.11: favourites — one flat strip that fits inside a window's 30 px header row (snaps there), no shadow, no frame */
-.dt.fav{position:fixed;z-index:45;height:26px;box-sizing:border-box;padding:0 2px;gap:0;border:0;border-radius:6px;box-shadow:none;background:color-mix(in srgb,var(--text,#e6e6e6) 6%,var(--bar,#0b0b0b))}
+/* 20.11: favourites — a thin strip that fits inside a window's 30 px header row (snaps there). Grey icons like TradingView (white on hover),
+   each tool in its own 32 px cell with 2 px between, so a hovered tool never covers its neighbour */
+.dt.fav{position:fixed;z-index:45;height:28px;box-sizing:border-box;padding:0 3px;gap:2px;border:0;border-radius:6px;box-shadow:none;background:color-mix(in srgb,var(--text,#e6e6e6) 5%,var(--bar,#0b0b0b))}
 .dt.fav:not(.snap){box-shadow:0 4px 16px rgba(0,0,0,.5)}
-.dt.fav button{width:28px;height:26px;border-radius:5px}
-.dt.fav .grip{width:12px;height:26px}
-.dt.fav .fadd{width:20px}
+.dt.fav button{width:32px;height:28px;border-radius:4px;color:color-mix(in srgb,var(--text,#e6e6e6) 72%,var(--bar,#0b0b0b));overflow:hidden}
+.dt.fav button:hover{color:var(--text,#e6e6e6);background:color-mix(in srgb,var(--text,#e6e6e6) 9%,var(--bar,#0b0b0b))}
+.dt.fav button[aria-pressed="true"]{color:var(--text,#e6e6e6);background:color-mix(in srgb,var(--text,#e6e6e6) 13%,var(--bar,#0b0b0b))}
+.dt.fav svg{width:28px;height:28px}
+.dt.fav .grip{width:12px;height:28px}
+.dt.fav .fadd{width:22px}
 .tb{border-bottom:0!important}
 .ws{padding-top:0!important}
 .indpop{position:fixed;z-index:60;width:250px;max-height:70vh;overflow:auto;padding:6px;border:1px solid var(--q2a2232,#2a2232);border-radius:10px;background:var(--q16121b,#16121b);box-shadow:0 10px 30px rgba(0,0,0,.6)}
@@ -3571,7 +3575,7 @@ const DSTY={
   measure:{up:'#7ee0d4',dn:'#ff8a9a',op:14,lock:false},
   long:{look:'clean',tgt:'#5670a8',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
   short:{look:'clean',tgt:'#9a4462',stp:'#3c3a40',op:80,behind:true,qty:1,risk:0,ppt:PPT,labels:true,prices:true,progress:true,mae:true,lock:false},
-  vprof:{mode:'fixed',vmode:'volume',vaPct:70,vaLines:true,ext:false,color:CLR.prof||'#8a8a8a',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
+  vprof:{mode:'fixed',vmode:'split',vaPct:70,vaLines:true,ext:false,color:CLR.prof||'#8a8a8a',poc:'#ffffff',vaOp:75,outOp:30,widthPct:70,bg:true,lock:true},
   avwap:{color:'#ffd166',width:1,dash:'solid',band:false,mult:1,label:true,lock:false},
   elliott:{color:'#8fd3ff',wave:'impulse',degree:'minor',width:1,lock:false},
 };
@@ -3624,6 +3628,10 @@ try{const k=LS+'.pos3'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1')
     else if(d.type==='rect'){if(d.st.fill==='#3a4c84'){Object.assign(d.st,{fill:'#566fb8',border:'#4a5f9e'}); ch=1} else if(d.st.fill==='#6c2b30'){Object.assign(d.st,{fill:'#9a434b',border:'#80373f'}); ch=1}}}
   if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 // 18.11 (user: «натягуючийся ВП досі фіолетовий»): range profiles grey like the chart's volume profile
+try{const k=LS+'.vp20'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;   // 20.11: range profiles two-tone (sells / buys) by default
+  for(const d of DR) if(d.type==='vprof'&&d.st&&d.st.vmode==='volume'){d.st.vmode='split'; ch=1}
+  if(DDEF.vprof&&DDEF.vprof.vmode==='volume'){DDEF.vprof.vmode='split'; try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){}}
+  if(ch) localStorage.setItem(LS,JSON.stringify(DR,(k,v)=>k[0]==='_'?undefined:v))}}catch(e){}
 try{const k=LS+'.vp18'; if(!localStorage.getItem(k)){localStorage.setItem(k,'1'); let ch=0;
   for(const d of DR) if(d.type==='vprof'&&d.st&&String(d.st.color).toLowerCase()==='#c4b2ee'){d.st.color=CLR.prof||'#8a8a8a'; ch=1}
   if(DDEF.vprof&&String(DDEF.vprof.color).toLowerCase()==='#c4b2ee'){DDEF.vprof.color=CLR.prof||'#8a8a8a'; try{localStorage.setItem('potik.drawdefaults',JSON.stringify(DDEF))}catch(e){}}
@@ -3819,21 +3827,27 @@ function drawDrawings0(ctx,g,P,ph){
       const x0=Math.min(xa,xb), x1=Math.max(xa,xb), W=x1-x0, tp=g.tp;
       const yT=g.yOf(v.hi)-tp/2, yB=g.yOf(v.lo)+tp/2;
       if(st.bg){ctx.fillStyle=hexA(st.color,.06); ctx.fillRect(x0,yT,W,yB-yT); ctx.strokeStyle=hexA(st.color,sel?.8:.3); ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.strokeRect(x0+.5,yT+.5,W,yB-yT); ctx.setLineDash([])}
-      // 20.11: thin, even stripes — every row the same pixel height with a 1 px gap (pitch ≥ 3 px), so more rows show and none is thicker
+      // 20.11 (2): detailed like the daily profile — every row the same pixel height with a 1 px gap, a soft gradient from the anchor to the tip,
+      // rounded tips, sells / buys in two tones, the value area brighter and the rest quiet, the POC row lit, POC / VAH / VAL lines with prices
       const rp=[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50,60,80,100,150,200].find(r=>r*tp>=3)||250, pitch=rp*tp, bh=Math.max(2,Math.floor(pitch)-1);
       let mx=1,md=1; const rows=[];
       for(let i=0;i<v.vol.length;i+=rp){let sb=0,sa=0; for(let j=i;j<i+rp&&j<v.vol.length;j++){sb+=v.vb[j]; sa+=v.va[j]} rows.push([v.lo+i,sb,sa]); if(sb+sa>mx)mx=sb+sa; if(Math.abs(sa-sb)>md)md=Math.abs(sa-sb)}
-      const WW=W*st.widthPct/100, xs=Math.round(x0), y0=g.yOf(v.lo)+tp/2;
+      const WW=W*st.widthPct/100, xs=Math.round(x0), y0=g.yOf(v.lo)+tp/2, rad=Math.min(bh/2,2);
+      const cB=CLR.buy||'#1e90fc', cS=CLR.sell||'#da3431';
+      const seg=(x,w,y,col,op,tip)=>{w=Math.round(w); if(w<1) return; const gr=ctx.createLinearGradient(xs,0,xs+WW,0); gr.addColorStop(0,hexA(col,op*.45)); gr.addColorStop(1,hexA(col,op));
+        ctx.fillStyle=gr; ctx.beginPath(); if(tip&&w>3) ctx.roundRect(x,y,w,bh,[0,rad,rad,0]); else ctx.rect(x,y,w,bh); ctx.fill()};
       rows.forEach(([k,sb,sa],ri)=>{
-        const inVA=k+rp-1>=v.val&&k<=v.vah, isP=v.poc>=k&&v.poc<k+rp, op=(inVA?st.vaOp:st.outOp)/100, y=Math.round(y0-(ri+1)*pitch)+(pitch-bh>=1?1:0);
-        const bar=(x,w,c)=>{w=Math.round(w); if(w<1) return; ctx.fillStyle=c; ctx.fillRect(x,y,w,bh)};
-        if(st.vmode==='split'){const wb=sb/mx*WW, wa=sa/mx*WW; bar(xs,wb,hexA(C.mag,op)); bar(xs+Math.round(wb),wa,isP?st.poc:hexA(st.color,op))}
-        else if(st.vmode==='delta') bar(xs,Math.abs(sa-sb)/md*WW,hexA(sa>=sb?st.color:C.mag,op));
-        else bar(xs,(sb+sa)/mx*WW,isP?st.poc:hexA(st.color,op));
+        const inVA=k+rp-1>=v.val&&k<=v.vah, isP=v.poc>=k&&v.poc<k+rp, op=Math.min(1,(isP?1.15:1)*(inVA?st.vaOp:st.outOp)/100), y=Math.round(y0-(ri+1)*pitch)+(pitch-bh>=1?1:0);
+        if(st.vmode==='split'){const wb=sb/mx*WW, wa=sa/mx*WW; seg(xs,wb,y,cS,op,wa<1); seg(xs+Math.round(wb),wa,y,cB,op,true)}
+        else if(st.vmode==='delta') seg(xs,Math.abs(sa-sb)/md*WW,y,sa>=sb?cB:cS,op,true);
+        else seg(xs,(sb+sa)/mx*WW,y,st.color,op,true);
+        if(isP){ctx.fillStyle=hexA(st.poc,.9); ctx.fillRect(xs,y,Math.max(2,Math.round((sb+sa)/mx*WW)),1)}
       });
-      const xl=st.ext?g.plotW:x1;
-      ctx.fillStyle=st.poc; ctx.fillRect(x0,Math.round(g.yOf(v.poc))-.5,xl-x0,1);
-      if(st.vaLines){ctx.strokeStyle=hexA(st.color,.75); ctx.lineWidth=1; ctx.setLineDash([5,3]); for(const p of [v.vah,v.val]){const y=Math.round(g.yOf(p))+.5; ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(xl,y); ctx.stroke()} ctx.setLineDash([])}
+      const xl=st.ext?g.plotW:x1, lab=(t,y,c)=>{ctx.font=`500 9.5px ${MONO}`; ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillStyle=c; ctx.fillText(t,xl-3,y-2)};
+      {const y=Math.round(g.yOf(v.poc))+.5; ctx.strokeStyle=hexA(st.poc,.85); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(xs,y); ctx.lineTo(xl,y); ctx.stroke(); lab(`POC ${fP(v.poc)}`,y,hexA(st.poc,.9))}
+      if(st.vaLines){ctx.strokeStyle=hexA(st.color,.6); ctx.lineWidth=1; ctx.setLineDash([4,3]);
+        for(const [p_,t] of [[v.vah,'VAH'],[v.val,'VAL']]){const y=Math.round(g.yOf(p_))+.5; ctx.beginPath(); ctx.moveTo(xs,y); ctx.lineTo(xl,y); ctx.stroke(); ctx.setLineDash([]); lab(`${t} ${fP(p_)}`,y,hexA(st.color,.95)); ctx.setLineDash([4,3])}
+        ctx.setLineDash([])}
       ctx.font=`600 10px ${MONO}`; ctx.fillStyle=C.text; ctx.textAlign='left'; ctx.textBaseline='top';
       ctx.fillText(`Vol ${fK(v.tot)}  Δ ${v.delta>0?'+':''}${fK(v.delta)}  POC ${fP(v.poc)}  VA ${fP(v.val)}–${fP(v.vah)}`,x0+2,yB+3); break}
     default:{
