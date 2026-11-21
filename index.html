@@ -545,6 +545,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 .iprow .sw{pointer-events:none;display:inline-block}
 .iprow[aria-checked="true"] .sw{background:var(--text)}
 .iprow[aria-checked="true"] .sw::after{background:var(--bg);transform:translateX(15px)}
+.sim.shut{color:var(--muted);border-color:var(--line)}
 </style>
 
 <div class="app">
@@ -765,13 +766,24 @@ let DS=null, WSF=null, BNL=null, BOOT_MSG='';
 const SITE_URL='https://danka23r.github.io/Potik/';
 // Quantower bridge (PotikBridge strategy) listens on this computer only
 function QT_URL(){return 'ws://127.0.0.1:'+(clamp_(Math.round(+DCFG.qtPort||8765),1024,65535))}
+// 21.11: CME futures are closed from Friday 17:00 to Sunday 18:00 New York time (crypto never closes)
+function mktClosedNow(){if(INSTR[DCFG.sym]&&INSTR[DCFG.sym].crypto) return false;
+  try{const p=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()), wd=p.find(x=>x.type==='weekday').value, h=+p.find(x=>x.type==='hour').value;
+    return wd==='Sat'||(wd==='Fri'&&h>=17)||(wd==='Sun'&&h<18)}catch(e){return false}}
 const IN_CLAUDE=(()=>{const h=location.hostname; if(location.protocol==='file:'||/github\.io$/.test(h)||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(h)) return false; if(/claude/i.test(h)) return true; try{return window.top!==window.self}catch(e){return true}})();
 if(DCFG.src==='csv'){try{DS=await dsLoad(DCFG.ds)}catch(e){console.error(e)} if(DS) DCFG.sym=DS.meta.sym; else BOOT_MSG='The imported data set could not be read, so the simulator is running.'}
 if(DCFG.src==='bnc'&&CRYPTO&&IN_CLAUDE) BOOT_MSG='Live Binance data cannot load inside Claude, so the simulator is running. For real prices open the site: '+SITE_URL;
 else if(DCFG.src==='bnc'&&CRYPTO){try{BNL=await bncLoad(INSTR[DCFG.sym],HIST_DAYS,DCFG.bnc,f=>{const m=document.getElementById('busyMsg'); if(m) m.textContent=`Loading ${INSTR[DCFG.sym].bsym} from Binance · ${Math.round(f*100)}%`})}catch(e){BOOT_MSG=`Binance could not be reached (${e.message||e}), so the simulator is running.`}}
 if(DCFG.src==='qt'&&INSTR[DCFG.sym]&&INSTR[DCFG.sym].crypto) DCFG.src='sim';
 if(DCFG.src==='qt'&&IN_CLAUDE) BOOT_MSG='Quantower data cannot load inside Claude, so the simulator is running. Open the site: '+SITE_URL;
-else if(DCFG.src==='qt'){const qd=clamp_(+DCFG.qtDays||5,1,30); {const m=document.getElementById('busyMsg'); if(m) m.textContent='Reading the saved Quantower history…'} const QC=await qtcLoad(DCFG.sym,qd); WSF=makeWsFeed(QT_URL(),JSON.stringify({type:'subscribe',symbol:DCFG.sym,days:qd,session:DCFG.ses,...(QC?{from:QC.lastMs+1}:{})}),{qt:true,qc:QC}); const ok=await WSF.ready; if(!ok){BOOT_MSG=`Quantower: ${WSF.status}. The simulator is running.`; WSF.close(); WSF=null} else{let n=''; try{n=sessionStorage.getItem('potik.qt.note')||''; sessionStorage.removeItem('potik.qt.note')}catch(e){} if(n) BOOT_MSG=n; else if(WSF.hello&&WSF.hello.warn) BOOT_MSG='Quantower: '+WSF.hello.warn}}
+else if(DCFG.src==='qt'){const qd=clamp_(+DCFG.qtDays||5,1,30); {const m=document.getElementById('busyMsg'); if(m) m.textContent='Reading the saved Quantower history…'} const QC=await qtcLoad(DCFG.sym,qd); WSF=makeWsFeed(QT_URL(),JSON.stringify({type:'subscribe',symbol:DCFG.sym,days:qd,session:DCFG.ses,...(QC?{from:QC.lastMs+1}:{})}),{qt:true,qc:QC}); const ok=await WSF.ready; if(!ok){
+  /* 21.11: no bridge (weekend, Quantower off) → show the real prints already saved in this browser, frozen at the last one,
+     instead of a simulated market. Only with nothing saved does the simulator still run. */
+  const why=WSF.status; WSF.close(); WSF=null; const C=QC||await qtcLoad(DCFG.sym,1), H=C&&wsCut(C.chunks);
+  if(H&&H.n){WSF=makeWsFeed(null,null,{qt:true,offline:true}); Object.assign(WSF,{H,first:{price:H.P[0]*INSTR[DCFG.sym].tick},dnum:H.dnum[0],status:'no data now · saved history',closed:true,lastMs:H.lastMs,drain(){this.q.length=0; return false}});
+    {const op=WSF.open; WSF.open=function(i){op.call(this,i); BK.bs.fill(0); if(BK.ws) BK.ws.fill(0); BK.on=false}}   // no made-up order book: only what really traded
+    BOOT_MSG=`${mktClosedNow()?'The market is closed':'Quantower is not sending data'} · showing the real prints saved up to ${new Date(H.lastMs).toLocaleString((()=>{try{return localStorage.getItem('potik.lang')==='uk'?'uk-UA':'en-GB'}catch(e){return 'en-GB'}})(),{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}`}
+  else BOOT_MSG=`Quantower: ${why}. The simulator is running.`} else{let n=''; try{n=sessionStorage.getItem('potik.qt.note')||''; sessionStorage.removeItem('potik.qt.note')}catch(e){} if(n) BOOT_MSG=n; else if(WSF.hello&&WSF.hello.warn) BOOT_MSG='Quantower: '+WSF.hello.warn}}
 if(DCFG.src==='ws'){WSF=makeWsFeed(DCFG.wsUrl,DCFG.wsSub); const ok=await WSF.ready; if(!ok){BOOT_MSG=`No trade arrived from ${DCFG.wsUrl||'the WebSocket'} (${WSF.status}), so the simulator is running.`; WSF.close(); WSF=null}}
 if(!INSTR[DCFG.sym]) DCFG.sym='NQ';
 /* a simulated crypto market starts at the real price: Binance's current price if it answers within 3 s,
@@ -5251,6 +5263,7 @@ function makeWsFeed(url,sub,opt){
       return k>0;
     }};
   let done, settled=false; F.ready=new Promise(r=>{done=v=>{if(!settled){settled=true; clearTimeout(timer); r(v)}}});
+  if(opt.offline) return F;   // 21.11: the saved history only (bridge off / market closed)
   const bm=document.getElementById('busyMsg'), bb=document.getElementById('busy'), say=t=>{if(bm){bm.textContent=t; bb.hidden=false}};
   // plain WebSocket: wait up to 20 s for the first trade; Quantower: 8 s for the bridge to answer, then as long as the history keeps coming
   let timer=0; const arm=(ms,why)=>{clearTimeout(timer); timer=setTimeout(()=>{if(!settled){F.status=why; done(false)}},ms)};
@@ -5960,6 +5973,9 @@ const UK_RX=[
   [/^Session (\d) from \((ET|UTC)\)$/,'Сесія $1 від ($2)'],[/^Session (\d) to \((ET|UTC)\)$/,'Сесія $1 до ($2)'],[/^Recently deleted \((\d+)\)$/,'Нещодавно видалені ($1)'],[/^before version (.+)$/,'перед версією $1'],
   [/^(\w+) · (.+) · Binance live$/,'$1 · $2 · Binance наживо'],[/^(\w+) · (.+) · simulated$/,'$1 · $2 · симуляція'],[/^Chart$/,'Графік'],[/^Linked: group ([ABC]) \(click to change\)$/,'Зв’язано: група $1 (клік — змінити)'],
 ];
+Object.assign(UK,{"CLOSED":"ЗАКРИТО","Market closed (Friday 17:00 – Sunday 18:00 New York). The chart shows the real prints up to the close.":"Ринок закритий (з п’ятниці 23:00 до понеділка 00:00 за Берліном). На графіку справжні угоди до закриття.","Quantower is not sending data. The chart shows the real prints saved before.":"Quantower не надсилає даних. На графіку справжні угоди, збережені раніше."});
+UK_RX.push([/^The market is closed · showing the real prints saved up to (.+)$/,'Ринок закритий · показано справжні угоди до $1'],[/^Quantower is not sending data · showing the real prints saved up to (.+)$/,'Quantower не надсилає даних · показано справжні угоди до $1']);
+
 Object.assign(UK,{"Indicators on this chart":"Індикатори на цьому графіку"});
 UK_RX.push([/^Indicators · (.+)$/,'Індикатори · $1']);
 
@@ -7142,12 +7158,17 @@ wireReplayBar();
 function updateSource(){
   const b=$('#srcb'), k=FEED.kind;
   const fake=CRYPTO&&k==='sim'&&!RP.on;
-  b.textContent=RP.on?(RP.blind?'BLIND':'REPLAY'):k==='csv'?'CSV':FEED.live?'LIVE':fake?'SIM · not real prices':'SIM'; b.className='sim'+(RP.on?' rp':k==='csv'?' csv':FEED.live?' ws':'');
+  const shut=!RP.on&&FEED.qt&&(FEED.closed||mktClosedNow());
+  b.textContent=RP.on?(RP.blind?'BLIND':'REPLAY'):k==='csv'?'CSV':shut?'CLOSED':FEED.live?'LIVE':fake?'SIM · not real prices':'SIM'; b.className='sim'+(RP.on?' rp':k==='csv'?' csv':shut?' shut':FEED.live?' ws':'');
   b.title=fake?'Simulated market, not real prices. Click to switch to live Binance data':`${FEED.name} · ${INS.name} · ${CRYPTO?'24/7, UTC days':ETH?'ETH':'RTH'}`;
   $('#rpb').setAttribute('aria-pressed',RP.on); $('#rpb').disabled=!!FEED.live;
   $('#pp').hidden=$('#spd').hidden=!!FEED.live; $('#rbar').hidden=!RP.on; syncReplayBar(true);
 }
 setPlaying(G.playing); updateSource();
+if(!RP.on&&FEED.qt){const shutTip=()=>{if(FEED.qt&&(FEED.closed||mktClosedNow())) $('#srcb').title=mktClosedNow()?'Market closed (Friday 17:00 – Sunday 18:00 New York). The chart shows the real prints up to the close.':'Quantower is not sending data. The chart shows the real prints saved before.'};
+  shutTip(); setInterval(()=>{updateSource(); shutTip()},60000);
+  // saved history only: once the market is open, look for the bridge every 2 minutes and reload when it answers
+  if(FEED.closed) setInterval(()=>{if(mktClosedNow()) return; try{const w=new WebSocket(QT_URL()); w.onopen=()=>{try{w.close()}catch(e){} location.reload()}; w.onerror=()=>{}}catch(e){}},120000)}
 $('#srcb').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();
   if(CRYPTO&&FEED.kind==='sim'&&!RP.on&&IN_CLAUDE) openDialog('Live data',body=>{
     body.appendChild(el_('p','idesc','Claude’s viewer does not let this page connect to Binance, so here the market is always simulated and the prices are not real. Live Binance data works on the site:'));
