@@ -420,6 +420,68 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
 @media (max-width:699px){.ssm{min-width:64px;padding:8px 10px;font-size:12px}.sslogo{font-size:20px}.ss{align-items:flex-start}}
 /* 29.10: a quieter window header */
 .wh .vw,.wh .indb,.wh .tgl.dom,.wc .lnk,.wc .propb,.wc .wsep:first-of-type{display:none!important}
+/* 21.11: Data window, variant B — grouped list, near-black like Settings, explanations behind "Setup guide" */
+.dbox.ddw{width:min(560px,100%);max-height:min(780px,92vh);background:#111113;border-color:#2a2a2f;--text:#d2d2d7;--muted:#9a9aa2;color:var(--text)}
+.ddw .dhd{gap:12px;padding:8px 8px 8px 22px;border-bottom-color:#222226}
+.ddw .dhd h2{flex:none;font-size:15px;color:#ececf0}
+.ddw .dhd .dx{margin-left:auto}
+.ddchip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;background:#18181b;border:1px solid #2a2a2f;font-size:11.5px;font-weight:400;letter-spacing:0;text-transform:none;color:#b0b0b8;white-space:nowrap;vertical-align:middle}
+.ddchip i{width:6px;height:6px;border-radius:50%;background:#9a9aa2}
+.ddchip.ok i{background:#3ecf8e}.ddchip.wait i{background:#f0b54a}.ddchip.bad i{background:#f08a8a}
+.ddchip b{font-family:var(--f-num);font-weight:400;color:#d2d2d7}
+.shead .ddchip{margin-left:10px}
+.ddb{display:flex;flex-direction:column;gap:18px;color:#d2d2d7}
+.dbd.ddb{padding:18px 22px 0}
+.ddg{display:flex;flex-direction:column;gap:8px}
+.ddg[hidden],.ddhelp[hidden]{display:none}
+.ddgh{margin:0 0 0 4px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#9a9aa2}
+.ddc{background:#0c0c0e;border:1px solid #2a2a2f;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.ddc:empty{display:none}
+.ddr{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 8px 6px 16px;box-sizing:border-box;border-bottom:1px solid #1e1e22}
+.ddr:last-child{border-bottom:0}
+.ddl{flex:1;font-size:13px;color:#d2d2d7;white-space:nowrap}
+.ddr select{appearance:none;-webkit-appearance:none;max-width:68%;min-width:0;height:34px;padding:0 26px 0 8px;border:0;border-radius:7px;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='%239a9aa2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 8px center;color:#ececf0;font:13px var(--f-ui);text-align:right;text-align-last:right;text-overflow:ellipsis;cursor:pointer}
+.ddr select:hover,.ddr select:focus-visible{background-color:#18181b}
+.ddr select:disabled{opacity:.6;cursor:default}
+.ddr select option{background:#18181b;color:#d2d2d7;text-align:left}
+.ddr input{height:34px;box-sizing:border-box;padding:0 10px;background:#18181b;border:1px solid #2a2a2f;border-radius:8px;font:12.5px var(--f-num);color:#ececf0}
+.ddr input[type=number]{width:84px;text-align:right}
+.ddr.ddwide .ddl{flex:none;width:130px;white-space:normal;line-height:1.3}
+.ddr.ddwide input{flex:1;min-width:0}
+.ddtag{font-size:10.5px;letter-spacing:.06em;color:var(--mag);border:1px solid var(--mag);border-radius:4px;padding:1px 5px}
+.ddseg{display:flex;gap:2px;padding:3px;background:#18181b;border-radius:8px}
+.ddseg button{min-width:30px;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#9a9aa2;font:12.5px var(--f-ui);cursor:pointer;white-space:nowrap}
+.ddseg button:hover{color:#d2d2d7}
+.ddseg button[aria-pressed=true]{background:#2e2e34;color:#ececf0}
+.ddseg small{margin-left:5px;font:11px var(--f-num);color:#9a9aa2}
+.ddseg.num button{padding:0 6px;font-family:var(--f-num);font-size:12px}
+.ddst{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;padding:14px 16px;border-bottom:1px solid #1e1e22}
+.ddst div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ddst b{font:500 17px var(--f-num);color:#ececf0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ddst b.acc{color:var(--mag)}
+.ddst span{font-size:11.5px;color:#9a9aa2}
+.ddnote{margin:0;padding:10px 16px;border-bottom:1px solid #1e1e22;font-size:12px;line-height:1.45;color:#b0b0b8}
+.ddact{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;background:transparent;border:0;border-bottom:1px solid #1e1e22;color:#d2d2d7;font:13px var(--f-ui);text-align:left;cursor:pointer}
+.ddact:last-child{border-bottom:0}
+.ddact:hover{background:#141416}
+.ddact svg{width:15px;height:15px;flex:none;color:#9a9aa2}
+.ddact span{flex:1}
+.ddact em{font:normal 12px var(--f-num);color:#9a9aa2}
+.ddact.danger,.ddact.danger svg{color:#f08a8a}
+.ddb .dimp:empty{display:none}
+.ddb .dimp:not(:empty){padding:12px 16px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:12px}
+.dds .dlist{padding:4px 10px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:12px;overflow-x:auto}
+.dds .atbl{margin:4px 0}
+.ddhelp{padding:0 4px}
+.ddhelp h5{margin:10px 0 4px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:#9a9aa2}
+.ddhelp pre{white-space:pre-wrap;word-break:break-all;font-family:var(--f-num);font-size:11px;color:#d2d2d7;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:8px;padding:8px;margin:6px 0}
+.ddft{position:sticky;bottom:0;z-index:1;margin:auto -22px 0;padding:12px 16px 12px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#111113;border-top:1px solid #222226}
+.embd.ddb .ddft{margin:auto 0 0;padding:12px 0}
+.ddlink{background:none;border:0;padding:8px 6px;margin-left:-6px;color:#b0b0b8;font:12.5px var(--f-ui);cursor:pointer}
+.ddlink:hover{color:#ececf0}
+.ddapply{height:36px;padding:0 16px;border:0;border-radius:8px;background:#ececf0;color:#111113;font:500 13px var(--f-ui);cursor:pointer}
+.ddapply:disabled{background:#2a2a2f;color:#9a9aa2;cursor:default}
+@media (max-width:520px){.dbd.ddb{padding:14px 14px 0}.ddft{margin:auto -14px 0;padding:10px 14px}.ddr{flex-wrap:wrap}.ddr select{max-width:100%}.ddr.ddwide .ddl{width:100%}}
 /* 18.11: Settings window, variant A — five sections, black / grey whatever the chart colours */
 .fhint{display:block;margin-top:2px;color:var(--muted);font-size:11px;line-height:1.35;font-weight:400}
 .dbox.setx{/* 19.11: palette «5г» — near-black, soft but clear text (user picked it on the canvas) */
@@ -4346,14 +4408,14 @@ function buildFields(host,fields,obj,onChange){
 const dlg=$('#dlg'), dlgBox=dlg.querySelector('.dbox');
 function openDialog(title,build){
   if(EMBED&&!dlg.hidden&&EMBED.host.isConnected){const h=EMBED.host; h.innerHTML=''; h.scrollTop=0; const hd=el_('div','shead'); hd.appendChild(el_('h3',null,title)); h.appendChild(hd); const body=el_('div','embd'); h.appendChild(body); build(body); return}
-  EMBED=null; dlgBox.classList.remove('wide','setx');
+  EMBED=null; dlgBox.classList.remove('wide','setx','ddw');
   dlgBox.innerHTML=''; const hd=el_('div','dhd'); hd.appendChild(el_('h2',null,title));
   const x=el_('button','ic dx'); x.type='button'; x.title='Close dialog'; x.innerHTML='<svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 2.5l8 8M10.5 2.5l-8 8"/></svg>';
   x.addEventListener('click',()=>closeDialog(true)); hd.appendChild(x); dlgBox.appendChild(hd);
   const body=el_('div','dbd'); dlgBox.appendChild(body); build(body); dlg.hidden=false;
 }
 // inside the Settings window a page that 'closes itself' just goes back to the current section
-function closeDialog(force){if(EMBED&&!force&&!dlg.hidden&&EMBED.host.isConnected){const r=EMBED.refresh; setTimeout(r,0); return} EMBED=null; dlg.hidden=true; dlgBox.innerHTML=''; dlgBox.classList.remove('wide','setx')}
+function closeDialog(force){if(EMBED&&!force&&!dlg.hidden&&EMBED.host.isConnected){const r=EMBED.refresh; setTimeout(r,0); return} EMBED=null; dlg.hidden=true; dlgBox.innerHTML=''; dlgBox.classList.remove('wide','setx','ddw')}
 dlg.addEventListener('pointerdown',e=>{if(e.target===dlg) closeDialog(true)});
 
 /* one Settings window (Deepcharts style): a section for every tool on the left, its own page on the right.
@@ -5757,28 +5819,42 @@ function openReport(){
 }
 
 /* ---------- Data: instrument, session, source, tick import ---------- */
+// 21.11: variant B — a grouped list (Market · History in this browser), near-black like Settings; the long explanations sit behind "Setup guide"
+const DD_UP='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M3 13v3a1 1 0 001 1h12a1 1 0 001-1v-3"/></svg>';
+const DD_BIN='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10"/></svg>';
 function openDataDialog(){
   openDialog('Data',async body=>{
     const draft={...DCFG};
-    body.innerHTML=`<p class="idesc">Instrument, trading session and where the market comes from. Applying a change rebuilds everything (the page reloads; layout, drawings and the account are kept).</p>
-      <div class="fields dfs"></div><div class="dact"><button type="button" class="btn2" data-a="apply" disabled>Apply and reload</button></div>
-      <h4 class="acsub">Import ticks · CSV or JSON</h4>
-      <p class="acnote">One print per row: time, price, size and, if you have it, the aggressor side (B/S, buy/sell, A/B) or the bid and ask at the time. Header names are recognised; files without a header are read as time, price, size, side, and NinjaTrader exports (time;last;bid;ask;volume) work too. Times can be ISO, “yyyyMMdd HHmmss”, “MM/DD/YYYY HH:MM:SS” or epoch numbers. The data stays in this browser.</p>
-      <input type="file" class="dfile" accept=".csv,.txt,.json,.tsv" aria-label="Tick file"><div class="dimp"></div>
-      <h4 class="acsub">Imported data sets</h4><div class="dlist"><p class="acnote">Loading…</p></div>
-      <details class="dhelp"><summary>WebSocket message format</summary><pre>{"type":"trade","t":1730000000123,"price":21000.25,"size":3,"side":"B"}
-{"type":"quote","bid":21000.00,"ask":21000.25,"bidSize":12,"askSize":9}
-{"type":"book","bids":[[21000.00,12],[20999.75,30]],"asks":[[21000.25,8]]}</pre>
-      <p class="acnote">t is epoch milliseconds (optional). A message may be a single object or an array. Without book messages the depth is synthesised around the quotes. The optional connect message is sent once the socket opens (for example a subscription).</p></details>`;
-    const fs=body.querySelector('.dfs'), apply=body.querySelector('[data-a="apply"]');
+    const box=EMBED?null:dlgBox; if(box) box.classList.add('ddw');
+    body.classList.add('ddb');
+    body.innerHTML=`<section class="ddg"><h4 class="ddgh">Market</h4><div class="ddc dfs"></div></section>
+      <section class="ddg"><h4 class="ddgh">History in this browser</h4><div class="ddc ddh"></div></section>
+      <input type="file" class="dfile" accept=".csv,.txt,.json,.tsv" aria-label="Tick file" hidden><div class="dimp"></div>
+      <section class="ddg dds" hidden><h4 class="ddgh">Imported data sets</h4><div class="dlist"></div></section>
+      <div class="ddhelp" hidden></div>
+      <div class="ddft"><button type="button" class="ddlink" data-a="guide" aria-expanded="false">Setup guide</button><button type="button" class="ddapply" data-a="apply" disabled>Apply and reload</button></div>`;
+    const fs=body.querySelector('.dfs'), hist=body.querySelector('.ddh'), help=body.querySelector('.ddhelp'), apply=body.querySelector('[data-a="apply"]'), guide=body.querySelector('[data-a="guide"]'), fin=body.querySelector('.dfile');
+    guide.addEventListener('click',()=>{help.hidden=!help.hidden; guide.setAttribute('aria-expanded',String(!help.hidden)); guide.textContent=help.hidden?'Setup guide':'Hide guide'; if(!help.hidden) help.scrollIntoView({block:'nearest'})});
+    // the running feed's state, next to the title
+    {const hd=box?box.querySelector('.dhd'):body.parentNode&&body.parentNode.querySelector('.shead');
+      if(hd){const s=String(FEED.status||''), M={connected:['Connected','ok'],connecting:['Connecting','wait'],reconnecting:['Reconnecting','wait'],closed:['Closed','']};
+        const [t,c]=FEED.kind==='sim'?['Simulator','']:FEED.kind==='csv'?['Imported data','']:M[s]||(FEED.closed?['Saved history','']:['No connection','bad']);
+        const chip=el_('span','ddchip'+(c?' '+c:'')); chip.append(el_('i'),el_('span',null,t)); const sym=FEED.hello&&FEED.hello.symbol; if(sym) chip.appendChild(el_('b',null,sym));
+        const x=hd.querySelector('.dx'); if(x) hd.insertBefore(chip,x); else hd.appendChild(chip)}}
     const changed=()=>{apply.disabled=JSON.stringify(draft)===JSON.stringify(DCFG)};
     let sets=[]; try{sets=await dsList()}catch(e){}
     const render=()=>{
-      fs.innerHTML='';
-      const row=(label,ctl)=>{const r=el_('label','frow'); r.append(el_('span',null,label),ctl); fs.appendChild(r); return ctl};
-      const src=row('Market data',el_('select'));
+      fs.innerHTML=''; hist.innerHTML=''; help.innerHTML='';
+      const row=(label,ctl,cls)=>{const r=el_(ctl.tagName==='DIV'?'div':'label','ddr'+(cls?' '+cls:'')); r.append(el_('span','ddl',label),ctl); fs.appendChild(r); return ctl};
+      const seg=(label,opts,val,on,cls)=>{const g=el_('div','ddseg'+(cls?' '+cls:'')); g.setAttribute('role','group'); g.setAttribute('aria-label',label);
+        for(const [v,t,sub,tip] of opts){const b=el_('button',null,t); b.type='button'; if(tip) b.title=tip; b.setAttribute('aria-pressed',String(String(v)===String(val))); if(sub) b.appendChild(el_('small',null,sub));
+          b.addEventListener('click',()=>{g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); on(v)}); g.appendChild(b)}
+        return row(label,g)};
+      const note=t=>help.appendChild(el_('p','acnote',t));
+      const src=row('Source',el_('select'));
       [['sim','Simulator'],['bnc','Binance · crypto, real data (live)'],['qt','Quantower · your futures data (Rithmic / CQG), live'],...sets.map(m=>['csv:'+m.id,`Imported: ${m.name}`]),['ws','WebSocket feed (live)']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; src.appendChild(o)});
       src.value=draft.src==='csv'?'csv:'+draft.ds:draft.src;
+      if(draft.src==='bnc'||draft.src==='qt'||draft.src==='ws') src.before(el_('span','ddtag','LIVE'));
       src.addEventListener('change',()=>{const v=src.value; if(v.startsWith('csv:')){draft.src='csv'; draft.ds=v.slice(4); const m=sets.find(x=>x.id===draft.ds); if(m) draft.sym=m.sym} else{draft.src=v; if(v==='bnc'&&!INSTR[draft.sym].crypto) draft.sym='BTC'; if(v==='qt'&&INSTR[draft.sym].crypto) draft.sym='NQ'} render(); changed()});
       const ins=row('Instrument',el_('select'));
       for(const [k,x] of Object.entries(INSTR)){const o=el_('option',null,x.crypto?`${k} · ${x.name} · 24/7 · 1 contract = ${x.lot} ${x.unit}`:`${k} · ${x.name} · tick ${x.tick} = $${x.usd}`); o.value=k; ins.appendChild(o)}
@@ -5786,43 +5862,55 @@ function openDataDialog(){
       ins.addEventListener('change',()=>{draft.sym=ins.value; if(draft.src==='bnc'&&!INSTR[draft.sym].crypto) draft.src='sim'; if(draft.src==='qt'&&INSTR[draft.sym].crypto) draft.src='bnc'; render(); changed()});
       const cr=!!INSTR[draft.sym].crypto;
       if(draft.src==='bnc'&&!cr){draft.sym='BTC'; render(); changed(); return}
+      const stats=[]; let detail='';
       if(cr){
-        fs.appendChild(el_('p','acnote',`Crypto trades 24/7: every session is one UTC day (00:00–24:00), weekends included. One contract = ${INSTR[draft.sym].lot} ${INSTR[draft.sym].unit}.`));
-        const dy=row('Days of history (TPO, profiles)',el_('select')); for(const n of [14,21,30]){const o=el_('option',null,n+' days'); o.value=n; dy.appendChild(o)} dy.value=draft.days||21; dy.addEventListener('change',()=>{draft.days=+dy.value; changed()});
+        seg('Days of history',[14,21,30].map(n=>[n,String(n),null,n+' days']),draft.days||21,v=>{draft.days=+v; changed()},'num');
+        note(`Crypto trades 24/7: every session is one UTC day (00:00–24:00), weekends included. One contract = ${INSTR[draft.sym].lot} ${INSTR[draft.sym].unit}.`);
         if(draft.src==='bnc'){
-          const mk=row('Binance market',el_('select')); [['fut','USDⓈ-M futures (perpetual)'],['spot','Spot']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; mk.appendChild(o)}); mk.value=draft.bnc||'fut'; mk.addEventListener('change',()=>{draft.bnc=mk.value; changed()});
-          fs.appendChild(el_('p','acnote','History comes from Binance 1-minute candles: prices, volume and buyers’ volume of every minute are real, how a minute’s volume splits across its prices is estimated. From the moment the page opens every trade and the top 20 book levels are real. No account or key is needed; Binance must be reachable from your network.'));
-          if(FEED.kind==='bnc') fs.appendChild(el_('p','acnote',`Now: ${FEED.status} · ${FEED.n} live trades${FEED.book?' · book from Binance':''}.`));
+          seg('Binance market',[['fut','Futures',null,'USDⓈ-M futures (perpetual)'],['spot','Spot']],draft.bnc||'fut',v=>{draft.bnc=v; changed()});
+          note('History comes from Binance 1-minute candles: prices, volume and buyers’ volume of every minute are real, how a minute’s volume splits across its prices is estimated. From the moment the page opens every trade and the top 20 book levels are real. No account or key is needed; Binance must be reachable from your network.');
+          if(FEED.kind==='bnc'){stats.push([String(FEED.n),'live trades'],[FEED.book?'Binance':'—','book']); detail=FEED.status}
         }
       }else{
-        const ses=row('Session',el_('select'));
-        [['eth','Whole day · ETH 18:00–17:00 New York (overnight included)'],['rth','RTH only · 9:30–16:00 New York']].forEach(([v,t])=>{const o=el_('option',null,t); o.value=v; ses.appendChild(o)});
-        ses.value=draft.ses; ses.addEventListener('change',()=>{draft.ses=ses.value; changed()});
+        seg('Session',[['eth','ETH','18–17','Whole day · ETH 18:00–17:00 New York (overnight included)'],['rth','RTH','9:30–16','RTH only · 9:30–16:00 New York']],draft.ses,v=>{draft.ses=v; changed()});
       }
       if(draft.src==='qt'){
-        const dy=row('Days of tick history',el_('select')); for(const n of [1,2,3,5,10,15,20]){const o=el_('option',null,n+(n>1?' sessions':' session')); o.value=n; dy.appendChild(o)} dy.value=String(draft.qtDays||5); dy.addEventListener('change',()=>{draft.qtDays=+dy.value; changed()});
+        seg('Tick history',[1,2,3,5,10,15,20].map(n=>[n,String(n),null,n+(n>1?' sessions':' session')]),draft.qtDays||5,v=>{draft.qtDays=+v; changed()},'num');
         const pt=row('Bridge port',el_('input')); pt.type='number'; pt.min=1024; pt.max=65535; pt.value=draft.qtPort||8765; pt.addEventListener('input',()=>{draft.qtPort=Math.round(+pt.value)||8765; changed()});
-        fs.appendChild(el_('p','acnote','Quantower must be open on this computer, connected to your data (Rithmic or AMP / CQG), with the PotikBridge strategy running (Strategies manager → PotikBridge → pick the same instrument → Run). Every print of the history comes with its real side, so footprint, delta and profiles are exact. The history is saved in this browser: the first load takes a while, after that only the new prints since the last visit come from Quantower. The browser may ask once to allow access to this computer: allow it.'));
-        if(FEED.qt) fs.appendChild(el_('p','acnote',`Now: ${FEED.status}${FEED.hello?' · '+FEED.hello.symbol:''} · ${FEED.H?fK_(FEED.H.n)+' prints of history · ':''}${FEED.cacheInfo?fK_(FEED.cacheInfo.cached)+' from the saved history, '+fK_(FEED.cacheInfo.fresh)+' new from Quantower · ':''}${FEED.n} live prints${FEED.book?' · book from Quantower':''}.`));
-        {const b=el_('button','btn2 sm','Forget the saved history'); b.type='button'; b.addEventListener('click',async()=>{await qtcClear(draft.sym); toast(`Saved ${draft.sym} history removed · the next load takes it from Quantower again`,'info')}); fs.appendChild(b)}
+        note('Quantower must be open on this computer, connected to your data (Rithmic or AMP / CQG), with the PotikBridge strategy running (Strategies manager → PotikBridge → pick the same instrument → Run). Every print of the history comes with its real side, so footprint, delta and profiles are exact. The history is saved in this browser: the first load takes a while, after that only the new prints since the last visit come from Quantower. The browser may ask once to allow access to this computer: allow it.');
+        if(FEED.qt){if(FEED.H) stats.push([fK_(FEED.H.n),'prints total']); if(FEED.cacheInfo) stats.push(['+'+fK_(FEED.cacheInfo.fresh),'new from Quantower','acc']); stats.push([String(FEED.n),'live prints']); detail=FEED.status}
       }
       if(draft.src==='ws'){
-        const u=row('WebSocket address',el_('input')); u.type='url'; u.placeholder='wss://…'; u.value=draft.wsUrl; u.addEventListener('input',()=>{draft.wsUrl=u.value.trim(); changed()});
-        const m=row('Message on connect (optional)',el_('input')); m.type='text'; m.value=draft.wsSub; m.addEventListener('input',()=>{draft.wsSub=m.value; changed()});
-        if(FEED.kind==='ws') fs.appendChild(el_('p','acnote',`Now: ${FEED.status} · ${FEED.n} prints received${FEED.book?' · book from the feed':' · synthesised book'}.`));
+        const u=row('WebSocket address',el_('input'),'ddwide'); u.type='url'; u.placeholder='wss://…'; u.value=draft.wsUrl; u.addEventListener('input',()=>{draft.wsUrl=u.value.trim(); changed()});
+        const m=row('Message on connect (optional)',el_('input'),'ddwide'); m.type='text'; m.value=draft.wsSub; m.addEventListener('input',()=>{draft.wsSub=m.value; changed()});
+        help.appendChild(el_('h5',null,'WebSocket message format'));
+        const pre=el_('pre'); pre.textContent=`{"type":"trade","t":1730000000123,"price":21000.25,"size":3,"side":"B"}
+{"type":"quote","bid":21000.00,"ask":21000.25,"bidSize":12,"askSize":9}
+{"type":"book","bids":[[21000.00,12],[20999.75,30]],"asks":[[21000.25,8]]}`; help.appendChild(pre);
+        note('t is epoch milliseconds (optional). A message may be a single object or an array. Without book messages the depth is synthesised around the quotes. The optional connect message is sent once the socket opens (for example a subscription).');
+        if(FEED.kind==='ws'&&!FEED.qt){stats.push([String(FEED.n),'prints received'],[FEED.book?'from the feed':'synthesised','book']); detail=FEED.status}
       }
+      help.appendChild(el_('h5',null,'Import ticks · CSV or JSON'));
+      note('One print per row: time, price, size and, if you have it, the aggressor side (B/S, buy/sell, A/B) or the bid and ask at the time. Header names are recognised; files without a header are read as time, price, size, side, and NinjaTrader exports (time;last;bid;ask;volume) work too. Times can be ISO, “yyyyMMdd HHmmss”, “MM/DD/YYYY HH:MM:SS” or epoch numbers. The data stays in this browser.');
+      note('Applying a change rebuilds everything: the page reloads; layout, drawings and the account are kept.');
+      // History in this browser: the numbers of the running feed, then the actions
+      if(stats.length){const g=el_('div','ddst'); for(const [v,l,c] of stats){const d=el_('div'); d.append(el_('b',c||null,v),el_('span',null,l)); g.appendChild(d)} hist.appendChild(g)}
+      if(detail&&!/^(connected|connecting|reconnecting|closed)$/.test(detail)) hist.appendChild(el_('p','ddnote',detail));
+      const act=(icon,label,meta,cls,fn)=>{const b=el_('button','ddact'+(cls?' '+cls:'')); b.type='button'; b.innerHTML=icon; b.appendChild(el_('span',null,label)); if(meta) b.appendChild(el_('em',null,meta)); b.addEventListener('click',fn); hist.appendChild(b)};
+      act(DD_UP,'Import ticks','CSV · JSON','',()=>fin.click());
+      if(draft.src==='qt') act(DD_BIN,'Forget the saved history',FEED.qt&&FEED.cacheInfo?fK_(FEED.cacheInfo.cached):'','danger',async()=>{await qtcClear(draft.sym); toast(`Saved ${draft.sym} history removed · the next load takes it from Quantower again`,'info')});
     };
     render(); changed();
     apply.addEventListener('click',()=>{if(draft.src==='ws'&&!/^wss?:\/\//.test(draft.wsUrl)){toast('Enter a ws:// or wss:// address','info'); return} DCFG=draft; saveDcfg(); location.reload()});
     // data sets
-    const list=body.querySelector('.dlist');
-    const showSets=()=>{list.innerHTML=sets.length?`<table class="atbl"><tr><th>Name</th><th>Instrument</th><th>Prints</th><th>From</th><th>To</th><th></th></tr>${sets.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.sym}</td><td>${fK(m.n)}</td><td>${m.from}</td><td>${m.to}</td><td><button type="button" class="btn2 sm" data-use="${m.id}">Use</button> <button type="button" class="btn2 sm danger" data-del="${m.id}">Delete</button></td></tr>`).join('')}</table>`:'<p class="acnote">None yet.</p>'};
+    const list=body.querySelector('.dlist'), setsBox=body.querySelector('.dds');
+    const showSets=()=>{setsBox.hidden=!sets.length; list.innerHTML=sets.length?`<table class="atbl"><tr><th>Name</th><th>Instrument</th><th>Prints</th><th>From</th><th>To</th><th></th></tr>${sets.map(m=>`<tr><td>${esc(m.name)}</td><td>${m.sym}</td><td>${fK(m.n)}</td><td>${m.from}</td><td>${m.to}</td><td><button type="button" class="btn2 sm" data-use="${m.id}">Use</button> <button type="button" class="btn2 sm danger" data-del="${m.id}">Delete</button></td></tr>`).join('')}</table>`:''};
     showSets();
     list.addEventListener('click',async e=>{const u=e.target.closest('[data-use]'), d=e.target.closest('[data-del]');
       if(u){const m=sets.find(x=>x.id===u.dataset.use); DCFG={...DCFG,src:'csv',ds:m.id,sym:m.sym}; saveDcfg(); location.reload()}
       if(d){await dsDelete(d.dataset.del); sets=sets.filter(x=>x.id!==d.dataset.del); if(DCFG.src==='csv'&&DCFG.ds===d.dataset.del){DCFG.src='sim'; saveDcfg()} showSets(); render()}});
     // import
-    const fin=body.querySelector('.dfile'), imp=body.querySelector('.dimp');
+    const imp=body.querySelector('.dimp');
     fin.addEventListener('change',async()=>{
       const file=fin.files&&fin.files[0]; if(!file) return;
       imp.innerHTML='<p class="acnote">Reading…</p>'; let text; try{text=await file.slice(0,262144).text()}catch(err){imp.innerHTML=`<p class="acnote">Could not read the file: ${esc(err.message)}</p>`; return}   // the first 256 KB are enough to recognise the format
@@ -5849,7 +5937,7 @@ function openDataDialog(){
       const ins=row('Instrument',el_('select')); Object.keys(INSTR).forEach(k=>{const x=el_('option',null,`${k} · tick ${INSTR[k].tick}`); x.value=k; ins.appendChild(x)}); ins.value=o.sym; ins.addEventListener('change',()=>{o.sym=ins.value; preview()});
       const fl=row('Swap buy and sell',el_('input')); fl.type='checkbox'; fl.addEventListener('change',()=>{o.flip=fl.checked; preview()});
       const nm=row('Name',el_('input')); nm.type='text'; nm.value=o.name; nm.addEventListener('input',()=>{o.name=nm.value.trim()||file.name});
-      imp.appendChild(pv); preview();
+      imp.appendChild(pv); preview(); try{imp.scrollIntoView({block:'nearest'})}catch(e){}
       const act=el_('div','dact'), go=el_('button','btn2','Import'), msg=el_('p','acnote'); go.type='button'; act.appendChild(go); imp.append(act,msg);
       go.addEventListener('click',async()=>{
         go.disabled=true; o.tick=INSTR[o.sym].tick; msg.textContent='Parsing…';
@@ -5869,6 +5957,7 @@ function openDataDialog(){
 
 /* ---------- interface strings: Ukrainian (exact English text → Ukrainian) ---------- */
 const UK={
+"History in this browser":"Історія в цьому браузері","Tick history":"Історія тиків","Bridge port":"Порт моста","Days of history":"Днів історії","Binance market":"Ринок Binance","Futures":"Ф’ючерси","Spot":"Спот","Setup guide":"Як налаштувати","Hide guide":"Сховати довідку","Import ticks":"Імпорт тиків","prints total":"принтів усього","new from Quantower":"нових із Quantower","live prints":"живих принтів","live trades":"живих угод","prints received":"принтів отримано","book":"стакан","from the feed":"з фіду","synthesised":"синтезований","Connected":"Підключено","Connecting":"Підключення","Reconnecting":"Перепідключення","Closed":"Закрито","Saved history":"Збережена історія","No connection":"Немає з’єднання","Imported data":"Імпортовані дані","Forget the saved history":"Забути збережену історію","Applying a change rebuilds everything: the page reloads; layout, drawings and the account are kept.":"Зміна все перебудовує: сторінка перезавантажиться; розкладка, малюнки й рахунок зберігаються.",
 "New window":"Нове вікно",
 "Stop the profile here":"Зупинити профіль тут","Keep it developing to the live price":"Продовжувати до живої ціни","From the start until I stop it (grows with the chart)":"Від початку, поки не зупиню (росте з графіком)","Fixed (start → end)":"Фіксований (від початку до кінця)","Time range":"Діапазон часу",
 "Crosshair":"Перехрестя","Crosshair on every chart":"Перехрестя на всіх графіках","Crosshair only on this chart":"Перехрестя лише на цьому графіку","No crosshair":"Без перехрестя","Crosshair: on every chart, only this chart or off":"Перехрестя: на всіх графіках, лише на цьому або вимкнене","Settings":"Налаштування",
