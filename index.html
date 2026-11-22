@@ -97,7 +97,7 @@ button{background:none;border:0;cursor:pointer}
 .tgl[aria-pressed="true"]{color:#fff}
 .win.tpo .tgl,.win.tpo .indb{display:none}
 .win:not(.tpo) .tpoRow{display:none}
-.win.vdom .btSel,.win.vdom .indb,.win.vdom .tgl,.win.vtape .btSel,.win.vtape .indb,.win.vtape .tgl,.win.vacct .btSel,.win.vacct .indb,.win.vacct .tgl{display:none}
+.win.vdom .btSel,.win.vdom .indb,.win.vdom .tgl,.win.vtape .btSel,.win.vtape .indb,.win.vtape .tgl,.win.vacct .btSel,.win.vacct .indb,.win.vacct .tgl,.win.vterm .btSel,.win.vterm .indb,.win.vterm .tgl{display:none}
 .tbar{position:absolute;bottom:0;z-index:4;display:flex;flex-direction:column;gap:4px;padding:6px;background:var(--q0b0810,#0b0810);border-top:1px solid var(--line);border-left:1px solid var(--line)}
 .tbar[hidden]{display:none}
 .tbr{display:flex;gap:4px;min-width:0}
@@ -112,6 +112,58 @@ button{background:none;border:0;cursor:pointer}
 .tpos.up,.atbl .up,.accard .up,.acpos .up{color:#5fe0bd}.tpos.dn,.atbl .dn,.accard .dn,.acpos .dn{color:#ff8a9a}
 .acct{position:absolute;inset:0;z-index:3;display:none;overflow:auto;background:var(--bg);padding:0 14px 16px}
 .win.vacct .acct{display:block}
+/* 22.11: Terminal window (variant A), «Майже OLED» colours like the settings window */
+.term{position:absolute;inset:0;z-index:3;display:none;overflow:auto;background:#111113;color:#d2d2d7;padding:10px;box-sizing:border-box;flex-direction:column;gap:9px;font-family:var(--f-ui,Inter,system-ui,sans-serif);font-size:12.5px;font-variant-numeric:tabular-nums}
+.win.vterm .term{display:flex}
+.term button,.term input{font:inherit;color:inherit}
+.term .tmhd{display:flex;align-items:center;gap:8px;min-height:22px}
+.term .tmbadge{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:3px;background:#1e1e22;color:#d2d2d7}
+.term .tmacc{color:#9a9aa2}.term .tmbal{margin-left:auto}
+.term .tmsym{display:flex;align-items:baseline;gap:8px}.term .tmsym b{font-size:15px;font-weight:600}.term .tmlast{font-size:15px}
+.term .tmside{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:5px;padding:2px}
+.term .tms{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 9px;border:0;border-radius:4px;background:none;cursor:pointer;color:#9a9aa2}
+.term .tms.buy{align-items:flex-end}.term .tms b{font-size:14px;font-weight:500}
+.term .tms.sell[aria-pressed="true"]{background:color-mix(in srgb,var(--ts) 30%,#0c0c0e);color:#fff}
+.term .tms.buy[aria-pressed="true"]{background:color-mix(in srgb,var(--tb) 30%,#0c0c0e);color:#fff}
+.term .tmtype{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #2a2a2f}
+.term .tmtype button{height:30px;border:0;background:none;color:#9a9aa2;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.term .tmtype button[aria-pressed="true"]{color:#fff;border-bottom-color:#d2d2d7}
+.term .tmg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.term .tmf{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#9a9aa2;min-width:0}
+.term .tmin{display:flex;height:30px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:4px;min-width:0}
+.term .tmin:focus-within{border-color:#64646b}
+.term .tmin button{width:26px;flex:0 0 26px;border:0;background:none;color:#9a9aa2;cursor:pointer;font-size:14px}.term .tmin button:hover{color:#fff}
+.term .tmin input{flex:1 1 auto;min-width:0;width:40px;border:0;background:none;text-align:center;font-size:13px;color:#d2d2d7;outline:0}
+.term .tmin input:disabled{color:#9a9aa2}
+.term .tmhint{font-size:11px;color:#9a9aa2;margin-top:-3px;min-height:14px}
+.term .tmchips{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.term .tmchips button{height:24px;border:1px solid #2a2a2f;border-radius:4px;background:#0c0c0e;color:#9a9aa2;cursor:pointer}
+.term .tmchips button[aria-pressed="true"]{background:#d2d2d7;color:#0c0c0e;border-color:#d2d2d7}
+.term .tmx{display:flex;flex-direction:column;gap:6px;background:#0c0c0e;border:1px solid #222226;border-radius:5px;padding:8px}
+.term .tmxh{font-size:11px;color:#9a9aa2}
+.term .tmxr{display:grid;grid-template-columns:minmax(96px,auto) 1fr;grid-template-rows:auto auto;column-gap:8px;row-gap:2px;align-items:center}
+.term .tmsw{display:flex;align-items:center;gap:6px;cursor:pointer;grid-row:1/3}
+.term .tmsw input{accent-color:#b0b0b8;width:14px;height:14px;margin:0}
+.term .tmxr input[type=text]{height:26px;min-width:0;background:#111113;border:1px solid #2a2a2f;border-radius:4px;padding:0 7px;color:#d2d2d7;outline:0}
+.term .tmxr input[type=text]:focus{border-color:#64646b}
+.term .tmxi{font-size:10.5px;color:#9a9aa2;text-align:right}
+.term .tmxr.off input[type=text],.term .tmxr.off .tmxi{opacity:.45}
+.term .tmxr.tp .tmsw span{color:#2ee6a6}.term .tmxr.sl .tmsw span{color:#ff7b8f}
+.term .tmnote{font-size:10.5px;color:#64646b}
+.term .tmgo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:50px;border:0;border-radius:6px;cursor:pointer;color:#fff}
+.term .tmgo.buy{background:color-mix(in srgb,var(--tb) 78%,#000)}.term .tmgo.sell{background:color-mix(in srgb,var(--ts) 82%,#000)}
+.term .tmgo:hover{filter:brightness(1.12)}.term .tmgo b{font-size:15px;font-weight:600}.term .tmgo span{font-size:11.5px;opacity:.92}
+.term .tmpos{display:grid;grid-template-columns:auto 1fr;row-gap:4px;background:#0c0c0e;border:1px solid #222226;border-radius:5px;padding:8px 10px}
+.term .tmpos span{color:#9a9aa2}.term .tmpos b{font-weight:500;text-align:right}
+.term .up{color:#4aa6ff}.term .dn{color:#ff6b66}.term .bs{color:#4aa6ff}.term .ss{color:#ff6b66}
+.term .tmpos b.up{color:color-mix(in srgb,var(--tb) 70%,#fff)}.term .tmpos b.dn{color:color-mix(in srgb,var(--ts) 70%,#fff)}
+.term .tmacts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.term .tmacts button{height:30px;border:1px solid #2a2a2f;border-radius:4px;background:#1e1e22;cursor:pointer}.term .tmacts button:hover{background:#26262b}
+.term .tmoh{font-size:11px;color:#9a9aa2;margin-bottom:-5px}
+.term .tmo{display:flex;align-items:center;gap:8px;height:26px;border-top:1px solid #222226}
+.term .tmo span:first-child{width:44px;flex:0 0 44px}
+.term .tmo button{margin-left:auto;width:24px;height:22px;border:0;background:none;color:#9a9aa2;cursor:pointer;font-size:15px}.term .tmo button:hover{color:#fff}
+.term .tmo0{color:#64646b;font-size:11.5px;padding:4px 0}
 .actabs{position:sticky;top:0;z-index:1;display:flex;flex-wrap:wrap;gap:2px;padding:8px 0;background:var(--bg);border-bottom:1px solid var(--q251e2c,#251e2c)}
 .actabs button{padding:4px 10px;border-radius:5px;color:var(--muted);font-size:12px}
 .actabs button:hover{color:var(--text)}
@@ -625,6 +677,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
       <button type="button" class="hbtn hic" id="tbeye" title="Show the drawing toolbar" aria-label="Show the drawing toolbar" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button type="button" class="hbtn" id="clrb" hidden title="Colours: the theme and every colour in one place">Colours</button>
       <button type="button" class="hbtn hic" id="indb" title="Indicators on this chart" aria-label="Indicators on this chart" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15.5l3.5-4 3 2.5L14 7l3 4 4-3"/><path d="M3 20.5h18" opacity=".55"/></svg></button>
+      <button type="button" class="hbtn hic" id="termb" title="Terminal: buy / sell" aria-label="Terminal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19V6M4 9l3-3 3 3M17 5v13M14 15l3 3 3-3"/></svg></button>
       <button type="button" class="hbtn hic" id="addwin" title="Add a chart to this screen" aria-label="Add a chart to this screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="3.5" y="5.5" width="8" height="13" rx="1.5"/><rect x="13.5" y="5.5" width="7" height="13" rx="1.5" stroke-dasharray="2 1.7"/><path d="M17 9.8v4.4M14.8 12h4.4" stroke-linecap="round"/></svg></button>
       <button type="button" class="hbtn hic" id="setb" title="Settings: every tool in one place" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6h3.4l.5 2.4 1.6.9 2.3-.8 1.7 2.9-1.8 1.6v1.8l1.8 1.6-1.7 2.9-2.3-.8-1.6.9-.5 2.4h-3.4l-.5-2.4-1.6-.9-2.3.8-1.7-2.9 1.8-1.6v-1.8L4.5 9l1.7-2.9 2.3.8 1.6-.9z"/><circle cx="12" cy="12" r="2.7"/></svg></button>
       <button type="button" class="hbtn" id="appb" title="Appearance & language" hidden>Aa</button>
@@ -702,7 +755,7 @@ textarea.code{display:block;width:100%;min-height:260px;resize:vertical;backgrou
       <select class="btSel" aria-label="Bar type">
         <option>250T</option><option>500T</option><option>1000T</option><option>1m</option><option>5m</option><option>15m</option><option>30m</option>
       </select>
-      <div class="seg vw" role="group" aria-label="Window type"><button type="button" data-v="chart" title="Price chart">Chart</button><button type="button" data-v="tpo" title="Market profile">TPO</button><button type="button" data-v="dom" title="Depth of market as its own window">DOM</button><button type="button" data-v="tape" title="Time &amp; Sales">Tape</button><button type="button" data-v="acct" title="Account, orders, journal, alerts">Acct</button></div>
+      <div class="seg vw" role="group" aria-label="Window type"><button type="button" data-v="chart" title="Price chart">Chart</button><button type="button" data-v="tpo" title="Market profile">TPO</button><button type="button" data-v="dom" title="Depth of market as its own window">DOM</button><button type="button" data-v="tape" title="Time &amp; Sales">Tape</button><button type="button" data-v="acct" title="Account, orders, journal, alerts">Acct</button><button type="button" data-v="term" title="Terminal: send orders">Term</button></div>
       <button type="button" class="stb indb" title="Indicators (Ctrl+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 19V11M10 19V5M15 19v-6M20 19V9"/></svg>Indicators</button>
       <button type="button" class="tgl dom" title="Show the DOM beside the chart">+DOM</button>
       <select class="tpoRow" aria-label="TPO row size"><option value="auto">Row: Auto</option><option value="1">Row: 0.25</option><option value="2">Row: 0.5</option><option value="4">Row: 1</option><option value="5">Row: 1.25</option><option value="10">Row: 2.5</option><option value="20">Row: 5</option><option value="40">Row: 10</option><option value="100">Row: 25</option></select>
@@ -1282,8 +1335,8 @@ function bracketOnEntry(o,k){
   let b=BRK.brk.find(x=>x.entry===o.id);
   if(!b){
     b={id:BRK.nid++,entry:o.id,side:s,ref:o.avgFill,be:o.custom?0:+A.be||0,beOff:+A.beOff||0,trail:o.custom?0:+A.trail||0,beDone:false,stop:null,tps:[]};
-    b.tgts=o.custom?[[o.custom.target,0]]:[[+A.t1,+A.q1],[+A.t2,+A.q2],[+A.t3,+A.q3]].filter(x=>x[0]>0).map(([tk,q])=>[b.ref+s*tk,q]);
-    b.stopPx=o.custom?o.custom.stop:A.stop>0?b.ref-s*A.stop:null;
+    b.tgts=o.custom?(o.custom.target!=null?[[o.custom.target,0]]:[]):[[+A.t1,+A.q1],[+A.t2,+A.q2],[+A.t3,+A.q3]].filter(x=>x[0]>0).map(([tk,q])=>[b.ref+s*tk,q]);
+    b.stopPx=o.custom?(o.custom.stop??null):A.stop>0?b.ref-s*A.stop:null;
     BRK.brk.push(b);
   }
   if(b.stopPx!=null){if(b.stop&&b.stop.status==='working') b.stop.qty+=k; else b.stop=placeOrder({side:-s,type:'STP',px:b.stopPx,qty:k,role:'sl',brk:b.id})}
@@ -2689,6 +2742,7 @@ function drawChart(P,ctx,w,h){
   if(I.vwap.on) tag(ctx,plotW,AX,yOf(B[last].vwap/TICK),0,pH,hexA(I.vwap.color,.35),'#fff',B[last].vwap.toFixed(DEC));
   if(DOMCFG.noteGuides) for(const k in NOTES) tag(ctx,plotW,AX,yOf(+k),0,pH,hexA(DOMCFG.noteCol,.35),'#fff',fP(+k));
   for(const o of BRK.orders){const px=o._drag??o.px; tag(ctx,plotW,AX,yOf(px),0,pH,ordCol(o),'#0b0710',fP(px))}
+  if(draftOn()){const dp=dPx(); tag(ctx,plotW,AX,yOf(dp),0,pH,TERM.side>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431'),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,'#2ee6a6','#0b0710',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,'#ff5c7a','#0b0710',fP(dSl()))}
   if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,posPnl()>=0?'#2ee6a6':'#ff5c7a','#0b0710',fP(BRK.avg));
   tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',lastStr());
   if(!G.hideDraw) for(const d of DR){
@@ -4463,7 +4517,7 @@ function indAt(P,p){
   return null;
 }
 function openIndicators(P,focus){openSettings(P,focus||'fp')}
-function openProps(P){openSettings(P,P.S.view==='dom'?'dom':P.S.view==='tape'?'tape':P.S.view==='tpo'?'tpo':P.S.view==='acct'?'acct':'chart')}
+function openProps(P){openSettings(P,P.S.view==='dom'?'dom':P.S.view==='tape'?'tape':P.S.view==='tpo'?'tpo':P.S.view==='acct'||P.S.view==='term'?'acct':'chart')}
 const SET_ORDER=['fp','big','vwap','prof','tpoov','heat','dpow','sot','cvd','stats','rsi','rng','ema'];
 /* Settings window (18.11, variant A from the canvas «Potik — налаштування, варіанти»): five sections with icons on the left,
    indicators as a list + the chosen one beside it, every indicator split into Main / Colours / Advanced, a hint under the
@@ -4949,6 +5003,7 @@ function drawTrading(ctx,g,R){
     ctx.strokeStyle=hexA('#ffd166',.75); ctx.setLineDash([2,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]);
     box(`${LANG==='uk'?'СПОВІЩЕННЯ':'ALERT'} ${fP(a.value/TICK)}`,y,'#ffd166','alert',a.id,R-4);
   }
+  drawDraft(ctx,g,R,box);   // 22.11: the Terminal's order draft
   // working orders (a dragged one shows its new price)
   for(const o of BRK.orders){
     const px=o._drag??o.px, y=Math.round(yOf(px))+.5; if(y<-8||y>pH+8) continue; const col=ordCol(o);
@@ -4977,7 +5032,7 @@ function orderHit(P,p){
   for(const r of g.ord){
     const dy=Math.abs(p.y-r.y);
     if(dy<=8&&p.x>=r.cx0&&p.x<=r.cx1) return {...r,act:'x'};                       // the ✕ box
-    if(r.kind!=='pos'&&((dy<=8&&p.x>=r.x0&&p.x<=r.x1)||(dy<=4&&p.x<g.plotW))) return {...r,act:'drag'};
+    if(r.kind!=='pos'&&((dy<=8&&p.x>=r.x0&&p.x<=r.x1)||(!r.btn&&dy<=4&&p.x<g.plotW))) return {...r,act:'drag'};
   }
   return null;
 }
@@ -5031,6 +5086,149 @@ function syncTradeBars(force){
     if(tb._v!==ATMV||!at.options.length){at.innerHTML=''; ATMS.forEach((a,i)=>{const o=el_('option',null,a.name); o.value=i; at.appendChild(o)}); tb._v=ATMV}
     if(document.activeElement!==at) at.value=Math.min(+ACC.atm,ATMS.length-1);
     if(pos.textContent!==full){pos.textContent=full; pos.className='tpos '+(BRK.q?(p>=0?'up':'dn'):'')}
+  }
+}
+
+/* ---------- 22.11: Terminal window (variant A from «Potik — термінал, варіанти») + the order draft on the chart, like TradingView ----------
+   Side (Sell / Buy), type (Market / Limit / Stop), price, contracts, take-profit and stop-loss. While a Terminal window is open the draft order
+   is drawn on every chart: Market follows the price, Limit / Stop sit at their price; drag the line to move it (the type follows: a buy below
+   the market is a limit, above it a stop). Drag «TP» / «SL» out of the line to set the exits; × hides them. The big button sends the order to the
+   broker (for now the Potik simulator; Quantower orders come through PotikBridge later). TP / SL are kept as distances in ticks from the entry. */
+const L2t=(en,uk)=>LANG==='uk'?uk:en;
+const TERM_DEF=()=>({side:1,type:'LMT',tpOn:false,slOn:false,tpOff:40,slOff:20,draft:true});
+let TERM=TERM_DEF(); try{TERM={...TERM,...(JSON.parse(localStorage.getItem('potik.term.v1')||'null')||{})}}catch(e){}
+TERM.px=null;   // the draft price (ticks) is not kept between visits
+const saveTerm=()=>{try{const {px,...k}=TERM; localStorage.setItem('potik.term.v1',JSON.stringify(k))}catch(e){}};
+const termOpen=()=>panes.some(P=>P.S.view==='term'&&!P.S.min);
+const draftOn=()=>TERM.draft&&termOpen()&&typeof BK!=='undefined'&&BK.bid!=null;
+function dPx(){   // the draft entry price in ticks
+  if(TERM.type==='MKT') return TERM.side>0?bestAsk():bestBid();
+  if(TERM.px==null) TERM.px=TERM.type==='LMT'?(TERM.side>0?bestBid():bestAsk()):(TERM.side>0?bestAsk()+10:bestBid()-10);
+  return TERM.px;
+}
+const dTp=()=>dPx()+TERM.side*TERM.tpOff, dSl=()=>dPx()-TERM.side*TERM.slOff;
+// the type that fits a price: buy below the ask → limit, above → stop (sell mirrored)
+const typeFor=(side,px)=>side>0?(px<bestAsk()?'LMT':'STP'):(px>bestBid()?'LMT':'STP');
+function termSet(o){Object.assign(TERM,o,{draft:true}); saveTerm(); termDirty(); allDirty()}
+function termDirty(){for(const P of panes) if(P.S.view==='term') P._tmF=true}
+function termSend(){
+  const s=TERM.side, px=dPx(), q=Math.max(1,ACC.qty|0);
+  const custom=TERM.tpOn||TERM.slOn?{stop:TERM.slOn?dSl():null,target:TERM.tpOn?dTp():null}:null;
+  placeOrder({side:s,type:TERM.type,px:TERM.type==='MKT'?undefined:px,qty:q,role:'entry',atm:0,...(custom?{custom}:{})});
+  if(TERM.type!=='MKT') toast(`${s>0?L2t('Buy','Купівля'):L2t('Sell','Продаж')} ${q} ${TERM.type==='LMT'?L2t('limit','ліміт'):L2t('stop','стоп')} @ ${fP(px)}`,'info');
+  TERM.draft=false; TERM.px=null; saveTerm(); termDirty(); allDirty();
+}
+function toggleTerminal(){
+  const P=panes.find(x=>x.S.view==='term');
+  if(P){if(P.S.min){P.S.min=false; updateChrome(); applyLayout(); return} closePane(P,true); allDirty(); return}
+  if(panes.length>=MAXW){toast(`Up to ${MAXW} windows`,'info'); return}
+  const N=addPane({view:'term',bt:'1m',ind:{}});
+  TREE=treeInsert(TREE,null,N.S.uid,'right');
+  if(TREE&&TREE.d==='h'){const i=TREE.k.findIndex(c=>c.p===N.S.uid), W=ws.clientWidth||1200, f=clamp(345/W,.14,.45);
+    if(i>=0){const rest=1-f, old=TREE.f.reduce((a,b,j)=>j===i?a:a+b,0)||1; TREE.f=TREE.f.map((x,j)=>j===i?f:x/old*rest)}}
+  TERM.draft=true; TERM.px=null; updateChrome(); saveLayout(); allDirty();
+}
+const TM_IC={
+  term:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19V6M4 9l3-3 3 3M17 5v13M14 15l3 3 3-3"/></svg>'};
+function buildTerm(P){
+  const T=el_('div','term'); T.addEventListener('pointerdown',e=>e.stopPropagation()); T.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
+  const U=LANG==='uk';
+  T.innerHTML=`<div class="tmhd"><span class="tmbadge">SIM</span><span class="tmacc"></span><span class="tmbal"></span></div>
+<div class="tmsym"><b class="tmsy"></b><span class="tmlast"></span></div>
+<div class="tmside" role="group" aria-label="${U?'Сторона':'Side'}"><button type="button" class="tms sell" data-side="-1"><span>${U?'Продати':'Sell'}</span><b class="tmbid"></b></button><button type="button" class="tms buy" data-side="1"><span>${U?'Купити':'Buy'}</span><b class="tmask"></b></button></div>
+<div class="tmtype" role="group" aria-label="${U?'Тип ордера':'Order type'}"><button type="button" data-type="MKT">${U?'Ринок':'Market'}</button><button type="button" data-type="LMT">${U?'Ліміт':'Limit'}</button><button type="button" data-type="STP">${U?'Стоп':'Stop'}</button></div>
+<div class="tmg2"><label class="tmf">${U?'Ціна':'Price'}<span class="tmin"><button type="button" data-a="pxm" aria-label="${U?'Нижче на тік':'One tick lower'}">−</button><input type="text" class="tmpx" inputmode="decimal" aria-label="${U?'Ціна':'Price'}"><button type="button" data-a="pxp" aria-label="${U?'Вище на тік':'One tick higher'}">+</button></span></label>
+<label class="tmf">${U?'Кількість':'Contracts'}<span class="tmin"><button type="button" data-a="qm" aria-label="${U?'Менше':'Fewer'}">−</button><input type="text" class="tmq" inputmode="numeric" aria-label="${U?'Контракти':'Contracts'}"><button type="button" data-a="qp" aria-label="${U?'Більше':'More'}">+</button></span></label></div>
+<div class="tmhint"></div>
+<div class="tmchips" role="group" aria-label="${U?'Швидка кількість':'Quick size'}">${[1,2,3,5,10].map(n=>`<button type="button" data-q="${n}">${n}</button>`).join('')}</div>
+<div class="tmx"><div class="tmxh">${U?'Рівні виходу':'Exits'}</div>
+<div class="tmxr tp"><label class="tmsw"><input type="checkbox" data-k="tpOn"><span>${U?'Тейк-профіт':'Take profit'}</span></label><input type="text" class="tmtp" inputmode="decimal" aria-label="${U?'Ціна тейк-профіту':'Take-profit price'}"><span class="tmxi tpi"></span></div>
+<div class="tmxr sl"><label class="tmsw"><input type="checkbox" data-k="slOn"><span>${U?'Стоп-лос':'Stop loss'}</span></label><input type="text" class="tmsl" inputmode="decimal" aria-label="${U?'Ціна стоп-лосу':'Stop-loss price'}"><span class="tmxi sli"></span></div>
+<div class="tmnote">${U?'Або витягни ТП / СЛ мишею з лінії ордера на графіку.':'Or drag TP / SL out of the order line on the chart.'}</div></div>
+<button type="button" class="tmgo"><b class="tmgo1"></b><span class="tmgo2"></span></button>
+<div class="tmpos"><span>${U?'Позиція':'Position'}</span><b class="tpq"></b><span>${U?'Відкритий P&L':'Open P&L'}</span><b class="tpp"></b><span>${U?'Сьогодні':'Today'}</span><b class="tps"></b></div>
+<div class="tmacts"><button type="button" data-a="flat" title="Shift F">${U?'Закрити':'Flatten'}</button><button type="button" data-a="rev" title="Shift R">${U?'Розвернути':'Reverse'}</button><button type="button" data-a="cxl" title="Shift X">${U?'Скас. всі':'Cancel all'}</button></div>
+<div class="tmoh">${U?'Робочі ордери':'Working orders'}</div><div class="tmords"></div>`;
+  const q=s=>T.querySelector(s), num=v=>{const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.')); return isFinite(n)?n:null};
+  T.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.side){termSet({side:+b.dataset.side,px:null}); return}   // the draft starts at the current market each time
+    if(b.dataset.type){termSet({type:b.dataset.type,px:null}); return}
+    if(b.dataset.q){ACC.qty=+b.dataset.q; saveAcc(); termSet({}); syncTradeBars(true); return}
+    if(b.classList.contains('tmgo')){termSend(); return}
+    if(b.dataset.oid){cancelOrder(+b.dataset.oid); return}
+    const a=b.dataset.a;
+    if(a==='pxm'||a==='pxp'){const p=dPx()+(a==='pxp'?1:-1); termSet({px:p,type:TERM.type==='MKT'?typeFor(TERM.side,p):TERM.type})}
+    else if(a==='qm'||a==='qp'){ACC.qty=clamp((ACC.qty|0)+(a==='qp'?1:-1),1,999); saveAcc(); termSet({}); syncTradeBars(true)}
+    else if(a==='flat') flatten(); else if(a==='rev') reverse(); else if(a==='cxl') cancelAll();
+  });
+  T.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.dataset.k){TERM[t.dataset.k]=t.checked; termSet({}); return}
+    if(t.classList.contains('tmpx')){const v=num(t.value); if(v!=null){const p=Math.round(v/TICK); termSet({px:p,type:TERM.type==='MKT'?typeFor(TERM.side,p):TERM.type})} else termDirty()}
+    else if(t.classList.contains('tmq')){const v=Math.round(num(t.value)||0); if(v>=1&&v<=999){ACC.qty=v; saveAcc(); syncTradeBars(true)} termSet({})}
+    else if(t.classList.contains('tmtp')){const v=num(t.value); if(v!=null){const d=(Math.round(v/TICK)-dPx())*TERM.side; if(d>0) TERM.tpOff=d, TERM.tpOn=true} termSet({})}
+    else if(t.classList.contains('tmsl')){const v=num(t.value); if(v!=null){const d=(dPx()-Math.round(v/TICK))*TERM.side; if(d>0) TERM.slOff=d, TERM.slOn=true} termSet({})}
+  });
+  T.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'){e.target.blur()} e.stopPropagation()});
+  P.el.querySelector('.body').appendChild(T); return T;
+}
+function renderTerm(P){
+  const T=P.tm; if(!T) return;
+  const now=performance.now(); if(!P._tmF&&now-(P._tmT||0)<180) return; P._tmF=false; P._tmT=now;
+  const q=s=>T.querySelector(s), U=LANG==='uk', set=(s,v)=>{const e=q(s); if(e&&e.textContent!==v) e.textContent=v}, foc=document.activeElement;
+  const val=(s,v,dis)=>{const e=q(s); if(!e) return; if(foc!==e&&e.value!==v) e.value=v; if(dis!=null) e.disabled=dis};
+  T.style.setProperty('--tb',CLR.buy||'#1e90fc'); T.style.setProperty('--ts',CLR.sell||'#da3431');
+  set('.tmacc',U?'Симулятор Потоку':'Potik simulator'); set('.tmbal',money(ACC.balance));
+  set('.tmsy',TAB_SYM||SYM); set('.tmlast',fP(D.last));
+  set('.tmbid',fP(bestBid())); set('.tmask',fP(bestAsk()));
+  T.querySelectorAll('.tms').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.side===TERM.side));
+  T.querySelectorAll('.tmtype button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===TERM.type));
+  T.querySelectorAll('.tmchips button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.q===ACC.qty));
+  const s=TERM.side, mk=TERM.type==='MKT', px=dPx(), qn=Math.max(1,ACC.qty|0);
+  val('.tmpx',mk?(U?'за ринком':'at market'):fP(px),mk); val('.tmq',String(qn));
+  const dist=Math.round((px-(s>0?bestAsk():bestBid()))*s);
+  set('.tmhint',mk?(U?`Виконається одразу за найкращою ціною (${fP(px)})`:`Fills at once at the best price (${fP(px)})`)
+    :TERM.type==='LMT'?(dist>=0?(U?'Ліміт за ринком — виконається одразу':'Limit through the market: fills at once'):(U?`${-dist} т від ринку · чекає ціну`:`${-dist} ticks away · waits for the price`))
+    :(dist<=0?(U?'Стоп уже пройдено — виконається одразу':'Stop already passed: fills at once'):(U?`Стоп: ${dist} т за ринком`:`Stop ${dist} ticks beyond the market`)));
+  const usd=t=>money(t*usdTick()*qn);
+  q('.tmxr.tp input[type=checkbox]').checked=TERM.tpOn; q('.tmxr.sl input[type=checkbox]').checked=TERM.slOn;
+  q('.tmxr.tp').classList.toggle('off',!TERM.tpOn); q('.tmxr.sl').classList.toggle('off',!TERM.slOn);
+  val('.tmtp',fP(dTp())); val('.tmsl',fP(dSl()));
+  set('.tpi',`${TERM.tpOff} ${U?'т':'t'} · +${usd(TERM.tpOff)}`); set('.sli',`${TERM.slOff} ${U?'т':'t'} · −${usd(TERM.slOff)}`);
+  const go=q('.tmgo'); go.classList.toggle('buy',s>0); go.classList.toggle('sell',s<0);
+  set('.tmgo1',`${s>0?(U?'Купити':'Buy'):(U?'Продати':'Sell')} ${qn}`);
+  set('.tmgo2',`${TAB_SYM||SYM} ${mk?(U?'РИНОК':'MARKET'):TERM.type==='LMT'?(U?'ЛІМІТ':'LIMIT'):(U?'СТОП':'STOP')}${mk?'':' @ '+fP(px)}${TERM.tpOn||TERM.slOn?` · ${[TERM.tpOn?'TP':'',TERM.slOn?'SL':''].filter(Boolean).join(' + ')}`:''}`);
+  const p=posPnl(), sess=ACC.balance-BRK.dayBal+p, cls=(e,v)=>{e.classList.toggle('up',v>0); e.classList.toggle('dn',v<0)};
+  set('.tpq',BRK.q?`${BRK.q>0?'Long':'Short'} ${Math.abs(BRK.q)} @ ${fP(BRK.avg)}`:(U?'Немає':'Flat'));
+  set('.tpp',BRK.q?(p>=0?'+':'−')+'$'+Math.abs(p).toFixed(2):'—'); cls(q('.tpp'),BRK.q?p:0);
+  set('.tps',(sess>=0?'+':'−')+'$'+Math.abs(sess).toFixed(2)); cls(q('.tps'),sess);
+  const ov=BRK.orders.map(o=>o.id+':'+o.px+':'+(o.qty-o.filled)).join(',')+'|'+LANG;
+  if(T._ov!==ov){T._ov=ov; const box=q('.tmords');
+    box.innerHTML=BRK.orders.length?BRK.orders.map(o=>{const r=o.role==='tp'?(U?'Ціль':'Target'):o.role==='sl'?(U?'Стоп':'Stop'):o.type==='LMT'?(U?'Ліміт':'Limit'):o.type==='STP'?(U?'Стоп':'Stop'):(U?'Ринок':'Mkt');
+      return `<div class="tmo"><span class="${o.role==='sl'?'dn':o.role==='tp'?'up':o.side>0?'bs':'ss'}">${r}</span><span>${o.side>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell')} ${o.qty-o.filled} @ ${fP(o.px)}</span><button type="button" data-oid="${o.id}" aria-label="${U?'Скасувати ордер':'Cancel order'}">×</button></div>`}).join('')
+      :`<div class="tmo0">${U?'Немає робочих ордерів':'No working orders'}</div>`}
+}
+// the draft on a chart: entry line with [side qty type @ price][TP][SL][×], TP and SL lines with their own ×
+function drawDraft(ctx,g,R,box){
+  if(!draftOn()) return;
+  const {yOf,pH}=g, s=TERM.side, px=dPx(), qn=Math.max(1,ACC.qty|0), U=LANG==='uk', col=s>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431');
+  const line=(p,c,dash)=>{const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(c,.9); ctx.setLineDash(dash); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]); return y};
+  const usd=t=>'$'+Math.abs(t*usdTick()*qn).toFixed(0);
+  if(TERM.tpOn){const y=line(dTp(),'#2ee6a6',[4,3]); if(y>-8&&y<pH+8) box(`${U?'ТП':'TP'} ${qn} · +${usd(TERM.tpOff)} · ${TERM.tpOff}${U?'т':'t'}`,y,'#2ee6a6','dtp',0,R-4)}
+  if(TERM.slOn){const y=line(dSl(),'#ff5c7a',[4,3]); if(y>-8&&y<pH+8) box(`${U?'СЛ':'SL'} ${qn} · −${usd(TERM.slOff)} · ${TERM.slOff}${U?'т':'t'}`,y,'#ff5c7a','dsl',0,R-4)}
+  const y=line(px,col,[2,3]); if(y<-8||y>pH+8) return;
+  const typ=TERM.type==='MKT'?(U?'Ринок':'Market'):TERM.type==='LMT'?(U?'Ліміт':'Limit'):(U?'Стоп':'Stop');
+  ctx.font=`600 10px ${MONO}`;
+  const sd=s>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell'), btnW=ctx.measureText(U?'ТПСЛ':'TPSL').width+24+3+8, fits=t=>ctx.measureText(t).width+30+btnW<R-8;
+  let txt=`${sd} ${qn} · ${typ}${TERM.type==='MKT'?'':' @ '+fP(px)}`;   // narrow chart: a shorter label, so TP / SL stay on screen
+  if(!fits(txt)) txt=`${sd} ${qn} · ${typ}`; if(!fits(txt)) txt=`${s>0?'B':'S'} ${qn}`;
+  const x0=box(txt,y,col,'draft',0,R-4);
+  // TP / SL handles left of the label: drag them up / down
+  let xr=x0-4; ctx.font=`600 10px ${MONO}`; ctx.textBaseline='middle'; ctx.textAlign='center';
+  for(const [k,txt,c,on] of [['dslbtn',U?'СЛ':'SL','#ff5c7a',TERM.slOn],['dtpbtn',U?'ТП':'TP','#2ee6a6',TERM.tpOn]]){
+    const w=ctx.measureText(txt).width+12, a=xr-w; ctx.fillStyle='#16121b'; ctx.fillRect(a,y-8,w,16); ctx.strokeStyle=hexA(c,on?.45:.9); ctx.lineWidth=1; ctx.strokeRect(a+.5,y-7.5,w-1,15);
+    ctx.fillStyle=hexA(c,on?.5:1); ctx.fillText(txt,a+w/2,y+.5); g.ord.unshift({kind:k,id:0,y,x0:a,x1:a+w,cx0:-9,cx1:-9,btn:true}); xr=a-3;
   }
 }
 
@@ -6019,7 +6217,7 @@ const UK={
 "Avg MAE / MFE":"Сер. MAE / MFE","Avg duration":"Сер. тривалість","Commissions":"Комісії","Working orders":"Робочі ордери","Recent orders":"Останні ордери","Cancel":"Скасувати","Cancel all":"Скасувати всі","Download CSV":"Завантажити CSV","Copy CSV":"Копіювати CSV","Clear journal":"Очистити журнал",
 "New alert":"Новий алерт","Add alert":"Додати алерт","Repeat":"Повторювати","Log":"Лог","Arm":"Увімкнути","Account":"Рахунок","Reset account to this balance":"Скинути рахунок до цього балансу","Add ATM":"Додати ATM","Reset ATMs":"Скинути ATM",
 "Commission per contract per side $":"Комісія за контракт за сторону $","Market and stop slippage (ticks)":"Прослизання ринкових і стоп-ордерів (тіки)","Trade by clicking Bid / Ask in the DOM":"Торгувати кліком по Bid / Ask у стакані","… with a double click":"… подвійним кліком",
-"Order-entry bar under the DOM":"Панель ордерів під стаканом","Sounds":"Звуки","Flat":"Флет","Buy Mkt":"Купити","Sell Mkt":"Продати","Rev":"Розв.","Cxl":"Скас.",
+"Terminal: buy / sell":"Термінал: купити / продати","Terminal: send orders":"Термінал: ордери","Order-entry bar under the DOM":"Панель ордерів під стаканом","Sounds":"Звуки","Flat":"Флет","Buy Mkt":"Купити","Sell Mkt":"Продати","Rev":"Розв.","Cxl":"Скас.",
 "Price crosses":"Ціна перетинає","Big print":"Великий принт","Tape speed":"Швидкість стрічки","Stacked imbalance (1-minute bar)":"Стековий дисбаланс (1-хв бар)","Drawn line":"Намальована лінія","Active":"Активний","Off":"Вимкнено",
 "Session":"Сесія","Start at (New York time)":"Почати о (час Нью-Йорка)","Blind training":"Сліпе тренування","Pause on prints of at least (0 = off)":"Пауза на угоді від (0 = вимк.)","Start replay":"Почати повтор","Exit replay":"Вийти з повтору",
 "Report":"Звіт","Session…":"Сесія…","Back to where the replay started":"До початку повтору","Back 5 minutes":"Назад на 5 хвилин","Forward 5 minutes":"Вперед на 5 хвилин","One bar back (active chart)":"На бар назад (активний графік)","One bar forward (active chart)":"На бар вперед (активний графік)",
@@ -6262,7 +6460,7 @@ function updateDataWin(){
 
 /* ---------- chart image: save as PNG or copy ---------- */
 function chartImage(P,how){
-  const cv=P.cv; if(!cv||P.S.view==='acct'){toast('Pick a chart window first','info'); return}
+  const cv=P.cv; if(!cv||P.S.view==='acct'||P.S.view==='term'){toast('Pick a chart window first','info'); return}
   cv.toBlob(b=>{if(!b){toast('Could not capture the chart','alert'); return}
     if(how==='copy'){try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('Chart image copied','info'),()=>toast('The clipboard is blocked here; use Save image','alert'))}catch(e){toast('The clipboard is blocked here; use Save image','alert')} return}
     saveFile(b,`potik-${SYM}-${btLabel(P.S.bt).replace(/\s+/g,'')}-${clock(sim.t).replace(':','')}.png`).then(ok=>{if(ok) toast('Chart image saved','info')})},'image/png');
@@ -6801,7 +6999,7 @@ function renderTray(){
 function winItems(P){
   const many=panes.length>1;
   return [
-    {icon:'eye',label:'Show as',sub:[['chart','Chart'],['tpo','TPO'],['dom','DOM'],['tape','Time & Sales'],['acct','Account']].map(([v,t])=>({label:t,on:P.S.view===v,act:()=>{const b=P.el.querySelector(`.vw button[data-v="${v}"]`); if(b) b.click()}}))},{sep:1},
+    {icon:'eye',label:'Show as',sub:[['chart','Chart'],['tpo','TPO'],['dom','DOM'],['tape','Time & Sales'],['acct','Account'],['term',L2t('Terminal','Термінал')]].map(([v,t])=>({label:t,on:P.S.view===v,act:()=>{const b=P.el.querySelector(`.vw button[data-v="${v}"]`); if(b) b.click()}}))},{sep:1},
     {icon:'auto',label:isMax(P)?'Restore size':'Maximize',kbd:'Dbl-click',act:()=>toggleMax(P)},
     {icon:'undo',label:'Minimize',disabled:shown().length<=1,act:()=>minimizePane(P)},
     {icon:'copy',label:P.S.float?'Dock into the grid':'Float',disabled:!P.S.float&&docked().length<=1,act:()=>toggleFloat(P)},
@@ -6866,7 +7064,7 @@ function makePane(cfg){
   q('.wsym').textContent=SYM; el.querySelectorAll('.tpoRow option').forEach(o=>{if(o.value!=='auto') o.textContent='Row: '+(+o.value*TICK).toFixed(DEC)});
   const btSel=q('.btSel'), vwBtns=el.querySelectorAll('.vw button'), dom=q('.dom'), rowSel=q('.tpoRow');
   P.btSel=btSel; fillBtSel(btSel,S.bt);
-  function sync(){fillBtSel(btSel,S.bt); vwBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.view)); el.classList.toggle('tpo',S.view==='tpo'); el.classList.toggle('vdom',S.view==='dom'); el.classList.toggle('vtape',S.view==='tape'); el.classList.toggle('vacct',S.view==='acct'); dom.setAttribute('aria-pressed',S.dom); rowSel.value=S.tpoRow}
+  function sync(){fillBtSel(btSel,S.bt); vwBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.view)); el.classList.toggle('tpo',S.view==='tpo'); el.classList.toggle('vdom',S.view==='dom'); el.classList.toggle('vtape',S.view==='tape'); el.classList.toggle('vacct',S.view==='acct'); el.classList.toggle('vterm',S.view==='term'); dom.setAttribute('aria-pressed',S.dom); rowSel.value=S.tpoRow}
   sync();
   btSel.addEventListener('change',()=>{if(btSel.value==='__custom'){btSel.value=S.bt; openBtDialog(P); return} setBt(P,btSel.value)});
   vwBtns.forEach(b=>b.addEventListener('click',()=>{S.view=b.dataset.v; P.V.tsN=null; P.V.tsOff=0; P.V.domHold=false; P.V.domC=null; sync(); P.dirty=true; renderTabs(); saveLayout()}));
@@ -6884,6 +7082,7 @@ function makePane(cfg){
   q('.flt').addEventListener('click',()=>toggleFloat(P)); wireFloat(P); syncWinBtns(P);
   P.tb=makeTradeBar(P);
   P.ac=el_('div','acct'); P.ac.addEventListener('pointerdown',e=>e.stopPropagation()); P.ac.addEventListener('wheel',e=>e.stopPropagation()); el.querySelector('.body').appendChild(P.ac);
+  P.tm=buildTerm(P);   // 22.11: Terminal window
   wireCanvas(P);
   return P;
 }
@@ -6926,6 +7125,7 @@ function updateChrome(){
   $('#addw').disabled=false;   // 19.11: «+» also makes tabs, so it is never off (the window item in its menu is)
   panes.forEach(P=>{P.el.querySelector('.cl').disabled=panes.length<=1; P.el.querySelector('.mn').disabled=!P.S.min&&shown().length<=1});
   renderTabs(); renderTray(); allDirty(); saveLayout();
+  {const tb=$('#termb'); if(tb) tb.setAttribute('aria-pressed',panes.some(P=>P.S.view==='term'))}
 }
 function addPane(cfg){const P=makePane(cfg); panes.push(P); ws.appendChild(P.el); return P}
 // closed windows are remembered (last 10): Reopen closed window brings one back with its settings and its drawings
@@ -7013,6 +7213,7 @@ function tabNewHere(){   // a new tab with one chart like the first chart of thi
 }
 $('#addw').addEventListener('click',()=>tabNewHere());   // 20.11: + = a new tab straight away, like TradingView
 $('#addwin').addEventListener('click',()=>openAddWindow());
+$('#termb').addEventListener('click',()=>toggleTerminal());   // 22.11: Terminal window on / off
 /* 20.11: the indicators button (top right) — only the indicators, each with a switch for the active chart; nothing else */
 {const pop=el_('div','indpop'); pop.hidden=true; pop.setAttribute('role','dialog'); pop.setAttribute('aria-label','Indicators on this chart'); document.body.appendChild(pop);
   const chartP=()=>active&&active.S.view==='chart'?active:panes.find(Q=>Q.S.view==='chart');
@@ -7099,6 +7300,8 @@ function wireCanvas(P){
         const oh=orderHit(P,p);
         if(oh&&oh.act==='x'){
           if(oh.kind==='order') cancelOrder(oh.id); else if(oh.kind==='pos') flatten();
+          else if(oh.kind==='draft'){TERM.draft=false; saveTerm(); termDirty(); allDirty()}
+          else if(oh.kind==='dtp'||oh.kind==='dsl'){TERM[oh.kind==='dtp'?'tpOn':'slOn']=false; saveTerm(); termDirty(); allDirty()}
           else if(oh.kind==='alert'){ALERTS=ALERTS.filter(a=>a.id!==oh.id); saveAlerts(); brkChanged()}
           P.drag={z:'none',moved:true}; return;
         }
@@ -7140,6 +7343,9 @@ function wireCanvas(P){
     if(drag.z==='ord'){
       const np=Math.round(V.g.pAt(p.y));
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o) o._drag=np}
+      else if(drag.kind==='draft'){if(drag.moved){TERM.px=np; TERM.type=typeFor(TERM.side,np); termDirty()}}
+      else if(drag.kind==='dtp'||drag.kind==='dtpbtn'){if(drag.moved){const d=(np-dPx())*TERM.side; TERM.tpOn=true; TERM.tpOff=Math.max(1,d); termDirty()}}
+      else if(drag.kind==='dsl'||drag.kind==='dslbtn'){if(drag.moved){const d=(dPx()-np)*TERM.side; TERM.slOn=true; TERM.slOff=Math.max(1,d); termDirty()}}
       else if(drag.kind==='alert'){const a=ALERTS.find(x=>x.id===drag.id); if(a) a.value=np*TICK}
       allDirty(); return;
     }
@@ -7170,6 +7376,7 @@ function wireCanvas(P){
     else if(drag&&drag.z==='ord'){
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag; delete o._drag; if(drag.moved) modifyOrder(o.id,np)}}
       else if(drag.kind==='alert') saveAlerts();
+      else if(/^d(raft|tp|sl)/.test(drag.kind)){TERM.draft=true; saveTerm(); termDirty()}
     }
     else if(drag&&drag.z==='tpo'&&!drag.moved) tpoClick(P,p,e.shiftKey||e.ctrlKey||e.metaKey);
     else if(drag&&!drag.moved&&drag.type!=='mouse'&&drag.z==='plot'){V.hover=V.hover?null:p}
@@ -7315,13 +7522,13 @@ function frame(ts){
   for(const P of panes){
     if(!(P.dirty||doData)||(P.errStop&&!P.dirty)) continue;
     P.dirty=false; const R=prep(P.cv); if(!R) continue; P._tb=false; P.ovDirty=true;
-    try{const v=P.S.view; if(v==='acct'){R.ctx.fillStyle='#000'; R.ctx.fillRect(0,0,R.w,R.h); P.live.hidden=true; P.V.g=null; renderAcct(P)} else v==='tpo'?drawTPO(P,R.ctx,R.w,R.h):v==='dom'?drawDomView(P,R.ctx,R.w,R.h):v==='tape'?drawTape(P,R.ctx,R.w,R.h):drawChart(P,R.ctx,R.w,R.h);
+    try{const v=P.S.view; if(v==='acct'||v==='term'){R.ctx.fillStyle='#000'; R.ctx.fillRect(0,0,R.w,R.h); P.live.hidden=true; P.V.g=null; if(v==='acct') renderAcct(P); else{P._tmF=true; renderTerm(P)}} else v==='tpo'?drawTPO(P,R.ctx,R.w,R.h):v==='dom'?drawDomView(P,R.ctx,R.w,R.h):v==='tape'?drawTape(P,R.ctx,R.w,R.h):drawChart(P,R.ctx,R.w,R.h);
       if(P.errN){P.errN=0; P.errStop=false; renderErr(P)}}
     catch(err){renderFail(P,err); try{for(let k=0;k<8;k++) R.ctx.restore()}catch(_){}}
   }
   // overlay layer: crosshair and values under the cursor, without redrawing the chart
   for(const P of panes){if(!P.ovDirty) continue; P.ovDirty=false; const R=prep(P.ov); if(R) try{drawChartOverlay(P,R.ctx,R.w,R.h)}catch(err){renderFail(P,err)}}
-  for(const P of panes){const h=!P._tb; if(P.tb.hidden!==h) P.tb.hidden=h; if(P.S.view==='acct') renderAcct(P)}
+  for(const P of panes){const h=!P._tb; if(P.tb.hidden!==h) P.tb.hidden=h; if(P.S.view==='acct') renderAcct(P); else if(P.S.view==='term') renderTerm(P)}
   syncTradeBars(false);
   if(doData) alertTick();
   if(ts-lastSt>1000){lastSt=ts; studyAlerts()}
