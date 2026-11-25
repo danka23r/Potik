@@ -119,7 +119,8 @@ button{background:none;border:0;cursor:pointer}
 .term .tmhd{display:flex;align-items:center;gap:8px;min-height:22px}
 .term .tmbadge{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:3px;background:#1e1e22;color:#d2d2d7}
 .term .tmacc{color:#9a9aa2}.term .tmbal{margin-left:auto}
-.term .tmsym{display:flex;align-items:baseline;gap:8px}.term .tmsym b{font-size:15px;font-weight:600}.term .tmlast{font-size:15px}
+.term .tmsym{display:flex;align-items:baseline;gap:8px}
+.term .tmch{margin-left:auto;align-self:center;height:24px;max-width:150px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:4px;color:#9a9aa2;font:inherit;font-size:11.5px;padding:0 4px}.term .tmsym b{font-size:15px;font-weight:600}.term .tmlast{font-size:15px}
 .term .tmside{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#0c0c0e;border:1px solid #2a2a2f;border-radius:5px;padding:2px}
 .term .tms{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 9px;border:0;border-radius:4px;background:none;cursor:pointer;color:#9a9aa2}
 .term .tms.buy{align-items:flex-end}.term .tms b{font-size:14px;font-weight:500}
@@ -2628,7 +2629,7 @@ function drawChart(P,ctx,w,h){
   ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(0,Math.round(yOf(D.last)),plotW,1);
   if(!G.hideDraw) drawDrawings(ctx,V.g,P);
   if(V.box){const [a,b,c,d]=V.box; ctx.fillStyle='rgba(196,178,238,.08)'; ctx.fillRect(Math.min(a,c),Math.min(b,d),Math.abs(c-a),Math.abs(d-b)); ctx.strokeStyle='rgba(196,178,238,.7)'; ctx.setLineDash([4,3]); ctx.lineWidth=1; ctx.strokeRect(Math.min(a,c)+.5,Math.min(b,d)+.5,Math.abs(c-a),Math.abs(d-b)); ctx.setLineDash([])}
-  drawTrading(ctx,V.g,R);
+  drawTrading(ctx,V.g,R,P);
   // DOM notes as guide lines
   if(DOMCFG.noteGuides) for(const k in NOTES){
     const y=Math.round(yOf(+k))+.5; if(y<0||y>pH) continue;
@@ -2742,7 +2743,7 @@ function drawChart(P,ctx,w,h){
   if(I.vwap.on) tag(ctx,plotW,AX,yOf(B[last].vwap/TICK),0,pH,hexA(I.vwap.color,.35),'#fff',B[last].vwap.toFixed(DEC));
   if(DOMCFG.noteGuides) for(const k in NOTES) tag(ctx,plotW,AX,yOf(+k),0,pH,hexA(DOMCFG.noteCol,.35),'#fff',fP(+k));
   for(const o of BRK.orders){const px=o._drag??o.px; tag(ctx,plotW,AX,yOf(px),0,pH,ordCol(o),'#0b0710',fP(px))}
-  if(draftOn()){const dp=dPx(); tag(ctx,plotW,AX,yOf(dp),0,pH,TERM.side>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431'),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,'#2ee6a6','#0b0710',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,'#ff5c7a','#0b0710',fP(dSl()))}
+  if(draftOn(P)){const dp=dPx(); tag(ctx,plotW,AX,yOf(dp),0,pH,TERM.side>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431'),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,'#2ee6a6','#0b0710',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,'#ff5c7a','#0b0710',fP(dSl()))}
   if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,posPnl()>=0?'#2ee6a6':'#ff5c7a','#0b0710',fP(BRK.avg));
   tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',lastStr());
   if(!G.hideDraw) for(const d of DR){
@@ -4985,7 +4986,7 @@ const ordCol=o=>ORD_COL[o.role]?ORD_COL[o.role][o.side>0?0:1]:'#c4b2ee';
 const ordLabel=o=>`${o.role==='tp'?'TP':o.role==='sl'?'SL':sideTxt(o.side).toUpperCase()} ${o.type==='MKT'?'MKT':o.type==='LMT'?'LMT':'STP'} ${o.qty-o.filled}`;
 function posPnl(){return BRK.q?(D.last-BRK.avg)*BRK.q*usdTick():0}
 // working orders, position, price alerts and fills on a chart; registers the clickable parts in g.ord
-function drawTrading(ctx,g,R){
+function drawTrading(ctx,g,R,P){
   g.ord=[]; const {yOf,pH}=g; ctx.save(); ctx.font=`600 10px ${MONO}`; ctx.textBaseline='middle';
   const placed=[];   // labels that would overlap slide left of each other
   const box=(txt,y,col,kind,id,xr)=>{
@@ -5003,7 +5004,7 @@ function drawTrading(ctx,g,R){
     ctx.strokeStyle=hexA('#ffd166',.75); ctx.setLineDash([2,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]);
     box(`${LANG==='uk'?'СПОВІЩЕННЯ':'ALERT'} ${fP(a.value/TICK)}`,y,'#ffd166','alert',a.id,R-4);
   }
-  drawDraft(ctx,g,R,box);   // 22.11: the Terminal's order draft
+  drawDraft(ctx,g,R,box,P);   // 22.11: the Terminal's order draft
   // working orders (a dragged one shows its new price)
   for(const o of BRK.orders){
     const px=o._drag??o.px, y=Math.round(yOf(px))+.5; if(y<-8||y>pH+8) continue; const col=ordCol(o);
@@ -5100,7 +5101,15 @@ let TERM=TERM_DEF(); try{TERM={...TERM,...(JSON.parse(localStorage.getItem('poti
 TERM.px=null;   // the draft price (ticks) is not kept between visits
 const saveTerm=()=>{try{const {px,...k}=TERM; localStorage.setItem('potik.term.v1',JSON.stringify(k))}catch(e){}};
 const termOpen=()=>panes.some(P=>P.S.view==='term'&&!P.S.min);
-const draftOn=()=>TERM.draft&&termOpen()&&typeof BK!=='undefined'&&BK.bid!=null;
+// 25.11 (user: «щоб термінал показувався тільки на 1 графіку, бо забирає місце»): the draft lives on one chart, TERM.uid;
+// default — the chart that was active when the terminal opened; change: right-click a chart → «Trade on this chart», or the chart list in the terminal
+const isChartP=P=>P&&P.S.view==='chart'&&!P.S.min;
+function tradePane(){
+  let P=panes.find(x=>x.S.uid===TERM.uid); if(isChartP(P)) return P;
+  P=isChartP(active)?active:panes.find(isChartP); if(P&&TERM.uid!==P.S.uid){TERM.uid=P.S.uid; saveTerm()} return P||null;
+}
+function setTradePane(P){if(!isChartP(P)) return; TERM.uid=P.S.uid; TERM.draft=true; saveTerm(); termDirty(); allDirty()}
+const draftOn=P=>TERM.draft&&termOpen()&&typeof BK!=='undefined'&&BK.bid!=null&&(!P||P===tradePane());
 function dPx(){   // the draft entry price in ticks
   if(TERM.type==='MKT') return TERM.side>0?bestAsk():bestBid();
   if(TERM.px==null) TERM.px=TERM.type==='LMT'?(TERM.side>0?bestBid():bestAsk()):(TERM.side>0?bestAsk()+10:bestBid()-10);
@@ -5126,7 +5135,8 @@ function toggleTerminal(){
   TREE=treeInsert(TREE,null,N.S.uid,'right');
   if(TREE&&TREE.d==='h'){const i=TREE.k.findIndex(c=>c.p===N.S.uid), W=ws.clientWidth||1200, f=clamp(345/W,.14,.45);
     if(i>=0){const rest=1-f, old=TREE.f.reduce((a,b,j)=>j===i?a:a+b,0)||1; TREE.f=TREE.f.map((x,j)=>j===i?f:x/old*rest)}}
-  TERM.draft=true; TERM.px=null; updateChrome(); saveLayout(); allDirty();
+  if(isChartP(active)) TERM.uid=active.S.uid;
+  TERM.draft=true; TERM.px=null; saveTerm(); updateChrome(); saveLayout(); allDirty();
 }
 const TM_IC={
   term:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19V6M4 9l3-3 3 3M17 5v13M14 15l3 3 3-3"/></svg>'};
@@ -5134,7 +5144,7 @@ function buildTerm(P){
   const T=el_('div','term'); T.addEventListener('pointerdown',e=>e.stopPropagation()); T.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
   const U=LANG==='uk';
   T.innerHTML=`<div class="tmhd"><span class="tmbadge">SIM</span><span class="tmacc"></span><span class="tmbal"></span></div>
-<div class="tmsym"><b class="tmsy"></b><span class="tmlast"></span></div>
+<div class="tmsym"><b class="tmsy"></b><span class="tmlast"></span><select class="tmch" aria-label="${U?'Графік для ордерів':'Chart for orders'}" title="${U?'На якому графіку показувати лінію ордера':'Which chart shows the order line'}"></select></div>
 <div class="tmside" role="group" aria-label="${U?'Сторона':'Side'}"><button type="button" class="tms sell" data-side="-1"><span>${U?'Продати':'Sell'}</span><b class="tmbid"></b></button><button type="button" class="tms buy" data-side="1"><span>${U?'Купити':'Buy'}</span><b class="tmask"></b></button></div>
 <div class="tmtype" role="group" aria-label="${U?'Тип ордера':'Order type'}"><button type="button" data-type="MKT">${U?'Ринок':'Market'}</button><button type="button" data-type="LMT">${U?'Ліміт':'Limit'}</button><button type="button" data-type="STP">${U?'Стоп':'Stop'}</button></div>
 <div class="tmg2"><label class="tmf">${U?'Ціна':'Price'}<span class="tmin"><button type="button" data-a="pxm" aria-label="${U?'Нижче на тік':'One tick lower'}">−</button><input type="text" class="tmpx" inputmode="decimal" aria-label="${U?'Ціна':'Price'}"><button type="button" data-a="pxp" aria-label="${U?'Вище на тік':'One tick higher'}">+</button></span></label>
@@ -5164,6 +5174,7 @@ function buildTerm(P){
   });
   T.addEventListener('change',e=>{
     const t=e.target;
+    if(t.classList.contains('tmch')){const P2=panes.find(x=>String(x.S.uid)===t.value); if(P2) setTradePane(P2); return}
     if(t.dataset.k){TERM[t.dataset.k]=t.checked; termSet({}); return}
     if(t.classList.contains('tmpx')){const v=num(t.value); if(v!=null){const p=Math.round(v/TICK); termSet({px:p,type:TERM.type==='MKT'?typeFor(TERM.side,p):TERM.type})} else termDirty()}
     else if(t.classList.contains('tmq')){const v=Math.round(num(t.value)||0); if(v>=1&&v<=999){ACC.qty=v; saveAcc(); syncTradeBars(true)} termSet({})}
@@ -5181,6 +5192,8 @@ function renderTerm(P){
   T.style.setProperty('--tb',CLR.buy||'#1e90fc'); T.style.setProperty('--ts',CLR.sell||'#da3431');
   set('.tmacc',U?'Симулятор Потоку':'Potik simulator'); set('.tmbal',money(ACC.balance));
   set('.tmsy',TAB_SYM||SYM); set('.tmlast',fP(D.last));
+  {const sel=q('.tmch'), TP=tradePane(), ch=panes.filter(isChartP), key=ch.map(x=>x.S.uid+winLabel(x)).join('|')+(TP?TP.S.uid:'');
+   if(sel._k!==key&&foc!==sel){sel._k=key; sel.innerHTML=ch.map(x=>`<option value="${x.S.uid}">${esc((U?'Графік ':'Chart ')+winLabel(x))}</option>`).join(''); if(TP) sel.value=TP.S.uid}}
   set('.tmbid',fP(bestBid())); set('.tmask',fP(bestAsk()));
   T.querySelectorAll('.tms').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.side===TERM.side));
   T.querySelectorAll('.tmtype button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.type===TERM.type));
@@ -5210,8 +5223,8 @@ function renderTerm(P){
       :`<div class="tmo0">${U?'Немає робочих ордерів':'No working orders'}</div>`}
 }
 // the draft on a chart: entry line with [side qty type @ price][TP][SL][×], TP and SL lines with their own ×
-function drawDraft(ctx,g,R,box){
-  if(!draftOn()) return;
+function drawDraft(ctx,g,R,box,P){
+  if(!draftOn(P)) return;
   const {yOf,pH}=g, s=TERM.side, px=dPx(), qn=Math.max(1,ACC.qty|0), U=LANG==='uk', col=s>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431');
   const line=(p,c,dash)=>{const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(c,.9); ctx.setLineDash(dash); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]); return y};
   const usd=t=>'$'+Math.abs(t*usdTick()*qn).toFixed(0);
@@ -6707,6 +6720,7 @@ function openMenu(P,p,cx,cy,indId){
   // or under «Window» (DOM beside the chart, link, chart image). Trading: click Bid / Ask in the DOM, Shift+B / S / F / R / X.
   items.push(
     {icon:'bell',label:`Alert at ${fP(cpx)}`,act:()=>{addAlert({kind:'price',op:'cross',value:cpx*TICK}); askNotify(); toast(`Alert set at ${fP(cpx)}`,'info')}},
+    ...(termOpen()&&P.S.view==='chart'?[{icon:'util',label:L2t('Trade on this chart','Торгувати на цьому графіку'),on:P===tradePane(),act:()=>setTradePane(P)}]:[]),
     {sep:1},
     {...st('live','Go to Live'),act:()=>{P.V.scroll=0; P.V.userY=false; P.V.yoff=0; P.dirty=true}},
     {...st('auto','Auto Scale'),on:P.V.autoY,act:()=>{P.V.autoY=true; P.V.fit=true; P.dirty=true}},
