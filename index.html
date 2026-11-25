@@ -2743,7 +2743,7 @@ function drawChart(P,ctx,w,h){
   if(I.vwap.on) tag(ctx,plotW,AX,yOf(B[last].vwap/TICK),0,pH,hexA(I.vwap.color,.35),'#fff',B[last].vwap.toFixed(DEC));
   if(DOMCFG.noteGuides) for(const k in NOTES) tag(ctx,plotW,AX,yOf(+k),0,pH,hexA(DOMCFG.noteCol,.35),'#fff',fP(+k));
   for(const o of BRK.orders){const px=o._drag??o.px; tag(ctx,plotW,AX,yOf(px),0,pH,ordCol(o),'#0b0710',fP(px))}
-  if(draftOn(P)){const dp=dPx(); tag(ctx,plotW,AX,yOf(dp),0,pH,TERM.side>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431'),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,'#2ee6a6','#0b0710',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,'#ff5c7a','#0b0710',fP(dSl()))}
+  if(draftOn(P)){const dp=dPx(), cE=TERM.side>0?TVC.buy:TVC.sell; tag(ctx,plotW,AX,yOf(dp),0,pH,tvMix(cE,.3),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,tvMix(TVC.tp,.3),'#e6fff8',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,tvMix(TVC.sl,.3),'#fff4e0',fP(dSl()))}
   if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,posPnl()>=0?'#2ee6a6':'#ff5c7a','#0b0710',fP(BRK.avg));
   tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',lastStr());
   if(!G.hideDraw) for(const d of DR){
@@ -5222,27 +5222,59 @@ function renderTerm(P){
       return `<div class="tmo"><span class="${o.role==='sl'?'dn':o.role==='tp'?'up':o.side>0?'bs':'ss'}">${r}</span><span>${o.side>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell')} ${o.qty-o.filled} @ ${fP(o.px)}</span><button type="button" data-oid="${o.id}" aria-label="${U?'Скасувати ордер':'Cancel order'}">×</button></div>`}).join('')
       :`<div class="tmo0">${U?'Немає робочих ордерів':'No working orders'}</div>`}
 }
-// the draft on a chart: entry line with [side qty type @ price][TP][SL][×], TP and SL lines with their own ×
+// the draft on a chart, drawn like the user's TradingView (25.11, variant 2 without ticks):
+// entry  [Купівля] [ТП | СЛ] [1 | Ліміт | ×]   TP [1 | +2.47 USD | ×]   SL [1 | −3.20 USD | ×]
+// labels right-aligned, a dashed vertical line near the price scale joins TP / entry / SL with round handles. TV colours.
+const TVC={buy:'#2962ff',sell:'#f23645',tp:'#22ab94',sl:'#f7a21b',bg:'#0c0d10',btn:'#363a45'};
+const tvMix=(c,a)=>{const h=c.replace('#',''), n=parseInt(h,16), r=n>>16&255, g=n>>8&255, b=n&255, m=[12,13,16];
+  return `rgb(${Math.round(m[0]+(r-m[0])*a)},${Math.round(m[1]+(g-m[1])*a)},${Math.round(m[2]+(b-m[2])*a)})`};
+function tvRect(ctx,x,y,w,h,r){ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h)}
+// an outlined group of cells, right edge at xr; returns the left edge and where the × cell starts
+function tvGroup(ctx,cells,xr,y,c){
+  const H=20, pad=8, ws=cells.map(t=>t==='×'?22:Math.ceil(ctx.measureText(t).width)+pad*2), W=ws.reduce((a,b)=>a+b,0), x0=Math.round(xr-W), top=Math.round(y-H/2)+.5;
+  ctx.fillStyle=tvMix(c,.1); tvRect(ctx,x0+.5,top,W,H,3); ctx.fill(); ctx.strokeStyle=hexA(c,.8); ctx.lineWidth=1; ctx.stroke();
+  let x=x0, cx=x0; ctx.textAlign='center'; ctx.textBaseline='middle';
+  cells.forEach((t,i)=>{
+    if(i){ctx.fillStyle=hexA(c,.8); ctx.fillRect(x,top,1,H)}
+    if(t==='×'){cx=x; ctx.strokeStyle=c; ctx.lineWidth=1.2; const m=x+ws[i]/2, k=3.5; ctx.beginPath(); ctx.moveTo(m-k,y-k); ctx.lineTo(m+k,y+k); ctx.moveTo(m+k,y-k); ctx.lineTo(m-k,y+k); ctx.stroke()}
+    else{ctx.fillStyle=c; ctx.fillText(t,x+ws[i]/2,y+.5)}
+    x+=ws[i];
+  });
+  return {x0,cx,x1:x0+W};
+}
 function drawDraft(ctx,g,R,box,P){
   if(!draftOn(P)) return;
-  const {yOf,pH}=g, s=TERM.side, px=dPx(), qn=Math.max(1,ACC.qty|0), U=LANG==='uk', col=s>0?(CLR.buy||'#1e90fc'):(CLR.sell||'#da3431');
-  const line=(p,c,dash)=>{const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(c,.9); ctx.setLineDash(dash); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]); return y};
-  const usd=t=>'$'+Math.abs(t*usdTick()*qn).toFixed(0);
-  if(TERM.tpOn){const y=line(dTp(),'#2ee6a6',[4,3]); if(y>-8&&y<pH+8) box(`${U?'ТП':'TP'} ${qn} · +${usd(TERM.tpOff)} · ${TERM.tpOff}${U?'т':'t'}`,y,'#2ee6a6','dtp',0,R-4)}
-  if(TERM.slOn){const y=line(dSl(),'#ff5c7a',[4,3]); if(y>-8&&y<pH+8) box(`${U?'СЛ':'SL'} ${qn} · −${usd(TERM.slOff)} · ${TERM.slOff}${U?'т':'t'}`,y,'#ff5c7a','dsl',0,R-4)}
-  const y=line(px,col,[2,3]); if(y<-8||y>pH+8) return;
+  const {yOf,pH}=g, s=TERM.side, px=dPx(), qn=Math.max(1,ACC.qty|0), U=LANG==='uk', cE=s>0?TVC.buy:TVC.sell;
+  const vis=y=>y>-10&&y<pH+10, hx=Math.round(R-26)+.5, xr=hx-34;
+  const usd=t=>(t*usdTick()*qn).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD';
+  const hline=(p,c,dash,a)=>{const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(c,a); ctx.setLineDash(dash); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]); return y};
+  const yE=hline(px,cE,[4,4],.85), yT=TERM.tpOn?hline(dTp(),TVC.tp,[2,3],.75):null, yS=TERM.slOn?hline(dSl(),TVC.sl,[2,3],.75):null;
+  ctx.font=`12px ${UI}`;
+  // vertical connector + round handles
+  const ys=[yE,yT,yS].filter(v=>v!=null);
+  if(ys.length>1){ctx.strokeStyle=hexA(cE,.6); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(hx,clamp(Math.min(...ys),0,pH)); ctx.lineTo(hx,clamp(Math.max(...ys),0,pH)); ctx.stroke(); ctx.setLineDash([])}
+  const handle=(y,c,kind)=>{if(!vis(y)) return; ctx.fillStyle=TVC.bg; ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(hx,y,4.5,0,7); ctx.fill(); ctx.stroke();
+    g.ord.unshift({kind,id:0,y,x0:hx-8,x1:hx+8,cx0:-9,cx1:-9,btn:true})};
+  if(yT!=null){handle(yT,TVC.tp,'dtp'); if(vis(yT)){const r=tvGroup(ctx,[String(qn),'+'+usd(TERM.tpOff),'×'],xr,yT,TVC.tp); g.ord.push({kind:'dtp',id:0,y:yT,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1})}}
+  if(yS!=null){handle(yS,TVC.sl,'dsl'); if(vis(yS)){const r=tvGroup(ctx,[String(qn),'−'+usd(TERM.slOff),'×'],xr,yS,TVC.sl); g.ord.push({kind:'dsl',id:0,y:yS,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1})}}
+  handle(yE,cE,'draft');
+  if(!vis(yE)) return;
   const typ=TERM.type==='MKT'?(U?'Ринок':'Market'):TERM.type==='LMT'?(U?'Ліміт':'Limit'):(U?'Стоп':'Stop');
-  ctx.font=`600 10px ${MONO}`;
-  const sd=s>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell'), btnW=ctx.measureText(U?'ТПСЛ':'TPSL').width+24+3+8, fits=t=>ctx.measureText(t).width+30+btnW<R-8;
-  let txt=`${sd} ${qn} · ${typ}${TERM.type==='MKT'?'':' @ '+fP(px)}`;   // narrow chart: a shorter label, so TP / SL stay on screen
-  if(!fits(txt)) txt=`${sd} ${qn} · ${typ}`; if(!fits(txt)) txt=`${s>0?'B':'S'} ${qn}`;
-  const x0=box(txt,y,col,'draft',0,R-4);
-  // TP / SL handles left of the label: drag them up / down
-  let xr=x0-4; ctx.font=`600 10px ${MONO}`; ctx.textBaseline='middle'; ctx.textAlign='center';
-  for(const [k,txt,c,on] of [['dslbtn',U?'СЛ':'SL','#ff5c7a',TERM.slOn],['dtpbtn',U?'ТП':'TP','#2ee6a6',TERM.tpOn]]){
-    const w=ctx.measureText(txt).width+12, a=xr-w; ctx.fillStyle='#16121b'; ctx.fillRect(a,y-8,w,16); ctx.strokeStyle=hexA(c,on?.45:.9); ctx.lineWidth=1; ctx.strokeRect(a+.5,y-7.5,w-1,15);
-    ctx.fillStyle=hexA(c,on?.5:1); ctx.fillText(txt,a+w/2,y+.5); g.ord.unshift({kind:k,id:0,y,x0:a,x1:a+w,cx0:-9,cx1:-9,btn:true}); xr=a-3;
+  const grp=tvGroup(ctx,[String(qn),typ,'×'],xr,yE,cE); let xl=grp.x0-8;
+  // [ТП | СЛ] for the exits not set yet: drag them up / down out of the line
+  const btns=[!TERM.tpOn&&['dtpbtn',U?'ТП':'TP',TVC.tp],!TERM.slOn&&['dslbtn',U?'СЛ':'SL',TVC.sl]].filter(Boolean);
+  if(btns.length){
+    const ws=btns.map(b=>Math.ceil(ctx.measureText(b[1]).width)+16), W=ws.reduce((a,b)=>a+b,0), x0=Math.round(xl-W), top=Math.round(yE-10)+.5;
+    ctx.fillStyle=TVC.bg; tvRect(ctx,x0+.5,top,W,20,3); ctx.fill(); ctx.strokeStyle=TVC.btn; ctx.lineWidth=1; ctx.stroke();
+    let x=x0; btns.forEach((b,i)=>{if(i){ctx.fillStyle=TVC.btn; ctx.fillRect(x,top,1,20)} ctx.fillStyle=b[2]; ctx.textAlign='center'; ctx.fillText(b[1],x+ws[i]/2,yE+.5);
+      g.ord.unshift({kind:b[0],id:0,y:yE,x0:x,x1:x+ws[i],cx0:-9,cx1:-9,btn:true}); x+=ws[i]});
+    xl=x0-8;
   }
+  // the side pill
+  const side=s>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell'); ctx.font=`500 12px ${UI}`;
+  const pw=Math.ceil(ctx.measureText(side).width)+18;
+  if(xl-pw>2){ctx.fillStyle=cE; tvRect(ctx,xl-pw+.5,Math.round(yE-10)+.5,pw,20,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(side,xl-pw/2,yE+.5); xl-=pw}
+  g.ord.push({kind:'draft',id:0,y:yE,x0:xl,x1:grp.x1,cx0:grp.cx,cx1:grp.x1});
 }
 
 /* ---------- Account window: overview, orders, executions, journal, alerts, settings ---------- */
