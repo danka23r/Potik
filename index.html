@@ -115,6 +115,8 @@ button{background:none;border:0;cursor:pointer}
 /* 22.11: Terminal window (variant A), «Майже OLED» colours like the settings window */
 .term{position:absolute;inset:0;z-index:3;display:none;overflow:auto;background:#111113;color:#d2d2d7;padding:10px;box-sizing:border-box;flex-direction:column;gap:9px;font-family:var(--f-ui,Inter,system-ui,sans-serif);font-size:12.5px;font-variant-numeric:tabular-nums}
 .win.vterm .term{display:flex}
+.newver{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;background:#18181b;border:1px solid #2a2a2f;border-radius:8px;color:#d2d2d7;font:13px var(--f-ui,Inter,system-ui,sans-serif);box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.newver button{font:inherit;border:0;border-radius:5px;cursor:pointer}.newver .nvgo{background:#2962ff;color:#fff;padding:5px 12px}.newver .nvx{background:none;color:#9a9aa2;width:26px;height:26px;font-size:16px}
 .term button,.term input{font:inherit;color:inherit}
 .term .tmhd{display:flex;align-items:center;gap:8px;min-height:22px}
 .term .tmbadge{font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:2px 6px;border-radius:3px;background:#1e1e22;color:#d2d2d7}
@@ -5204,11 +5206,11 @@ function renderTerm(P){
   set('.tmhint',mk?(U?`Виконається одразу за найкращою ціною (${fP(px)})`:`Fills at once at the best price (${fP(px)})`)
     :TERM.type==='LMT'?(dist>=0?(U?'Ліміт за ринком — виконається одразу':'Limit through the market: fills at once'):(U?`${-dist} т від ринку · чекає ціну`:`${-dist} ticks away · waits for the price`))
     :(dist<=0?(U?'Стоп уже пройдено — виконається одразу':'Stop already passed: fills at once'):(U?`Стоп: ${dist} т за ринком`:`Stop ${dist} ticks beyond the market`)));
-  const usd=t=>money(t*usdTick()*qn);
+  const usd=t=>(t*usdTick()*qn).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD';
   q('.tmxr.tp input[type=checkbox]').checked=TERM.tpOn; q('.tmxr.sl input[type=checkbox]').checked=TERM.slOn;
   q('.tmxr.tp').classList.toggle('off',!TERM.tpOn); q('.tmxr.sl').classList.toggle('off',!TERM.slOn);
   val('.tmtp',fP(dTp())); val('.tmsl',fP(dSl()));
-  set('.tpi',`${TERM.tpOff} ${U?'т':'t'} · +${usd(TERM.tpOff)}`); set('.sli',`${TERM.slOff} ${U?'т':'t'} · −${usd(TERM.slOff)}`);
+  set('.tpi','+'+usd(TERM.tpOff)); set('.sli','−'+usd(TERM.slOff));   // 25.11: money only, no ticks (user)
   const go=q('.tmgo'); go.classList.toggle('buy',s>0); go.classList.toggle('sell',s<0);
   set('.tmgo1',`${s>0?(U?'Купити':'Buy'):(U?'Продати':'Sell')} ${qn}`);
   set('.tmgo2',`${TAB_SYM||SYM} ${mk?(U?'РИНОК':'MARKET'):TERM.type==='LMT'?(U?'ЛІМІТ':'LIMIT'):(U?'СТОП':'STOP')}${mk?'':' @ '+fP(px)}${TERM.tpOn||TERM.slOn?` · ${[TERM.tpOn?'TP':'',TERM.slOn?'SL':''].filter(Boolean).join(' + ')}`:''}`);
@@ -7677,6 +7679,26 @@ READY=true; $('#busy').hidden=true; snapStart();
    try{if(FEED.live&&FEED.drain()) dataDirty=true; alertTick()}catch(e){}};
  try{const w=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),1000)'],{type:'text/javascript'}))); w.onmessage=bg; w.onerror=()=>setInterval(bg,1000)}catch(e){setInterval(bg,1000)}}
 requestAnimationFrame(frame);
+// 25.11: the user kept seeing an old copy from the browser cache (GitHub Pages lets it live ~10 min) and thought nothing changed.
+// 4 s after opening and then every 3 min the page asks the site for index.html; if its code differs, a bar offers «Reload».
+// cache:'reload' also refreshes the browser cache, so the reload really gets the new version.
+(function(){
+  if(!/^https?:$/.test(location.protocol)||IN_CLAUDE) return;
+  const hs=t=>{let x=0; for(let i=0;i<t.length;i++) x=(x*31+t.charCodeAt(i))|0; return x};
+  const sig=d=>hs([...d.querySelectorAll('script:not([src])')].map(e=>e.textContent).join('\n'));
+  const mine=sig(document); let shown=false;
+  async function chk(){
+    if(shown) return;
+    try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'reload'}); if(!r.ok) return; const t=await r.text();
+      if(sig(new DOMParser().parseFromString(t,'text/html'))!==mine) show()}catch(e){}
+  }
+  function show(){
+    shown=true; const b=document.createElement('div'); b.className='newver'; b.setAttribute('role','status');
+    b.innerHTML=`<span>${L2t('A newer version of Potik is on the site.','На сайті нова версія Потоку.')}</span><button type="button" class="nvgo">${L2t('Reload','Оновити')}</button><button type="button" class="nvx" aria-label="${L2t('Later','Пізніше')}">×</button>`;
+    b.querySelector('.nvgo').onclick=()=>location.reload(); b.querySelector('.nvx').onclick=()=>b.remove(); document.body.appendChild(b);
+  }
+  setTimeout(chk,4000); setInterval(chk,180000);
+})();
 })();
 
 </script>
