@@ -2744,7 +2744,11 @@ function drawChart(P,ctx,w,h){
   if(sideVA&&I.prof.vaLines){tag(ctx,plotW,AX,yOf(sideVA.vah),0,pH,'#22192c',C.text,fP(Math.round(sideVA.vah))); tag(ctx,plotW,AX,yOf(sideVA.val),0,pH,'#22192c',C.text,fP(Math.round(sideVA.val))); tag(ctx,plotW,AX,yOf(sideVA.poc),0,pH,hexA(I.prof.vaCol,.4),'#fff',fP(Math.round(sideVA.poc)))}
   if(I.vwap.on) tag(ctx,plotW,AX,yOf(B[last].vwap/TICK),0,pH,hexA(I.vwap.color,.35),'#fff',B[last].vwap.toFixed(DEC));
   if(DOMCFG.noteGuides) for(const k in NOTES) tag(ctx,plotW,AX,yOf(+k),0,pH,hexA(DOMCFG.noteCol,.35),'#fff',fP(+k));
-  for(const o of BRK.orders){const px=o._drag??o.px; tag(ctx,plotW,AX,yOf(px),0,pH,ordCol(o),'#0b0710',fP(px))}
+  if(!P||P===tradePane()){
+    for(const o of BRK.orders){const px=o._drag??o.px, c=tvOrdCol(o); tag(ctx,plotW,AX,yOf(px),0,pH,tvMix(c,.3),'#fff',fP(px));
+      if(o.role==='entry'&&o.custom){if(o.custom.target!=null) tag(ctx,plotW,AX,yOf(o.custom.target),0,pH,tvMix(TVC.tp,.3),'#e6fff8',fP(o.custom.target)); if(o.custom.stop!=null) tag(ctx,plotW,AX,yOf(o.custom.stop),0,pH,tvMix(TVC.sl,.3),'#fff4e0',fP(o.custom.stop))}}
+    if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,tvMix(BRK.q>0?TVC.buy:TVC.sell,.3),'#fff',fP(BRK.avg));
+  }
   if(draftOn(P)){const dp=dPx(), cE=TERM.side>0?TVC.buy:TVC.sell; tag(ctx,plotW,AX,yOf(dp),0,pH,tvMix(cE,.3),'#fff',fP(dp)); if(TERM.tpOn) tag(ctx,plotW,AX,yOf(dTp()),0,pH,tvMix(TVC.tp,.3),'#e6fff8',fP(dTp())); if(TERM.slOn) tag(ctx,plotW,AX,yOf(dSl()),0,pH,tvMix(TVC.sl,.3),'#fff4e0',fP(dSl()))}
   if(BRK.q) tag(ctx,plotW,AX,yOf(BRK.avg),0,pH,posPnl()>=0?'#2ee6a6':'#ff5c7a','#0b0710',fP(BRK.avg));
   tag(ctx,plotW,AX,yOf(D.last),0,pH,'#fff','#000',lastStr());
@@ -5007,19 +5011,9 @@ function drawTrading(ctx,g,R,P){
     box(`${LANG==='uk'?'СПОВІЩЕННЯ':'ALERT'} ${fP(a.value/TICK)}`,y,'#ffd166','alert',a.id,R-4);
   }
   drawDraft(ctx,g,R,box,P);   // 22.11: the Terminal's order draft
-  // working orders (a dragged one shows its new price)
-  for(const o of BRK.orders){
-    const px=o._drag??o.px, y=Math.round(yOf(px))+.5; if(y<-8||y>pH+8) continue; const col=ordCol(o);
-    ctx.strokeStyle=hexA(col,.85); ctx.setLineDash(o.type==='STP'?[6,4]:[]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]);
-    const tk=Math.round((px-D.last)), usd=BRK.q&&(o.role==='tp'||o.role==='sl')?(px-BRK.avg)*BRK.q*usdTick()*(o.qty-o.filled)/Math.abs(BRK.q):null;
-    box(`${ordLabel(o)} @ ${fP(px)} · ${tk>0?'+':''}${tk}t${usd!=null?` · ${usd>=0?'+':''}$${usd.toFixed(0)}`:''}`,y,col,'order',o.id,R-4);
-  }
-  // position at its average price
-  if(BRK.q){
-    const y=Math.round(yOf(BRK.avg))+.5, p=posPnl(), col=p>=0?'#2ee6a6':'#ff5c7a';
-    ctx.strokeStyle=hexA('#ffffff',.8); ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke();
-    box(`${BRK.q>0?'LONG':'SHORT'} ${Math.abs(BRK.q)} @ ${fP(BRK.avg)} · ${p>=0?'+':''}$${p.toFixed(0)}`,y,col,'pos',0,R-4);
-  }
+  // 25.11 (user: «прибери з іншого графіка», «як у TV, червона / синя рамка, просто Sell / Buy і зліва кількість»):
+  // working orders, their pending TP / SL and the position are drawn only on the trading chart, in the TV style of the draft.
+  if(!P||P===tradePane()) drawLiveTV(ctx,g,R);
   // fills
   for(const f of BRK.fills){
     if(f.t>sim.t) continue;
@@ -5244,6 +5238,56 @@ function tvGroup(ctx,cells,xr,y,c){
   });
   return {x0,cx,x1:x0+W};
 }
+const tvOrdCol=o=>o.role==='tp'?TVC.tp:o.role==='sl'?TVC.sl:o.side>0?TVC.buy:TVC.sell;
+const tvUsd=v=>(v<0?'−':'+')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD';
+// [ТП | СЛ] buttons ending at xr; dotted border like TV's working-order buttons; returns the left edge
+function tvBtns(ctx,g,list,xr,y,dotted){
+  const ws=list.map(b=>Math.ceil(ctx.measureText(b.t).width)+16), W=ws.reduce((a,b)=>a+b,0), x0=Math.round(xr-W), top=Math.round(y-10)+.5;
+  ctx.fillStyle=TVC.bg; tvRect(ctx,x0+.5,top,W,20,3); ctx.fill();
+  let x=x0; ctx.textAlign='center'; ctx.textBaseline='middle';
+  list.forEach((b,i)=>{
+    if(dotted){ctx.strokeStyle=hexA(b.c,.8); ctx.setLineDash([1.5,2]); ctx.lineWidth=1; tvRect(ctx,x+1.5,top+1,ws[i]-3,18,2); ctx.stroke(); ctx.setLineDash([])}
+    else if(i){ctx.fillStyle=TVC.btn; ctx.fillRect(x,top,1,20)}
+    ctx.fillStyle=b.c; ctx.fillText(b.t,x+ws[i]/2,y+.5);
+    g.ord.unshift({kind:b.kind,id:b.id||0,y,x0:x,x1:x+ws[i],cx0:-9,cx1:-9,btn:true}); x+=ws[i];
+  });
+  if(!dotted){ctx.strokeStyle=TVC.btn; ctx.lineWidth=1; tvRect(ctx,x0+.5,top,W,20,3); ctx.stroke()}
+  return x0;
+}
+// working orders, pending TP / SL of entry orders, the position — TV style, right edges in the same column as the draft
+function drawLiveTV(ctx,g,R){
+  const {yOf,pH}=g, U=LANG==='uk', xr=Math.round(R-26)+.5-34, vis=y=>y>-10&&y<pH+10;
+  const hline=(p,c,dash,a,w)=>{const y=Math.round(yOf(p))+.5; ctx.strokeStyle=hexA(c,a); ctx.setLineDash(dash); ctx.lineWidth=w||1; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(R,y); ctx.stroke(); ctx.setLineDash([]); return y};
+  ctx.font=`12px ${UI}`;
+  for(const o of BRK.orders){
+    const px=o._drag??o.px, c=tvOrdCol(o), q=o.qty-o.filled, y=hline(px,c,o.type==='STP'?[6,4]:[4,4],.85);
+    if(o.role==='entry'){
+      const dpx=px-o.px, cu=o.custom||{};   // pending exits move with a dragged entry
+      for(const [k,v,cc,sg] of [['otp',cu.target,TVC.tp,1],['osl',cu.stop,TVC.sl,-1]]){
+        if(v==null) continue; const vp=v+dpx, yy=hline(vp,cc,[2,3],.75); if(!vis(yy)) continue;
+        const r=tvGroup(ctx,[String(q),tvUsd((vp-px)*o.side*usdTick()*q),'×'],xr,yy,cc); g.ord.push({kind:k,id:o.id,y:yy,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1});
+      }
+      if(!vis(y)) continue;
+      const r=tvGroup(ctx,[String(q),o.side>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell'),'×'],xr,y,c);
+      const btns=[cu.target==null&&{t:U?'ТП':'TP',c:TVC.tp,kind:'otpbtn',id:o.id},cu.stop==null&&{t:U?'СЛ':'SL',c:TVC.sl,kind:'oslbtn',id:o.id}].filter(Boolean);
+      if(btns.length) tvBtns(ctx,g,btns,r.x0-6,y,true);
+      g.ord.push({kind:'order',id:o.id,y,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1});
+    }else{
+      if(!vis(y)) continue;
+      const v=BRK.q?(px-BRK.avg)*Math.sign(BRK.q)*usdTick()*q:null;
+      const r=tvGroup(ctx,[String(q),v!=null?tvUsd(v):(o.side>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell')),'×'],xr,y,c);
+      g.ord.push({kind:'order',id:o.id,y,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1});
+    }
+  }
+  if(BRK.q){
+    const c=BRK.q>0?TVC.buy:TVC.sell, y=hline(BRK.avg,c,[],.9,1.2);
+    if(vis(y)){const pl=posPnl(), r=tvGroup(ctx,[String(Math.abs(BRK.q)),tvUsd(pl),'×'],xr,y,c);
+      // the P&L cell coloured by sign
+      g.ord.push({kind:'pos',id:0,y,x0:r.x0,x1:r.x1,cx0:r.cx,cx1:r.x1});
+      const pill=BRK.q>0?(U?'Довга':'Long'):(U?'Коротка':'Short'); ctx.font=`500 12px ${UI}`; const pw=Math.ceil(ctx.measureText(pill).width)+18;
+      ctx.fillStyle=c; tvRect(ctx,r.x0-6-pw+.5,Math.round(y-10)+.5,pw,20,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(pill,r.x0-6-pw/2,y+.5); ctx.font=`12px ${UI}`}
+  }
+}
 function drawDraft(ctx,g,R,box,P){
   if(!draftOn(P)) return;
   const {yOf,pH}=g, s=TERM.side, px=dPx(), qn=Math.max(1,ACC.qty|0), U=LANG==='uk', cE=s>0?TVC.buy:TVC.sell;
@@ -5275,7 +5319,8 @@ function drawDraft(ctx,g,R,box,P){
   // the side pill
   const side=s>0?(U?'Купівля':'Buy'):(U?'Продаж':'Sell'); ctx.font=`500 12px ${UI}`;
   const pw=Math.ceil(ctx.measureText(side).width)+18;
-  if(xl-pw>2){ctx.fillStyle=cE; tvRect(ctx,xl-pw+.5,Math.round(yE-10)+.5,pw,20,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(side,xl-pw/2,yE+.5); xl-=pw}
+  if(xl-pw>2){ctx.fillStyle=cE; tvRect(ctx,xl-pw+.5,Math.round(yE-10)+.5,pw,20,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(side,xl-pw/2,yE+.5);
+    g.ord.unshift({kind:'dsend',id:0,y:yE,x0:xl-pw,x1:xl,cx0:-9,cx1:-9,btn:true}); xl-=pw}   // 25.11: click the pill = send the order (like TV)
   g.ord.push({kind:'draft',id:0,y:yE,x0:xl,x1:grp.x1,cx0:grp.cx,cx1:grp.x1});
 }
 
@@ -7350,6 +7395,7 @@ function wireCanvas(P){
           if(oh.kind==='order') cancelOrder(oh.id); else if(oh.kind==='pos') flatten();
           else if(oh.kind==='draft'){TERM.draft=false; saveTerm(); termDirty(); allDirty()}
           else if(oh.kind==='dtp'||oh.kind==='dsl'){TERM[oh.kind==='dtp'?'tpOn':'slOn']=false; saveTerm(); termDirty(); allDirty()}
+          else if(oh.kind==='otp'||oh.kind==='osl'){const o=BRK.orders.find(x=>x.id===oh.id); if(o&&o.custom){o.custom[oh.kind==='otp'?'target':'stop']=null; brkChanged()}}
           else if(oh.kind==='alert'){ALERTS=ALERTS.filter(a=>a.id!==oh.id); saveAlerts(); brkChanged()}
           P.drag={z:'none',moved:true}; return;
         }
@@ -7391,7 +7437,9 @@ function wireCanvas(P){
     if(drag.z==='ord'){
       const np=Math.round(V.g.pAt(p.y));
       if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o) o._drag=np}
-      else if(drag.kind==='draft'){if(drag.moved){TERM.px=np; TERM.type=typeFor(TERM.side,np); termDirty()}}
+      else if(drag.kind==='draft'||drag.kind==='dsend'){if(drag.moved){TERM.px=np; TERM.type=typeFor(TERM.side,np); termDirty()}}
+      else if(/^o(tp|sl)/.test(drag.kind)){if(drag.moved){const o=BRK.orders.find(x=>x.id===drag.id); if(o){const tp=drag.kind.startsWith('otp'); o.custom=o.custom||{stop:null,target:null};
+        o.custom[tp?'target':'stop']=tp?(o.side>0?Math.max(o.px+1,np):Math.min(o.px-1,np)):(o.side>0?Math.min(o.px-1,np):Math.max(o.px+1,np))}}}
       else if(drag.kind==='dtp'||drag.kind==='dtpbtn'){if(drag.moved){const d=(np-dPx())*TERM.side; TERM.tpOn=true; TERM.tpOff=Math.max(1,d); termDirty()}}
       else if(drag.kind==='dsl'||drag.kind==='dslbtn'){if(drag.moved){const d=(dPx()-np)*TERM.side; TERM.slOn=true; TERM.slOff=Math.max(1,d); termDirty()}}
       else if(drag.kind==='alert'){const a=ALERTS.find(x=>x.id===drag.id); if(a) a.value=np*TICK}
@@ -7422,7 +7470,9 @@ function wireCanvas(P){
     else if(drag&&drag.z==='cvdax') saveLayout();
     else if(drag&&drag.z==='lower'&&drag.cvd&&drag.moved) saveLayout();
     else if(drag&&drag.z==='ord'){
-      if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag; delete o._drag; if(drag.moved) modifyOrder(o.id,np)}}
+      if(drag.kind==='order'){const o=BRK.orders.find(x=>x.id===drag.id); if(o&&o._drag!=null){const np=o._drag, d=np-o.px; delete o._drag; if(drag.moved){if(o.custom){if(o.custom.target!=null) o.custom.target+=d; if(o.custom.stop!=null) o.custom.stop+=d} modifyOrder(o.id,np)}}}
+      else if(drag.kind==='dsend'&&!drag.moved) termSend();
+      else if(/^o(tp|sl)/.test(drag.kind)) brkChanged();
       else if(drag.kind==='alert') saveAlerts();
       else if(/^d(raft|tp|sl)/.test(drag.kind)){TERM.draft=true; saveTerm(); termDirty()}
     }
